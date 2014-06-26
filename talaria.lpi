@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <PathDelim Value="\"/>
+    <General>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="talaria"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <Icon Value="0"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="3">
+      <Item1>
+        <PackageName Value="laz_synapse"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="SynEdit"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="LCL"/>
+      </Item3>
+    </RequiredPackages>
+    <Units Count="13">
+      <Unit0>
+        <Filename Value="talaria.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="mainform.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormMain"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="MainForm"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="statusframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameStatus"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="StatusFrame"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="chatframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameChat"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ChatFrame"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="pointlistframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FramePointList"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="PointListFrame"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="dnmp_unit.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_unit"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="dnmp_services.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_services"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="core.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Core"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="dnmpnodeframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameDnmpNode"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="DnmpNodeFrame"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="Misc.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Misc"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="dnmpservicesframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameDnmpServices"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="DnmpServicesFrame"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="configframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameConfig"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ConfigFrame"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="grpcserviceframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameGrpcService"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="GrpcServiceFrame"/>
+      </Unit12>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="talaria"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <Linking>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

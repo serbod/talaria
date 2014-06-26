@@ -1,0 +1,215 @@
+object FrameChat: TFrameChat
+  Left = 0
+  Height = 481
+  Top = 0
+  Width = 734
+  ClientHeight = 481
+  ClientWidth = 734
+  TabOrder = 0
+  DesignLeft = 475
+  DesignTop = 238
+  object panRight: TPanel
+    Left = 564
+    Height = 481
+    Top = 0
+    Width = 170
+    Align = alRight
+    BevelOuter = bvNone
+    ClientHeight = 481
+    ClientWidth = 170
+    TabOrder = 0
+    object panAvatar: TPanel
+      Left = 0
+      Height = 121
+      Top = 360
+      Width = 170
+      Align = alBottom
+      BevelInner = bvLowered
+      BevelOuter = bvNone
+      TabOrder = 0
+    end
+    object SplitterAvatar: TSplitter
+      Cursor = crVSplit
+      Left = 0
+      Height = 5
+      Top = 355
+      Width = 170
+      Align = alBottom
+      ResizeAnchor = akBottom
+    end
+    object tvUserList: TTreeView
+      Left = 0
+      Height = 355
+      Top = 0
+      Width = 170
+      Align = alClient
+      DefaultItemHeight = 18
+      TabOrder = 2
+    end
+  end
+  object SplitterV: TSplitter
+    Left = 559
+    Height = 481
+    Top = 0
+    Width = 5
+    Align = alRight
+    ResizeAnchor = akRight
+  end
+  object panLeft: TPanel
+    Left = 0
+    Height = 481
+    Top = 0
+    Width = 559
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 481
+    ClientWidth = 559
+    TabOrder = 2
+    object panMessage: TPanel
+      Left = 0
+      Height = 82
+      Top = 399
+      Width = 559
+      Align = alBottom
+      BevelOuter = bvNone
+      ClientHeight = 82
+      ClientWidth = 559
+      TabOrder = 0
+      object ToolBarChat: TToolBar
+        Left = 0
+        Height = 26
+        Top = 0
+        Width = 559
+        Caption = 'ToolBarChat'
+        Images = FormMain.ImageList16
+        TabOrder = 0
+        object tbBold: TToolButton
+          Left = 1
+          Top = 2
+          Action = actBold
+        end
+        object tbItalic: TToolButton
+          Left = 24
+          Top = 2
+          Action = actItalic
+        end
+        object tbUnderline: TToolButton
+          Left = 47
+          Top = 2
+          Action = actUnderline
+        end
+        object ToolButton1: TToolButton
+          Left = 70
+          Top = 2
+          Width = 5
+          Caption = 'ToolButton1'
+          Style = tbsDivider
+        end
+        object tbColor: TToolButton
+          Left = 75
+          Top = 2
+          Action = actColor
+        end
+        object tbSmiles: TToolButton
+          Left = 98
+          Top = 2
+          Action = actSmiles
+        end
+        object ToolButton2: TToolButton
+          Left = 121
+          Top = 2
+          Width = 5
+          Caption = 'ToolButton2'
+          Style = tbsDivider
+        end
+        object tbFreezeScrolling: TToolButton
+          Left = 126
+          Top = 2
+          Action = actFreezeScrolling
+        end
+      end
+      object TextToSend: TMemo
+        Left = 4
+        Height = 48
+        Top = 30
+        Width = 551
+        Align = alClient
+        BorderSpacing.Around = 4
+        OnChange = TextToSendChange
+        OnKeyDown = TextToSendKeyDown
+        TabOrder = 1
+      end
+    end
+    object SplitterH: TSplitter
+      Cursor = crVSplit
+      Left = 0
+      Height = 5
+      Top = 394
+      Width = 559
+      Align = alBottom
+      ResizeAnchor = akBottom
+    end
+    object MemoText: TMemo
+      Left = 0
+      Height = 394
+      Top = 0
+      Width = 559
+      Align = alClient
+      TabOrder = 2
+    end
+  end
+  object alChat: TActionList
+    Images = FormMain.ImageList16
+    left = 216
+    top = 203
+    object actBold: TAction
+      Category = 'Message'
+      Caption = 'Bold'
+      ImageIndex = 10
+    end
+    object actItalic: TAction
+      Category = 'Message'
+      Caption = 'Italic'
+      ImageIndex = 11
+      OnExecute = actItalicExecute
+    end
+    object actUnderline: TAction
+      Category = 'Message'
+      Caption = 'Underline'
+      ImageIndex = 12
+    end
+    object actColor: TAction
+      Category = 'Message'
+      Caption = 'Color'
+      ImageIndex = 13
+    end
+    object actSmiles: TAction
+      Category = 'Message'
+      Caption = 'Smiles'
+      ImageIndex = 16
+    end
+    object actClearText: TAction
+      Category = 'ChatText'
+      Caption = 'Clear text'
+      ImageIndex = 15
+    end
+    object actFreezeScrolling: TAction
+      Category = 'ChatText'
+      Caption = 'Freeze scrolling'
+      ImageIndex = 31
+    end
+    object actInsertNick: TAction
+      Category = 'UserList'
+      Caption = 'Insert nick'
+    end
+    object actInsertPrivate: TAction
+      Category = 'UserList'
+      Caption = 'Insert private'
+    end
+    object actInfoAboutUser: TAction
+      Category = 'UserList'
+      Caption = 'Info about user'
+      ImageIndex = 19
+    end
+  end
+end

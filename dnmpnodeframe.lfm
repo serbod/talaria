@@ -1,0 +1,82 @@
+object FrameDnmpNode: TFrameDnmpNode
+  Left = 0
+  Height = 519
+  Top = 0
+  Width = 739
+  ClientHeight = 519
+  ClientWidth = 739
+  TabOrder = 0
+  DesignLeft = 584
+  DesignTop = 223
+  object ToolBarNode: TToolBar
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 739
+    Caption = 'ToolBarNode'
+    Images = FormMain.ImageList16
+    TabOrder = 0
+    object ToolButton1: TToolButton
+      Left = 1
+      Top = 2
+      Action = actTest
+    end
+  end
+  object PageControlNode: TPageControl
+    Left = 0
+    Height = 493
+    Top = 26
+    Width = 739
+    ActivePage = tsMyInfo
+    Align = alClient
+    TabIndex = 5
+    TabOrder = 1
+    OnChange = PageControlNodeChange
+    object tsStatus: TTabSheet
+      Caption = 'Node status'
+      ClientHeight = 465
+      ClientWidth = 731
+      object MemoStatus: TMemo
+        Left = 4
+        Height = 457
+        Top = 4
+        Width = 723
+        Align = alClient
+        BorderSpacing.Around = 4
+        ScrollBars = ssBoth
+        TabOrder = 0
+      end
+    end
+    object tsLinks: TTabSheet
+      Caption = 'Links'
+    end
+    object tsNodes: TTabSheet
+      Caption = 'Nodes'
+    end
+    object tsPoints: TTabSheet
+      Caption = 'Points'
+    end
+    object tsContacts: TTabSheet
+      Caption = 'Contacts'
+    end
+    object tsMyInfo: TTabSheet
+      Caption = 'My info'
+    end
+    object tsServices: TTabSheet
+      Caption = 'Services'
+    end
+    object tsRouting: TTabSheet
+      Caption = 'Routing'
+    end
+  end
+  object alNode: TActionList
+    Images = FormMain.ImageList16
+    left = 262
+    top = 242
+    object actTest: TAction
+      Caption = 'Test'
+      ImageIndex = 35
+      OnExecute = actTestExecute
+    end
+  end
+end
