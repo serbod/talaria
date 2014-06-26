@@ -1,0 +1,183 @@
+object FrameGrpcService: TFrameGrpcService
+  Left = 0
+  Height = 463
+  Top = 0
+  Width = 612
+  ClientHeight = 463
+  ClientWidth = 612
+  TabOrder = 0
+  DesignLeft = 337
+  DesignTop = 235
+  object lbTopic: TLabel
+    Left = 168
+    Height = 15
+    Top = 8
+    Width = 33
+    Caption = 'Topic:'
+    ParentColor = False
+  end
+  object edTopic: TEdit
+    Left = 208
+    Height = 23
+    Top = 8
+    Width = 391
+    Anchors = [akTop, akLeft, akRight]
+    OnEditingDone = edTopicEditingDone
+    TabOrder = 0
+  end
+  object lbNamelb: TLabel
+    Left = 8
+    Height = 15
+    Top = 8
+    Width = 35
+    Caption = 'Name:'
+    ParentColor = False
+  end
+  object lbName: TLabel
+    Left = 48
+    Height = 15
+    Top = 8
+    Width = 43
+    Caption = 'lbName'
+    Font.Style = [fsBold]
+    ParentColor = False
+    ParentFont = False
+  end
+  object gbUsersList: TGroupBox
+    Left = 6
+    Height = 257
+    Top = 41
+    Width = 185
+    Caption = 'Users list'
+    ClientHeight = 239
+    ClientWidth = 181
+    TabOrder = 1
+    object lboxUsersList: TListBox
+      Left = 2
+      Height = 235
+      Top = 2
+      Width = 177
+      Align = alClient
+      BorderSpacing.Around = 2
+      ItemHeight = 0
+      TabOrder = 0
+    end
+  end
+  object gbBanList: TGroupBox
+    Left = 200
+    Height = 257
+    Top = 41
+    Width = 185
+    Caption = 'Ban list'
+    ClientHeight = 239
+    ClientWidth = 181
+    TabOrder = 2
+    object lboxBanList: TListBox
+      Left = 2
+      Height = 235
+      Top = 2
+      Width = 177
+      Align = alClient
+      BorderSpacing.Around = 2
+      ItemHeight = 0
+      TabOrder = 0
+    end
+  end
+  object gbMessagesList: TGroupBox
+    Left = 6
+    Height = 145
+    Top = 304
+    Width = 593
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Caption = 'Messages list'
+    ClientHeight = 127
+    ClientWidth = 589
+    TabOrder = 3
+    object memoMessages: TMemo
+      Left = 2
+      Height = 123
+      Top = 2
+      Width = 585
+      Align = alClient
+      BorderSpacing.Around = 2
+      Lines.Strings = (
+        'memoMessages'
+      )
+      ScrollBars = ssBoth
+      TabOrder = 0
+    end
+  end
+  object gbAbonList: TGroupBox
+    Left = 392
+    Height = 257
+    Top = 41
+    Width = 185
+    Caption = 'Abonents list'
+    ClientHeight = 239
+    ClientWidth = 181
+    TabOrder = 4
+    object lboxAbonentsList: TListBox
+      Left = 2
+      Height = 235
+      Top = 2
+      Width = 177
+      Align = alClient
+      BorderSpacing.Around = 2
+      ItemHeight = 0
+      TabOrder = 0
+    end
+  end
+  object alGrpcService: TActionList
+    Images = FormMain.ImageList16
+    left = 248
+    top = 155
+    object actBanUser: TAction
+      Category = 'Userlist'
+      Caption = 'Ban user'
+    end
+    object actUnbanUser: TAction
+      Category = 'Userlist'
+      Caption = 'Unban user'
+    end
+    object actKickUser: TAction
+      Category = 'Userlist'
+      Caption = 'Kick user'
+    end
+    object actJoinUser: TAction
+      Category = 'Userlist'
+      Caption = 'Join user'
+    end
+    object actLeaveUser: TAction
+      Category = 'Userlist'
+      Caption = 'Leave user'
+    end
+    object actGetTopic: TAction
+      Category = 'Get info'
+      Caption = 'Get topic'
+    end
+    object actGetUsers: TAction
+      Category = 'Get info'
+      Caption = 'Get users'
+    end
+    object actGetAbonents: TAction
+      Category = 'Get info'
+      Caption = 'Get abonents'
+    end
+    object actGetBanlist: TAction
+      Category = 'Get info'
+      Caption = 'Get banlist'
+    end
+    object actGetLastMessages: TAction
+      Category = 'Get info'
+      Caption = 'Get last messages'
+    end
+    object actGetAll: TAction
+      Category = 'Get info'
+      Caption = 'Get all info'
+    end
+    object actGetMode: TAction
+      Category = 'Get info'
+      Caption = 'Get mode'
+    end
+  end
+end

@@ -1,0 +1,56 @@
+object FrameStatus: TFrameStatus
+  Left = 0
+  Height = 415
+  Top = 0
+  Width = 642
+  ClientHeight = 415
+  ClientWidth = 642
+  TabOrder = 0
+  DesignLeft = 710
+  DesignTop = 338
+  object ToolBarStatus: TToolBar
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 642
+    ButtonHeight = 30
+    ButtonWidth = 31
+    Caption = 'ToolBarStatus'
+    TabOrder = 0
+  end
+  object panStatus: TPanel
+    Left = 0
+    Height = 389
+    Top = 26
+    Width = 642
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 389
+    ClientWidth = 642
+    TabOrder = 1
+    object tvItems: TTreeView
+      Left = 0
+      Height = 389
+      Top = 0
+      Width = 205
+      Align = alLeft
+      DefaultItemHeight = 18
+      TabOrder = 0
+    end
+    object Splitter1: TSplitter
+      Left = 205
+      Height = 389
+      Top = 0
+      Width = 5
+    end
+    object panItem: TPanel
+      Left = 210
+      Height = 389
+      Top = 0
+      Width = 432
+      Align = alClient
+      BevelOuter = bvNone
+      TabOrder = 2
+    end
+  end
+end

@@ -1,0 +1,233 @@
+object FramePointList: TFramePointList
+  Left = 0
+  Height = 434
+  Top = 0
+  Width = 622
+  ClientHeight = 434
+  ClientWidth = 622
+  TabOrder = 0
+  DesignLeft = 568
+  DesignTop = 212
+  object panPointlistTop: TPanel
+    Left = 0
+    Height = 330
+    Top = 0
+    Width = 622
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 330
+    ClientWidth = 622
+    TabOrder = 0
+    object lvPointList: TListView
+      Left = 4
+      Height = 322
+      Top = 4
+      Width = 260
+      Align = alLeft
+      BorderSpacing.Around = 4
+      Columns = <      
+        item
+          Caption = 'Addr'
+        end      
+        item
+          Caption = 'Name'
+          Width = 150
+        end      
+        item
+          Caption = 'State'
+        end>
+      GridLines = True
+      PopupMenu = pmPointList
+      ReadOnly = True
+      RowSelect = True
+      StateImages = FormMain.ImageList16
+      TabOrder = 0
+      ViewStyle = vsReport
+    end
+    object Splitter1: TSplitter
+      Left = 268
+      Height = 330
+      Top = 0
+      Width = 5
+    end
+    object gbPointInfo: TGroupBox
+      Left = 273
+      Height = 330
+      Top = 0
+      Width = 349
+      Align = alClient
+      Caption = 'Selected item info'
+      ClientHeight = 312
+      ClientWidth = 345
+      TabOrder = 2
+      object StringGridInfo: TStringGrid
+        Left = 4
+        Height = 304
+        Top = 4
+        Width = 337
+        Align = alClient
+        BorderSpacing.Around = 4
+        ColCount = 2
+        FixedCols = 0
+        TabOrder = 0
+        TitleStyle = tsNative
+        ColWidths = (
+          121
+          255
+        )
+        Cells = (
+          2
+          0
+          0
+          'Param'
+          1
+          0
+          'Value'
+        )
+      end
+    end
+  end
+  object alPointList: TActionList
+    Images = FormMain.ImageList16
+    left = 58
+    top = 162
+    object actConnect: TAction
+      Category = 'PointList'
+      Caption = 'Connect'
+    end
+    object actGetInfo: TAction
+      Category = 'PointList'
+      Caption = 'Get info'
+      ImageIndex = 19
+    end
+    object actPointListSave: TAction
+      Category = 'PointList'
+      Caption = 'Save pointlist'
+    end
+    object actPointListLoad: TAction
+      Category = 'PointList'
+      Caption = 'Load pointlist'
+    end
+    object actPointListUpdate: TAction
+      Category = 'PointList'
+      Caption = 'Update pointlist'
+    end
+    object actApprove: TAction
+      Category = 'Point'
+      Caption = 'Approve'
+    end
+    object actGenerateGUID: TAction
+      Category = 'Point'
+      Caption = 'Generate GUID'
+    end
+    object actPointAdd: TAction
+      Category = 'Point'
+      Caption = 'Add point'
+    end
+    object actPointDel: TAction
+      Category = 'Point'
+      Caption = 'Delete point'
+    end
+    object actPointUpdate: TAction
+      Category = 'Point'
+      Caption = 'Update point'
+    end
+    object actPointSave: TAction
+      Category = 'Point'
+      Caption = 'Save point'
+    end
+  end
+  object pmPointList: TPopupMenu
+    Images = FormMain.ImageList16
+    left = 58
+    top = 80
+    object MenuItem1: TMenuItem
+      Action = actConnect
+    end
+    object MenuItem2: TMenuItem
+      Action = actApprove
+    end
+    object MenuItem11: TMenuItem
+      Action = actGetInfo
+      Bitmap.Data = {
+        36040000424D3604000000000000360000002800000010000000100000000100
+        2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00DDDD
+        DDFF858585FFA5A5A5FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00A4A4
+        A4FFEADADAFF8B8888FFBCBCBCFFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00C6C6
+        C6FFA7A5A5FFDDD1D1FF858484FFCDCDCDFFFFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00D4D4D4FFA5A4A4FFCCC4C4FF868585FFDBDBDBFFFFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00DFDFDFFFA6A5A5FFBCB8B8FF878787FFD6D6D6FFAAAAAAFF8888
+        88FF7A7A7AFF888888FFAAAAAAFFE9E9E9FFFFFFFF00FFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00E7E7E7FFA7A7A7FFAFADADFF8F8E8DFFC0BCB8FFF2ED
+        E9FFFAF5F0FFF3EFEBFFC2C0BFFF969696FFD8D8D8FFFFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00E3E3E3FFA6A6A5FFE6DDD3FFF5EBE1FFF8F0
+        E9FFF8F0E9FFF8F0E9FFF8F2EBFFE8E4DFFFA7A6A6FFEEEEEEFFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00C4C4C4FFCBC5BFFFEFDFCEFFF7EDE6FFF8F0
+        E9FFF8F0E9FFF8F0E9FFF8F0E9FFF8F0E8FFCDC8C3FFC4C4C4FFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00B0B0B0FFEADED0FFEEDDCCFFF8F0E9FFF8F0
+        E9FFF8F0E9FFF8F0E9FFF8F0E9FFF8F0E9FFEEE3D9FFB0B0B0FFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00ABABABFFEFDFCFFFEEDDCCFFEEDDCCFFF8F0
+        E9FFF8F0E9FFF8F0E9FFF8F0E9FFF8F0E9FFF1E3D5FFABABABFFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00B8B8B8FFEADCCEFFEEDDCCFFEEDDCCFFEEDD
+        CCFFEEDDCCFFEEDDCCFFEEDDCCFFEEDDCCFFECE0D4FFB8B8B8FFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00CFCFCFFFD1CAC2FFEEDDCCFFF4E9DEFFF8F0
+        E9FFF8F0E9FFF8F0E9FFF8F0E9FFF5EADFFFD2CBC4FFCFCFCFFFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00F3F3F3FFC0BFBEFFE4D8CCFFF0E1D2FFF8F0
+        E8FFF8F0E9FFF8F0E9FFF8F0E8FFE7DCD1FFC1BFBFFFF3F3F3FFFFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00E8E8E8FFC3C2C1FFD4CDC5FFEEE2
+        D7FFF6EFE6FFF2EBE4FFD6D1CBFFC3C2C1FFE8E8E8FFFFFFFF00FFFFFF00FFFF
+        FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00F4F4F4FFD4D4D4FFC3C3
+        C3FFBCBCBCFFC3C3C3FFD4D4D4FFF4F4F4FFFFFFFF00FFFFFF00
+      }
+    end
+    object MenuItem7: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem12: TMenuItem
+      Action = actPointUpdate
+    end
+    object MenuItem8: TMenuItem
+      Action = actPointAdd
+    end
+    object MenuItem9: TMenuItem
+      Action = actPointDel
+    end
+    object MenuItem10: TMenuItem
+      Action = actPointSave
+    end
+    object MenuItem3: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem4: TMenuItem
+      Action = actPointListUpdate
+    end
+    object MenuItem5: TMenuItem
+      Action = actPointListLoad
+    end
+    object MenuItem6: TMenuItem
+      Action = actPointListSave
+    end
+  end
+  object pmPointInfo: TPopupMenu
+    left = 370
+    top = 155
+    object MenuItem14: TMenuItem
+      Action = actPointUpdate
+    end
+    object MenuItem15: TMenuItem
+      Action = actPointSave
+    end
+    object MenuItem16: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem13: TMenuItem
+      Action = actGenerateGUID
+    end
+  end
+end

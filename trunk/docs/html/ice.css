@@ -1,0 +1,32 @@
+/* ============== Overall ============== */
+
+html
+    {
+    padding:0;
+    }
+
+body
+    {
+    font:12px Verdana, Arial, sans-serif;
+    background-image:url('img/back.gif');
+    margin:12px;
+    padding:0;
+    color:#000000;
+    }
+
+a           { text-decoration:none; border-width:0; color:#7479AC; }
+a:hover     { text-decoration:underline; }
+
+h1  { font-size:250%; letter-spacing: -2px; font-weight:normal;}
+h2  { font-size:170%; letter-spacing: -2px; font-weight:normal; }
+h3  { font-size:140%; margin:1em 1em 1em 0; letter-spacing: -1px; font-weight:normal; }
+h4  { font-size:100%; font-weight:bold; margin:1.5em 1em 1em 0; }
+h5  { font-size:95%; margin:1em 1em 1em 0; }
+h6  { font-size:90%; margin:1em 1em 1em 0; }
+
+/* ============== Various ============== */
+
+ul      { list-style-type:square; }
+li      { margin:2px; }
+img     { border-width:0; }
+abbr 	{ border-bottom: 1px dashed #999; }
