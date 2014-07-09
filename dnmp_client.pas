@@ -128,7 +128,7 @@ begin
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
   SetLength(sNewKey, Length(sLocalKey));
   RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, PChar(sLocalKey), Length(sLocalKey));
+  RC4.RC4Init(RC4Data, sLocalKey);
   RC4.RC4Crypt(RC4Data, PChar(sRemoteKey), PChar(sNewKey), Length(sRemoteKey));
 
   SendAuthReply(sNewKey);

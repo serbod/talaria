@@ -22,7 +22,7 @@ type
 { performs a self test on this implementation }
 function RC4SelfTest(): boolean;
 { initializes the TRC4Data structure with the key information }
-procedure RC4Init(var Data: TRC4Data; Key: pointer; Len: integer);
+procedure RC4Init(var Data: TRC4Data; Key: AnsiString);
 { erases all information about the key }
 procedure RC4Burn(var Data: TRC4Data);
 { encrypts/decrypts Len bytes of data }
@@ -42,7 +42,7 @@ var
   Block: array[0..4] of byte;
   Data: TRC4Data;
 begin
-  RC4Init(Data,@Key,5);
+  RC4Init(Data,'test1');
   RC4Crypt(Data,@InBlock,@Block,5);
   Result:=CompareMem(@Block,@OutBlock,5);
   RC4Reset(Data);
@@ -51,18 +51,20 @@ begin
   RC4Burn(Data);
 end;
 
-procedure RC4Init(var Data: TRC4Data; Key: pointer; Len: integer);
+procedure RC4Init(var Data: TRC4Data; Key: AnsiString);
 var
   xKey: array[0..255] of byte;
   i, j: integer;
   t: byte;
+  Len: integer;
 begin
+  Len:=Length(Key);
   if (Len<= 0) or (Len> 256) then
     raise Exception.Create('RC4: Invalid key length');
   for i:= 0 to 255 do
   begin
     Data.Key[i]:= i;
-    xKey[i]:= PByte(integer(Key)+(i mod Len))^;
+    xKey[i]:= Byte(Key[i mod Len]);
   end;
   j:= 0;
   for i:= 0 to 255 do
@@ -72,7 +74,7 @@ begin
     Data.Key[i]:= Data.Key[j];
     Data.Key[j]:= t;
   end;
-  Move(Data.Key,Data.OrgKey,256);
+  Move(Data.Key, Data.OrgKey, 256);
 end;
 
 procedure RC4Burn(var Data: TRC4Data);

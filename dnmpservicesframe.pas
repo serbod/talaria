@@ -15,6 +15,7 @@ type
   TFrameDnmpServices = class(TFrame)
     actAddGrpc: TAction;
     actDelService: TAction;
+    actRunService: TAction;
     actSaveServicesList: TAction;
     actSaveInfoList: TAction;
     alServices: TActionList;
@@ -31,10 +32,12 @@ type
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
     panService: TPanel;
     pmServices: TPopupMenu;
     Splitter1: TSplitter;
     tvServices: TTreeView;
+    procedure actRunServiceExecute(Sender: TObject);
     procedure tvServicesSelectionChanged(Sender: TObject);
   private
     { private declarations }
@@ -60,6 +63,13 @@ begin
   if not Assigned(tvServices.Selected) then Exit;
   if not Assigned(tvServices.Selected.Data) then Exit;
   CurServiceInfo:=TDnmpServiceInfo(tvServices.Selected.Data);
+end;
+
+procedure TFrameDnmpServices.actRunServiceExecute(Sender: TObject);
+begin
+  if not Assigned(CurServiceInfo) then Exit;
+  SvcMgr.CreateService(CurServiceInfo);
+  Update();
 end;
 
 procedure TFrameDnmpServices.FSetSvcMgr(Value: TDnmpServiceManager);

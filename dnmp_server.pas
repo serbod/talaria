@@ -316,7 +316,7 @@ begin
   SetLength(sNewKey, Length(sRemoteKey));
   // Инициализируем наш ключ
   RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, PChar(sLocalKey), Length(sLocalKey));
+  RC4.RC4Init(RC4Data, sLocalKey);
   // Шифруем кодовое слово хозяина нашим ключом
   RC4.RC4Crypt(RC4Data, PChar(sRemoteKey), PChar(sNewKey), Length(sRemoteKey));
 
@@ -371,7 +371,7 @@ begin
   sSecret1:=Copy(Secret1, 1, MaxInt);
   SetLength(SecretNew, Length(Secret1));
   RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, PChar(Key), Length(Key));
+  RC4.RC4Init(RC4Data, Key);
   RC4.RC4Crypt(RC4Data, PChar(Secret1), PChar(SecretNew), Length(Secret1));
   if SecretNew = Secret2 then Result:=True;
 end;
