@@ -5,7 +5,8 @@ unit GrpcServiceFrame;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ActnList, dnmp_grpc;
+  Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ActnList, dnmp_grpc,
+  dnmp_unit;
 
 type
 
@@ -59,7 +60,7 @@ uses dnmp_services;
 procedure TFrameGrpcService.edTopicEditingDone(Sender: TObject);
 begin
   if not Assigned(Grpc) then Exit;
-  Grpc.Cmd('SET_TOPIC '+Trim(edTopic.Text));
+  Grpc.Cmd('SET_TOPIC '+Trim(edTopic.Text), NewAddr());
 end;
 
 procedure TFrameGrpcService.FSetGrpc(Value: TDnmpGrpc);
@@ -97,7 +98,7 @@ begin
       for i:=0 to Grpc.ServiceInfo.Abonents.Count-1 do
       begin
         Abon:=Grpc.ServiceInfo.Abonents[i];
-        lboxAbonentsList.AddItem(Abon.Addr+': '+Abon.Nick, Abon);
+        lboxAbonentsList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
       end;
     end;
     edTopic.Text:=Grpc.Topic;
@@ -107,7 +108,7 @@ begin
     for i:=0 to Grpc.UsersList.Count-1 do
     begin
       Abon:=Grpc.UsersList[i];
-      lboxUsersList.AddItem(Abon.Addr+': '+Abon.Nick, Abon);
+      lboxUsersList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
     end;
 
     // ban list
@@ -115,7 +116,7 @@ begin
     for i:=0 to Grpc.BanList.Count-1 do
     begin
       Abon:=Grpc.BanList[i];
-      lboxBanList.AddItem(Abon.Addr+': '+Abon.Nick, Abon);
+      lboxBanList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
     end;
 
     memoMessages.Lines.Clear();

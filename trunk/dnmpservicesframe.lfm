@@ -6,8 +6,8 @@ object FrameDnmpServices: TFrameDnmpServices
   ClientHeight = 460
   ClientWidth = 637
   TabOrder = 0
-  DesignLeft = 671
-  DesignTop = 388
+  DesignLeft = 445
+  DesignTop = 193
   object gbServicesTree: TGroupBox
     Left = 0
     Height = 460
@@ -154,6 +154,10 @@ object FrameDnmpServices: TFrameDnmpServices
     object actDelService: TAction
       Caption = 'Delete service'
     end
+    object actRunService: TAction
+      Caption = 'Run service'
+      OnExecute = actRunServiceExecute
+    end
   end
   object pmServices: TPopupMenu
     Images = FormMain.ImageList16
@@ -164,6 +168,9 @@ object FrameDnmpServices: TFrameDnmpServices
     end
     object MenuItem2: TMenuItem
       Action = actDelService
+    end
+    object MenuItem6: TMenuItem
+      Action = actRunService
     end
     object MenuItem3: TMenuItem
       Caption = '-'
