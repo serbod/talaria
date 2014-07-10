@@ -5,7 +5,7 @@ unit ChatFrame;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, SynMemo, Forms, Controls, ExtCtrls, ComCtrls,
+  Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, ComCtrls,
   StdCtrls, ActnList, LCLType;
 
 type

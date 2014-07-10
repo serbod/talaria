@@ -33,16 +33,13 @@ type
     { private declarations }
   public
     { public declarations }
-    ServiceDnmpNode: TServiceDnmpNode;
-    procedure Init();
+    procedure UpdatePages();
   end;
 
 var
   FormMain: TFormMain;
 
 implementation
-
-uses StatusFrame, ChatFrame, DnmpNodeFrame;
 
 {$R *.lfm}
 
@@ -55,49 +52,51 @@ end;
 
 procedure TFormMain.actAboutExecute(Sender: TObject);
 begin
-  Init();
+  Core.Init();
+  UpdatePages();
 end;
 
-procedure TFormMain.Init();
+procedure TFormMain.UpdatePages();
 var
-  i: integer;
+  i, ii: integer;
   tsheet: TTabSheet;
   frame: TFrame;
+  PageItem: TMainFormPageItem;
 begin
+  if not Assigned(MainFormPages) then Exit;
 
-  // clear all pages
+  // delete pages
   for i:=pgcMain.PageCount-1 downto 0 do
   begin
-    pgcMain.Pages[i].Free();
+    tsheet:=pgcMain.Pages[i];
+    for ii:=0 to MainFormPages.Count-1 do
+    begin
+      if (MainFormPages.Items[ii] as TMainFormPageItem).TabSheet = tsheet then
+      begin
+        tsheet:=nil;
+        Break;
+      end;
+    end;
+    if Assigned(tsheet) then FreeAndNil(tsheet);
   end;
 
-  // status page
-  tsheet:=pgcMain.AddTabSheet();
-  tsheet.Caption:='Status';
-  frame:=TFrameStatus.Create(tsheet);
-  frame.Parent:=tsheet;
-  frame.Align:=alClient;
-
-  // chat page
-  tsheet:=pgcMain.AddTabSheet();
-  tsheet.Caption:='Chat';
-  frame:=TFrameChat.Create(tsheet);
-  frame.Parent:=tsheet;
-  frame.Align:=alClient;
-
-  // node
-  ServiceDnmpNode:=TServiceDnmpNode.Create('1.0');
-
-  tsheet:=pgcMain.AddTabSheet();
-  tsheet.Caption:='Node';
-  frame:=TFrameDnmpNode.Create(tsheet);
-  frame.Parent:=tsheet;
-  frame.Align:=alClient;
-
-  ServiceDnmpNode.Frame:=frame;
-  (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;
-  (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpNode.ServMgr;
-
+  // update/add pages
+  for i:=0 to MainFormPages.Count-1 do
+  begin
+    PageItem:=(MainFormPages.Items[i] as TMainFormPageItem);
+    if Assigned(PageItem.TabSheet) then
+    begin
+      tsheet:=(PageItem.TabSheet as TTabSheet);
+    end
+    else
+    begin
+      tsheet:=pgcMain.AddTabSheet();
+      PageItem.TabSheet:=tsheet;
+      PageItem.Frame.Parent:=tsheet;
+      PageItem.Frame.Align:=alClient;
+    end;
+    tsheet.Caption:=PageItem.Caption;
+  end;
 end;
 
 end.

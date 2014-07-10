@@ -60,6 +60,8 @@ object FrameGrpcService: TFrameGrpcService
       Align = alClient
       BorderSpacing.Around = 2
       ItemHeight = 0
+      OnSelectionChange = lboxUsersListSelectionChange
+      PopupMenu = pmUsersList
       TabOrder = 0
     end
   end
@@ -80,6 +82,7 @@ object FrameGrpcService: TFrameGrpcService
       Align = alClient
       BorderSpacing.Around = 2
       ItemHeight = 0
+      PopupMenu = pmBanList
       TabOrder = 0
     end
   end
@@ -103,6 +106,7 @@ object FrameGrpcService: TFrameGrpcService
       Lines.Strings = (
         'memoMessages'
       )
+      PopupMenu = pmMessagesList
       ScrollBars = ssBoth
       TabOrder = 0
     end
@@ -124,28 +128,33 @@ object FrameGrpcService: TFrameGrpcService
       Align = alClient
       BorderSpacing.Around = 2
       ItemHeight = 0
+      PopupMenu = pmAbonentList
       TabOrder = 0
     end
   end
   object alGrpcService: TActionList
     Images = FormMain.ImageList16
-    left = 248
-    top = 155
+    left = 280
+    top = 88
     object actBanUser: TAction
       Category = 'Userlist'
       Caption = 'Ban user'
+      OnExecute = actBanUserExecute
     end
     object actUnbanUser: TAction
       Category = 'Userlist'
       Caption = 'Unban user'
+      OnExecute = actUnbanUserExecute
     end
     object actKickUser: TAction
       Category = 'Userlist'
       Caption = 'Kick user'
+      OnExecute = actKickUserExecute
     end
     object actJoinUser: TAction
       Category = 'Userlist'
       Caption = 'Join user'
+      OnExecute = actJoinUserExecute
     end
     object actLeaveUser: TAction
       Category = 'Userlist'
@@ -178,6 +187,46 @@ object FrameGrpcService: TFrameGrpcService
     object actGetMode: TAction
       Category = 'Get info'
       Caption = 'Get mode'
+    end
+  end
+  object pmUsersList: TPopupMenu
+    left = 74
+    top = 159
+    object MenuItem4: TMenuItem
+      Action = actKickUser
+    end
+    object MenuItem1: TMenuItem
+      Action = actBanUser
+    end
+    object MenuItem5: TMenuItem
+      Action = actGetUsers
+    end
+  end
+  object pmBanList: TPopupMenu
+    left = 280
+    top = 159
+    object MenuItem2: TMenuItem
+      Action = actUnbanUser
+    end
+    object MenuItem6: TMenuItem
+      Action = actGetBanlist
+    end
+  end
+  object pmAbonentList: TPopupMenu
+    left = 480
+    top = 159
+    object MenuItem3: TMenuItem
+      Action = actJoinUser
+    end
+    object MenuItem7: TMenuItem
+      Action = actGetAbonents
+    end
+  end
+  object pmMessagesList: TPopupMenu
+    left = 280
+    top = 349
+    object MenuItem8: TMenuItem
+      Action = actGetLastMessages
     end
   end
 end

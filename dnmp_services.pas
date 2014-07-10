@@ -61,6 +61,7 @@ type
     property Items[Index: Integer]: TDnmpAbonent read GetItem write SetItem; default;
     function GetAbonentByGUID(sGUID: string): TDnmpAbonent;
     function AddAbonentByGUID(sGUID: string): TDnmpAbonent;
+    function DelAbonentByGUID(sGUID: string): TDnmpAbonent;
     function UpdateAbonent(sGUID, sNick, sState, sRights, sStatus: string; Addr: TAddr): TDnmpAbonent; overload;
     function UpdateAbonent(ab: TDnmpAbonent): TDnmpAbonent; overload;
     function ToStorage(): TDnmpStorage;
@@ -115,15 +116,16 @@ type
     FEvent: TDnmpServiceEvent;
     FMgr: TDnmpManager;
     FServiceMgr: TDnmpServiceManager;
-    // Получить абрнента по его GUID
-    // Ищет сперва в списке абонентов сервиса, затем в общем списке абонентов
-    // затем в списках линков и контактов
-    function GetAbonentByGUID(sGUID: string): TDnmpAbonent; virtual;
   public
     ServiceInfo: TDnmpServiceInfo;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); virtual;
     destructor Destroy; override;
     property Mgr: TDnmpManager read FMgr;
+    { Получить абрнента по его GUID
+      Ищет сперва в списке абонентов сервиса, затем в общем списке абонентов
+      затем в списках линков и контактов
+      Если не находит, то создает нового }
+    function GetAbonentByGUID(sGUID: string): TDnmpAbonent; virtual;
     // Обработка команды (Thread-safe)
     function Cmd(Text: string; Addr: TAddr): string; virtual;
     // Обработка сообщения
@@ -585,6 +587,15 @@ begin
     if Assigned(ParentList) then ParentList.Add(Result);
   end;
   Self.Add(Result);
+end;
+
+function TDnmpAbonentList.DelAbonentByGUID(sGUID: string): TDnmpAbonent;
+begin
+  Result:=GetAbonentByGUID(sGUID);
+  if Assigned(Result) then
+  begin
+    self.Extract(Result);
+  end;
 end;
 
 function TDnmpAbonentList.UpdateAbonent(sGUID, sNick, sState, sRights, sStatus: string; Addr: TAddr): TDnmpAbonent;

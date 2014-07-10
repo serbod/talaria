@@ -5,7 +5,7 @@ unit Core;
 interface
 
 uses
-  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, PointListFrame, Misc;
+  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame, Misc;
 
 type
 
@@ -32,7 +32,100 @@ type
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
   end;
 
+  TMainFormPageItem = class(TCollectionItem)
+  public
+    Caption: string;
+    Frame: TFrame;
+    Visible: boolean;
+    TabSheet: TObject;
+  end;
+
+  { TMainFormPages }
+
+  TMainFormPages = class(TCollection)
+    procedure AddPage(AFrame: TFrame; ACaption: string);
+    procedure ClearAll;
+  end;
+
+var
+  MainFormPages: TMainFormPages;
+  ServiceDnmpNode: TServiceDnmpNode;
+
+procedure Init();
+procedure AddPage(AFrame: TFrame; ACaption: string);
+procedure AddServicePage(AService: TDnmpService);
+
 implementation
+
+uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm;
+
+procedure Init();
+var
+  frame: TFrame;
+begin
+
+  if not Assigned(MainFormPages) then Exit;
+  MainFormPages.ClearAll();
+
+  // status page
+  AddPage(TFrameStatus.Create(nil), 'Status');
+  // chat page
+  AddPage(TFrameChat.Create(nil), 'Chat');
+  // node
+  // TODO: clearing
+  // if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
+  ServiceDnmpNode:=TServiceDnmpNode.Create('1.0');
+  frame:=TFrameDnmpNode.Create(nil);
+  ServiceDnmpNode.Frame:=frame;
+  (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;
+  (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpNode.ServMgr;
+  Core.AddPage(frame, 'Node');
+end;
+
+procedure AddPage(AFrame: TFrame; ACaption: string);
+begin
+  if not Assigned(MainFormPages) then Exit;
+  MainFormPages.AddPage(AFrame, ACaption);
+  FormMain.UpdatePages();
+end;
+
+procedure AddServicePage(AService: TDnmpService);
+var
+  TmpFrame: TFrame;
+begin
+  if not Assigned(AService) then Exit;
+  if (AService is TDnmpGrpc) then
+  begin
+    TmpFrame:=TFrameGrpcService.Create(nil);
+    (TmpFrame as TFrameGrpcService).Grpc:=(AService as TDnmpGrpc);
+    AddPage(TmpFrame, AService.ServiceInfo.Name);
+  end;
+end;
+
+{ TMainFormPages }
+
+procedure TMainFormPages.AddPage(AFrame: TFrame; ACaption: string);
+var
+  Item: TMainFormPageItem;
+begin
+  Item:=(MainFormPages.Add() as TMainFormPageItem);
+  Item.Frame:=AFrame;
+  Item.Caption:=ACaption;
+end;
+
+procedure TMainFormPages.ClearAll();
+var
+  i: integer;
+  Item: TMainFormPageItem;
+begin
+  for i:=self.Count-1 downto 0 do
+  begin
+    Item:=(self.Items[i] as TMainFormPageItem);
+    FreeAndNil(Item.Frame);
+    //FreeAndNil(Item.TabSheet);
+  end;
+  self.Clear();
+end;
 
 { TServiceDnmpNode }
 
@@ -134,6 +227,14 @@ begin
   FreeAndNil(Mgr);
   inherited Destroy();
 end;
+
+initialization
+  MainFormPages:=TMainFormPages.Create(TMainFormPageItem);
+
+finalization
+  MainFormPages.ClearAll();
+  FreeAndNil(MainFormPages);
+  //if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
 
 end.
 
