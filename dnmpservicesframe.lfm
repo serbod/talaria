@@ -50,12 +50,12 @@ object FrameDnmpServices: TFrameDnmpServices
     TabOrder = 2
     object gbServiceInfo: TGroupBox
       Left = 0
-      Height = 240
+      Height = 304
       Top = 0
       Width = 447
       Align = alTop
       Caption = 'Service info'
-      ClientHeight = 222
+      ClientHeight = 286
       ClientWidth = 443
       TabOrder = 0
       object lbNameLabel: TLabel
@@ -97,7 +97,7 @@ object FrameDnmpServices: TFrameDnmpServices
       object gbAbonents: TGroupBox
         Left = 9
         Height = 129
-        Top = 86
+        Top = 152
         Width = 423
         Caption = 'Abonents'
         ClientHeight = 111
@@ -106,6 +106,49 @@ object FrameDnmpServices: TFrameDnmpServices
         object lvAbonents: TListView
           Left = 4
           Height = 103
+          Top = 4
+          Width = 411
+          Align = alClient
+          BorderSpacing.Around = 4
+          Columns = <          
+            item
+              Caption = 'Addr'
+            end          
+            item
+              Caption = 'Nick'
+              Width = 100
+            end          
+            item
+              Caption = 'State'
+            end          
+            item
+              Caption = 'GUID'
+            end          
+            item
+              Caption = 'Rights'
+            end          
+            item
+              Caption = 'Status'
+            end>
+          GridLines = True
+          ReadOnly = True
+          RowSelect = True
+          TabOrder = 0
+          ViewStyle = vsReport
+        end
+      end
+      object gbOwners: TGroupBox
+        Left = 9
+        Height = 97
+        Top = 48
+        Width = 423
+        Caption = 'Owners'
+        ClientHeight = 79
+        ClientWidth = 419
+        TabOrder = 1
+        object lvOwners: TListView
+          Left = 4
+          Height = 71
           Top = 4
           Width = 411
           Align = alClient

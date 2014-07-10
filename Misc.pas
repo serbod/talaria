@@ -38,6 +38,8 @@ function Norm(s: string): string;
 function ParamFromStr(s: string; ParamNum: integer): string;
 // Выделяет из строки первое слово и все остальные
 procedure ExtractCmd(sText: string; var sCmd, sParam: string);
+// Извлекает из строки первое слово, возвращает это слово
+function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
 
 implementation
@@ -360,6 +362,24 @@ begin
   begin
     sCmd:=Copy(sText, 1, i-1);
     sParam:=Copy(sText, i+1, MaxInt);
+  end;
+end;
+
+function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
+var
+  i: integer;
+begin
+  Result:='';
+  i:=Pos(delimiter, s);
+  if i>0 then
+  begin
+    Result:=Copy(s, 1, i-1);
+    s:=Copy(s, i+1, maxint);
+  end
+  else
+  begin
+    Result:=s;
+    s:='';
   end;
 end;
 

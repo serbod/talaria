@@ -80,16 +80,16 @@ begin
   ServMgr.ModService('GRPC','#test2', 'set_parent', '#test');
 
   ServMgr.ModService('GRPC','#test3', 'add', '');
-  s:=ServMgr.ServiceInfoList.ToString();
+  s:=ServMgr.ServiceInfoList.SaveToString();
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
   ServMgr.ModService('GRPC','#test', 'del', '');
   ServMgr.ModService('GRPC','#test2', 'del', '');
   ServMgr.ModService('GRPC','#test3', 'del', '');
-  MemoStatus.Append(ServMgr.ServiceInfoList.ToString());
+  MemoStatus.Append(ServMgr.ServiceInfoList.SaveToString());
   MemoStatus.Append('--------------------------------------------');
-  ServMgr.ServiceInfoList.FromString(s);
-  s:=ServMgr.ServiceInfoList.ToString();
+  ServMgr.ServiceInfoList.LoadFromString(s);
+  s:=ServMgr.ServiceInfoList.SaveToString();
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
 end;

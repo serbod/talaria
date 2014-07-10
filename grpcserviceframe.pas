@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ActnList, Menus,
-  dnmp_grpc, dnmp_unit, dnmp_services;
+  ExtCtrls, dnmp_grpc, dnmp_unit, dnmp_services;
 
 type
 
@@ -21,11 +21,14 @@ type
     actGetLastMessages: TAction;
     actGetAll: TAction;
     actGetMode: TAction;
+    actSay: TAction;
     actLeaveUser: TAction;
     actJoinUser: TAction;
     actKickUser: TAction;
     actUnbanUser: TAction;
     alGrpcService: TActionList;
+    btnSay: TButton;
+    edSay: TEdit;
     edTopic: TEdit;
     gbAbonList: TGroupBox;
     gbUsersList: TGroupBox;
@@ -46,6 +49,7 @@ type
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
+    panSay: TPanel;
     pmUsersList: TPopupMenu;
     pmBanList: TPopupMenu;
     pmAbonentList: TPopupMenu;
@@ -53,9 +57,9 @@ type
     procedure actBanUserExecute(Sender: TObject);
     procedure actJoinUserExecute(Sender: TObject);
     procedure actKickUserExecute(Sender: TObject);
+    procedure actSayExecute(Sender: TObject);
     procedure actUnbanUserExecute(Sender: TObject);
     procedure edTopicEditingDone(Sender: TObject);
-    procedure lboxUsersListSelectionChange(Sender: TObject; User: boolean);
   private
     { private declarations }
     FGrpc: TDnmpGrpc;
@@ -81,7 +85,7 @@ implementation
 procedure TFrameGrpcService.edTopicEditingDone(Sender: TObject);
 begin
   if not Assigned(Grpc) then Exit;
-  Grpc.Cmd('SET_TOPIC '+Trim(edTopic.Text), NewAddr());
+  Grpc.ParseCmd('SET_TOPIC '+Trim(edTopic.Text), NewAddr());
 end;
 
 procedure TFrameGrpcService.actBanUserExecute(Sender: TObject);
@@ -109,16 +113,18 @@ begin
   Update();
 end;
 
+procedure TFrameGrpcService.actSayExecute(Sender: TObject);
+var
+  s: string;
+begin
+  s:=Trim(edSay.Text);
+  if s<>'' then Grpc.SayText(Grpc.Author.GUID, s);
+end;
+
 procedure TFrameGrpcService.actUnbanUserExecute(Sender: TObject);
 begin
   if Assigned(SelectedBan) then Grpc.UnbanAbonent(SelectedBan.AbonentGUID);
   Update();
-end;
-
-procedure TFrameGrpcService.lboxUsersListSelectionChange(Sender: TObject;
-  User: boolean);
-begin
-
 end;
 
 procedure TFrameGrpcService.FSetGrpc(Value: TDnmpGrpc);

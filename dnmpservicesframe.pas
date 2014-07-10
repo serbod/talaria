@@ -19,6 +19,7 @@ type
     actSaveServicesList: TAction;
     actSaveInfoList: TAction;
     alServices: TActionList;
+    gbOwners: TGroupBox;
     gbServicesTree: TGroupBox;
     gbServiceInfo: TGroupBox;
     gbAbonents: TGroupBox;
@@ -27,6 +28,7 @@ type
     lbServiceName: TLabel;
     lbNameLabel: TLabel;
     lvAbonents: TListView;
+    lvOwners: TListView;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -96,6 +98,24 @@ begin
   begin
     lbServiceName.Caption:=FCurServiceInfo.Name;
     lbServiceType.Caption:=FCurServiceInfo.ServiceType;
+
+    // owners
+    lvOwners.BeginUpdate();
+    lvOwners.Items.Clear();
+
+    for i:=0 to FCurServiceInfo.Owners.Count-1 do
+    begin
+      Abon:=FCurServiceInfo.Owners[i];
+      li:=lvOwners.Items.Add();
+
+      li.Caption:=AddrToStr(Abon.Addr);
+      li.SubItems.Add(Abon.Nick);
+      li.SubItems.Add(Abon.StateStr());
+      li.SubItems.Add(Abon.GUID);
+      li.SubItems.Add(Abon.Rights);
+      li.SubItems.Add(Abon.Status);
+    end;
+    lvOwners.EndUpdate();
 
     // abonents
     lvAbonents.BeginUpdate();
