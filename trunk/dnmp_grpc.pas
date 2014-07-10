@@ -4,12 +4,10 @@ interface
 uses SysUtils, Classes, Contnrs, dnmp_unit, dnmp_services;
 
 type
+  { TDnmpChannelMessage }
   // GRPC Channel message
   // Contain text and basic info about author
   // Serializable
-
-  { TDnmpChannelMessage }
-
   TDnmpChannelMessage = class(TObject)
   public
     Timestamp: TDateTime;
@@ -24,12 +22,10 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
+  { TDnmpChannelMessagesList }
   // GRPC Channel messages list
   // When MaxCount reached, first item will be deleted
   // Serializable
-
-  { TDnmpChannelMessagesList }
-
   TDnmpChannelMessagesList = class(TObjectList)
   private
     function GetItem(Index: Integer): TDnmpChannelMessage;
@@ -46,6 +42,33 @@ type
     function FromString(s: AnsiString): boolean;
   end;
 
+  { TGrpcBanItem }
+
+  TGrpcBanItem = class(TCollectionItem)
+  public
+    AuthorGUID: string;
+    AbonentGUID: string;
+    Reason: string;
+    EndDate: TDateTime;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
+  end;
+
+  { TGrpcBanList }
+
+  TGrpcBanList = class(TCollection)
+  public
+    constructor Create(); reintroduce;
+    function GetItem(Index: integer): TGrpcBanItem;
+    function AddBan(AAbonentGUID, AReason: string; AEndDate: TDateTime): boolean;
+    function UpdateBan(AAbonentGUID, AReason: string; AEndDate: TDateTime): boolean;
+    function DelBan(AAbonentGUID: string): boolean;
+    function GetBan(AAbonentGUID: string): TGrpcBanItem;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
+  end;
+
+  { TDnmpGrpc }
   // GRPC Channel base (client-server independent)
   // Serializable
   // == Events ==
@@ -55,9 +78,6 @@ type
   // ('ABONENTS', Self.ServiceInfo.Abonents)
   // ('BANLIST', Self.BanList)
   // ('MODE <mode>', nil)
-
-  { TDnmpGrpc }
-
   TDnmpGrpc = class(TDnmpService)
   protected
     FOnSay: TNotifyEvent;
@@ -74,20 +94,49 @@ type
     function SendTopic(Addr: TAddr): Boolean;
     // Read data response
     function ReadData(sDataType, sData: string): string;
+    { Read BANLIST response CSV
+    [0] author_guid - GUID автора
+    [1] abonent_guid - GUID абонента
+    [2] reason - причина бана
+    [3] end_date - дата окончани€ бана }
+    function ReadBanList(sData: string): boolean;
     // Read abonent list response
+    { «агрузить абонентов из сериализованого списка в формате CSV.
+     аждый элемент списка содержит сведени€:
+    [0] guid - GUID абонента
+    [1] state - состо€ние (подключен или отключен)
+    [2] nick - ник (им€ на канале, не зависит от реального имени)
+    [3] addr - адрес
+    [4] rights - полномочи€ (набор полномочий)
+    [5] status - статус (сообщение абонента)
+    ѕераметр sListType - тип списка:
+      USERS - список активных пользователей
+      ABONENTS - список известных подписчиков }
     function ReadAbonList(sAbonList, sListType: string): Boolean;
     // Parse and update abonent state response
     function SetAbonentState(sData: string): TDnmpAbonent;
   public
     Topic: string;
     UsersList: TDnmpAbonentList;
-    BanList: TDnmpAbonentList;
+    //BanList: TDnmpAbonentList;
+    BanList: TGrpcBanList;
     MessagesList: TDnmpChannelMessagesList;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
+    procedure DebugText(s: string);
     function SendCmd(Text: string; Addr: TAddr): string;
     function ToStorage(): TDnmpStorage; override;
     function FromStorage(Storage: TDnmpStorage): boolean; override;
+    { Add abonent to users list }
+    function JoinAbonent(AbonentGUID: string): string;
+    { Remove abonent from users list }
+    function LeaveAbonent(AbonentGUID: string): string;
+    { Kick abonent from users list }
+    function KickAbonent(AbonentGUID: string): string;
+    { Move user to ban list }
+    function BanUser(AbonentGUID: string): string;
+    { Remove user from ban list }
+    function UnbanAbonent(AbonentGUID: string): string;
     //function Msg(Msg: TDnmpMsg): string; override;
     property OnSay: TNotifyEvent read FOnSay write FOnSay;
     property OnTopicChange: TNotifyEvent read FOnTopicChange write FOnTopicChange;
@@ -97,15 +146,13 @@ type
     property OnBanlistChange: TNotifyEvent read FOnBanlistChange write FOnBanlistChange;
   end;
 
+  { TDnmpGrpcClient }
   // GRPC Channel Client
   // Server -> This: messages, data
   // Server <- This: messages, commands, data
   // Serializable
   // == Events ==
   // ('MSG', ChanMsg)
-
-  { TDnmpGrpcClient }
-
   TDnmpGrpcClient = class(TDnmpGrpc)
   private
     function SayCmd(AbonGUID, sText: string): string;
@@ -117,19 +164,18 @@ type
     procedure Say(sText: string);
   end;
 
+  { TDnmpGrpcServer }
   // GRPC Channel Server
   // Client -> This: messages, commands, data
   // Client <- This: messages, data
   // Server -> This: messages, commands, data
   // Server <- This: messages, commands, data
   // Serializable
-
-  { TDnmpGrpcServer }
-
   TDnmpGrpcServer = class(TDnmpGrpc)
   private
     function SayCmd(AbonGUID, sText: string): string;
     function SendAbonList(Addr: TAddr; ListType: AnsiChar): Boolean;
+    function SendBanList(Addr: TAddr): Boolean;
     function SendLastMsgList(Addr: TAddr): Boolean;
     procedure BroadcastMsg(ChanMsg: TDnmpChannelMessage);
     procedure BroadcastCmd(sCmd: string);
@@ -165,6 +211,145 @@ const
 
 implementation
 uses Misc;
+
+{ TGrpcBanItem }
+
+function TGrpcBanItem.ToStorage(): TDnmpStorage;
+begin
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('author_guid', self.AuthorGUID);
+  Result.Add('abonent_guid', self.AbonentGUID);
+  Result.Add('reason', self.Reason);
+  Result.Add('end_date', self.EndDate);
+end;
+
+function TGrpcBanItem.FromStorage(Storage: TDnmpStorage): boolean;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  Self.AuthorGUID:=Storage.GetString('author_guid');
+  Self.AbonentGUID:=Storage.GetString('abonent_guid');
+  Self.Reason:=Storage.GetString('reason');
+  Self.EndDate:=Storage.GetReal('end_date');
+  Result:=True;
+end;
+
+{ TGrpcBanList }
+
+constructor TGrpcBanList.Create();
+begin
+  inherited Create(TGrpcBanItem);
+end;
+
+function TGrpcBanList.GetItem(Index: integer): TGrpcBanItem;
+begin
+  Result:=(self.Items[Index] as TGrpcBanItem);
+end;
+
+function TGrpcBanList.AddBan(AAbonentGUID, AReason: string; AEndDate: TDateTime
+  ): boolean;
+begin
+  Result:=False;
+  // search for exists
+  if Assigned(self.GetBan(AAbonentGUID)) then Exit;
+
+  // add new
+  Result:=self.UpdateBan(AAbonentGUID, AReason, AEndDate);
+end;
+
+function TGrpcBanList.UpdateBan(AAbonentGUID, AReason: string;
+  AEndDate: TDateTime): boolean;
+var
+  i: integer;
+  Item: TGrpcBanItem;
+begin
+  Result:=False;
+  // search for exists
+  Item:=nil;
+  for i:=0 to self.Count-1 do
+  begin
+    Item:=self.GetItem(i);
+    if Item.AbonentGUID=AAbonentGUID then Break;
+  end;
+  // add new if not found
+  if not Assigned(Item) then Item:=(self.Add() as TGrpcBanItem);
+
+  Item.AbonentGUID:=AAbonentGUID;
+  Item.Reason:=AReason;
+  Item.EndDate:=AEndDate;
+  Result:=True;
+end;
+
+function TGrpcBanList.DelBan(AAbonentGUID: string): boolean;
+var
+  i: integer;
+  Item: TGrpcBanItem;
+begin
+  Result:=False;
+  // search for exists
+  for i:=0 to self.Count-1 do
+  begin
+    Item:=self.GetItem(i);
+    if Item.AbonentGUID=AAbonentGUID then
+    begin
+      self.Delete(Item.Index);
+      Result:=True;
+      Exit;
+    end;
+  end;
+end;
+
+function TGrpcBanList.GetBan(AAbonentGUID: string): TGrpcBanItem;
+var
+  i: integer;
+begin
+  // search for exists
+  for i:=0 to self.Count-1 do
+  begin
+    Result:=self.GetItem(i);
+    if Result.AbonentGUID=AAbonentGUID then Exit;
+  end;
+  Result:=nil;
+end;
+
+function TGrpcBanList.ToStorage(): TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.GetItem(i).ToStorage());
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'GrpcBanList');
+  Result.Add('items', Storage);
+end;
+
+function TGrpcBanList.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item: TGrpcBanItem;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'GrpcBanList' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=(self.Add as TGrpcBanItem);
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
+    begin
+      self.Delete(Item.Index);
+      Continue;
+    end;
+  end;
+  Result:=True;
+end;
 
 // === TDnmpChannelMessage ===
 procedure TDnmpChannelMessage.FillMsg(Msg: TDnmpMsg);
@@ -326,8 +511,9 @@ begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
   Self.UsersList:=TDnmpAbonentList.Create(False);
   Self.UsersList.ParentList:=Self.ServiceInfo.Abonents.ParentList;
-  Self.BanList:=TDnmpAbonentList.Create(False);
-  Self.BanList.ParentList:=Self.ServiceInfo.Abonents.ParentList;
+  //Self.BanList:=TDnmpAbonentList.Create(False);
+  //Self.BanList.ParentList:=Self.ServiceInfo.Abonents.ParentList;
+  Self.BanList:=TGrpcBanList.Create();
   Self.MessagesList:=TDnmpChannelMessagesList.Create(True);
 end;
 
@@ -337,6 +523,11 @@ begin
   FreeAndNil(BanList);
   FreeAndNil(UsersList);
   inherited Destroy();
+end;
+
+procedure TDnmpGrpc.DebugText(s: string);
+begin
+  if Assigned(Mgr) then Mgr.DebugText('GRPC: '+s);
 end;
 
 function TDnmpGrpc.CreateChannelMsg(AbonGUID, sText: string): TDnmpChannelMessage;
@@ -474,6 +665,116 @@ begin
   Result:=True;
 end;
 
+function TDnmpGrpc.JoinAbonent(AbonentGUID: string): string;
+var
+  Abonent: TDnmpAbonent;
+begin
+  Result:='';
+
+  // Banned?
+  if BanList.GetBan(AbonentGUID)<>nil then
+  begin
+    Result:='Cannot JOIN - abonent banned: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+
+  // Exists?
+  Abonent:=GetAbonentByGUID(AbonentGUID);
+  if not Assigned(Abonent) then Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(AbonentGUID);
+  if not Assigned(Abonent) then
+  begin
+    Result:='Cannot JOIN - abonent not exists: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+
+  // Add abonent to abonents list
+  Self.ServiceInfo.Abonents.UpdateAbonent(Abonent);
+  Self.UsersList.UpdateAbonent(Abonent);
+
+  if Assigned(OnUsersChange) then OnUsersChange(self);
+  if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
+end;
+
+function TDnmpGrpc.LeaveAbonent(AbonentGUID: string): string;
+var
+  Abonent: TDnmpAbonent;
+begin
+  Result:='';
+
+  // Exists?
+  Abonent:=Self.UsersList.GetAbonentByGUID(AbonentGUID);
+  if not Assigned(Abonent) then
+  begin
+    Result:='Cannot LEAVE - abonent not joined: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+
+  // Remove abonent from users list
+  Self.UsersList.Extract(Abonent);
+  if Assigned(OnUsersChange) then OnUsersChange(self);
+end;
+
+function TDnmpGrpc.KickAbonent(AbonentGUID: string): string;
+var
+  Abonent: TDnmpAbonent;
+begin
+  Result:='';
+
+  // Joined?
+  Abonent:=UsersList.GetAbonentByGUID(AbonentGUID);
+  if Abonent=nil then
+  begin
+    Result:='Cannot KICK - abonent not joined: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+
+  // Remove abonent from users list
+  Self.UsersList.Extract(Abonent);
+  if Assigned(OnUsersChange) then OnUsersChange(self);
+end;
+
+function TDnmpGrpc.BanUser(AbonentGUID: string): string;
+var
+  Abonent: TDnmpAbonent;
+begin
+  Result:='';
+  Abonent:=self.UsersList.GetAbonentByGUID(AbonentGUID);
+  if not Assigned(Abonent) then
+  begin
+    Result:='Cannot BAN - user not exists: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+  if self.BanList.GetBan(AbonentGUID)<>nil then
+  begin
+    Result:=('Cannot BAN - abonent banned: '+AbonentGUID);
+    DebugText(Result);
+    Exit;
+  end;
+  self.UsersList.Extract(Abonent);
+  // TODO: ban prams
+  self.BanList.AddBan(AbonentGUID, '', 0);
+  if Assigned(OnBanlistChange) then OnBanlistChange(self);
+  if Assigned(OnUsersChange) then OnUsersChange(self);
+end;
+
+function TDnmpGrpc.UnbanAbonent(AbonentGUID: string): string;
+begin
+  Result:='';
+  if not Assigned(self.BanList.GetBan(AbonentGUID)) then
+  begin
+    Result:='Cannot UNBAN - user not banned: '+AbonentGUID;
+    DebugText(Result);
+    Exit;
+  end;
+  self.BanList.DelBan(AbonentGUID);
+  if Assigned(OnBanlistChange) then OnBanlistChange(self);
+end;
+
 function TDnmpGrpc.ReadData(sDataType, sData: string): string;
 var
   Abonent: TDnmpAbonent;
@@ -505,7 +806,7 @@ begin
 
   else if sDataType='BANLIST' then
   begin
-    ReadAbonList(sData, sDataType);
+    ReadBanList(sData);
     if Assigned(OnEvent) then OnEvent(sDataType, Self.BanList);
   end
 
@@ -516,14 +817,24 @@ begin
   Mgr.AddCmd('GRPC UPDATE '+ServiceInfo.Name+' '+sDataType);
 end;
 
-// USERS - список активных подписчиков
-// —одержит список активных подписчиков в формате CSV.  аждый элемент списка содержит сведени€:
-// [0] guid - GUID абонента
-// [1] state - состо€ние (подключен или отключен)
-// [2] nick - ник (им€ на канале, не зависит от реального имени)
-// [3] addr - адрес
-// [4] rights - полномочи€ (набор полномочий)
-// [5] status - статус (сообщение абонента)
+function TDnmpGrpc.ReadBanList(sData: string): boolean;
+var
+  sl, slData: TStringList;
+begin
+  sl:=TStringList.Create();
+  slData:=TStringList.Create();
+  slData.Text:=sData;
+  for i:=0 to slData.Count-1 do
+  begin
+    sl.Clear();
+    sl.DelimitedText:=slData[i];
+    if sl.Count<3 then Continue;
+    self.BanList.UpdateBan(sl[1], sl[3], StrToTimestamp(sl[2]));
+  end;
+  FreeAndNil(slData);
+  FreeAndNil(sl);
+end;
+
 function TDnmpGrpc.ReadAbonList(sAbonList, sListType: string): Boolean;
 var
   sl, slData: TStringList;
@@ -558,8 +869,8 @@ begin
     end
     else if sListType='BANLIST' then
     begin
-      UpdateAbonentList(Self.BanList, sl);
-      Result:=True;
+      //UpdateAbonentList(Self.BanList, sl);
+      //Result:=True;
     end;
   end;
   FreeAndNil(slData);
@@ -598,41 +909,34 @@ begin
   else if sCmd='JOIN' then
   begin
     if n<2 then Exit;
-    if BanList.GetAbonentByGUID(Params[1])<>nil then
+    Result:=Self.JoinAbonent(Params[1]);
+    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
+    else
     begin
-      // Banned!
-      Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, 'Cannot JOIN - abonent banned '+Params[1]);
-      Exit;
+      // broadcast to others
+      BroadcastCmd(Text);
+      if SameNode(Addr, self.Mgr.MyInfo.Addr) then
+      begin
+        // Send channel description
+        SendTopic(Addr);
+        // Send active abonents list
+        SendAbonList(Addr, 'U');
+        // Send last messages
+        SendLastMsgList(Addr);
+      end;
     end;
-    Abonent:=GetAbonentByGUID(Params[1]);
-    if not Assigned(Abonent) then Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(Params[1]);
-    // Add abonent to abonents list
-    Self.ServiceInfo.Abonents.UpdateAbonent(Abonent);
-    Self.UsersList.UpdateAbonent(Abonent);
-    // Broadcast JOIN to other abonents
-    BroadcastCmd(Text);
-    // Send channel description
-    SendTopic(Addr);
-    // Send active abonents list
-    SendAbonList(Addr, 'U');
-    // Send last messages
-    SendLastMsgList(Abonent.Addr);
-    if Assigned(OnUsersChange) then OnUsersChange(self);
-    if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
   end
 
   else if sCmd='LEAVE' then
   begin
     if n<2 then Exit;
-    Abonent:=GetAbonentByGUID(Params[1]);
-    if not Assigned(Abonent) then Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(Params[1]);
-    // Remove abonent from abonents list
-    Self.ServiceInfo.Abonents.Remove(Abonent);
-    Self.UsersList.Remove(Abonent);
-    // Broadcast JOIN to other abonents
-    BroadcastCmd(Text);
-    if Assigned(OnUsersChange) then OnUsersChange(self);
-    if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
+    Result:=Self.LeaveAbonent(Params[1]);
+    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
+    else
+    begin
+      // broadcast to others
+      BroadcastCmd(Text);
+    end;
   end
 
   else if sCmd='GET_TOPIC' then
@@ -666,7 +970,7 @@ begin
 
   else if sCmd='GET_BANLIST' then
   begin
-    SendAbonList(Addr, 'B');
+    SendBanList(Addr);
   end
 
   else if sCmd='GET_LAST_MESSAGES' then
@@ -677,13 +981,17 @@ begin
   else if sCmd='KICK' then
   begin
     if n<2 then Exit;
-    Abonent:=Self.UsersList.GetAbonentByGUID(Params[1]);
-    if not Assigned(Abonent) then Exit;
-    self.UsersList.Remove(Abonent);
-    SendAbonList(Addr, 'U');
-    // Broadcast KICK to other abonents
-    BroadcastCmd(Text);
-    if Assigned(OnUsersChange) then OnUsersChange(self);
+    Result:=Self.KickAbonent(Params[1]);
+    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
+    else
+    begin
+      // broadcast to others
+      BroadcastCmd(Text);
+      if SameNode(Addr, self.Mgr.MyInfo.Addr) then
+      begin
+        SendAbonList(Addr, 'U');
+      end;
+    end;
   end
 
   else if sCmd='SAY' then
@@ -694,6 +1002,34 @@ begin
     i:=Pos(' ', Text);
     s:=Copy(Text, i+1, MaxInt);
     Result:=SayCmd(Params[1], s);
+  end
+
+  else if sCmd='BAN' then
+  begin
+    if n<1 then Exit;
+    Result:=self.BanUser(Params[1]);
+    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
+    else
+    begin
+      // broadcast to others
+      BroadcastCmd(Text);
+      //SendAbonList(Addr, 'U');
+      //SendBanList(Addr);
+    end;
+  end
+
+  else if sCmd='UNBAN' then
+  begin
+    if n<1 then Exit;
+    Result:=self.UnbanAbonent(Params[1]);
+    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
+    else
+    begin
+      // broadcast to others
+      BroadcastCmd(Text);
+      //SendAbonList(Addr, 'U');
+      //SendBanList(Addr);
+    end;
   end
 
   else
@@ -772,7 +1108,7 @@ begin
   end
   else if ListType='B' then
   begin
-    al:=self.BanList;
+    //al:=self.BanList;
     sDataType:='BANLIST';
   end;
 
@@ -807,6 +1143,40 @@ begin
     Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'data='+sDataType, slData.Text);
   end;
   slData.Free();
+end;
+
+function TDnmpGrpcServer.SendBanList(Addr: TAddr): Boolean;
+var
+  i: Integer;
+  sl, slData: TStringList;
+  Item: TGrpcBanItem;
+begin
+  Result:=False;
+  sl:=TStringList.Create();
+  slData:=TStringList.Create();
+  for i:=0 to self.BanList.Count-1 do
+  begin
+    Item:=(self.BanList.Items[i] as TGrpcBanItem);
+
+    sl.Clear();
+    // item info
+    sl.Add(Item.AuthorGUID);
+    sl.Add(Item.AbonentGUID);
+    sl.Add(TimestampToStr(Item.EndDate));
+    sl.Add(Item.Reason);
+    slData.Add(sl.DelimitedText);
+  end;
+  sl.Free();
+
+  try
+    if slData.Count>0 then
+    begin
+      Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'data=BANLIST'+#13+#10+'format=CSV', slData.Text);
+      Result:=True;
+    end;
+  finally
+    slData.Free();
+  end;
 end;
 
 function TDnmpGrpcServer.SendLastMsgList(Addr: TAddr): Boolean;
@@ -885,7 +1255,7 @@ var
   ChanMsg: TDnmpChannelMessage;
 begin
   Result:='';
-  if BanList.GetAbonentByGUID(AbonGUID)<>nil then
+  if BanList.GetBan(AbonGUID)<>nil then
   begin
     // Banned!
     Exit;
@@ -922,7 +1292,7 @@ var
   ChanMsg: TDnmpChannelMessage;
 begin
   Result:='';
-  if BanList.GetAbonentByGUID(AbonGUID)<>nil then
+  if BanList.GetBan(AbonGUID)<>nil then
   begin
     // Banned!
     Mgr.DebugText('GRPC Cannot SAY - abonent banned '+AbonGUID);
@@ -960,17 +1330,9 @@ begin
   else if sCmd='JOIN' then
   begin
     if n<2 then Exit;
-    if BanList.GetAbonentByGUID(Params[1])<>nil then
-    begin
-      // Banned!
-      Mgr.DebugText('GRPC Cannot JOIN - abonent banned '+Params[1]);
-      Exit;
-    end;
-    Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(Params[1]);
-    Self.UsersList.AddAbonentByGUID(Params[1]);
+    Result:=self.JoinAbonent(Params[1]);
+    if Result<>'' then Exit;
     Mgr.AddCmd('GRPC UPDATE '+self.ServiceInfo.Name);
-    if Assigned(OnUsersChange) then OnUsersChange(self);
-    if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
   end
 
   else if sCmd='LEAVE' then

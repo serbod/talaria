@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls, ExtCtrls,
-  ActnList, Menus, dnmp_unit, dnmp_services;
+  ActnList, Menus, dnmp_unit, dnmp_services, Core;
 
 type
 
@@ -47,12 +47,15 @@ type
     procedure FSetCurServiceInfo(Value: TDnmpServiceInfo);
   public
     { public declarations }
+
     property SvcMgr: TDnmpServiceManager read FSvcMgr write FSetSvcMgr;
     property CurServiceInfo: TDnmpServiceInfo read FCurServiceInfo write FSetCurServiceInfo;
     procedure Update(); override;
   end;
 
 implementation
+
+uses GrpcServiceFrame;
 
 {$R *.lfm}
 
@@ -66,10 +69,13 @@ begin
 end;
 
 procedure TFrameDnmpServices.actRunServiceExecute(Sender: TObject);
+var
+  TmpService: TDnmpService;
+  TmpFrame: TFrame;
 begin
   if not Assigned(CurServiceInfo) then Exit;
-  SvcMgr.CreateService(CurServiceInfo);
-  Update();
+  TmpService:=SvcMgr.CreateService(CurServiceInfo);
+  if Assigned(TmpService) then Core.AddServicePage(TmpService);
 end;
 
 procedure TFrameDnmpServices.FSetSvcMgr(Value: TDnmpServiceManager);
