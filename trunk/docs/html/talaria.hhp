@@ -1,0 +1,30 @@
+[OPTIONS]
+Binary Index=No
+Compatibility=1.1 or later
+Compiled file=..\talaria.chm
+Contents file=TOC.hhc
+Default topic=index.htm
+Display compile progress=Yes
+Error log file=d:\Work\sources_laz\Talaria\docs\ChmLog.log
+Index file=Index.hhk
+Language=0x419 Русский (Россия)
+Title=Talaria - распределенная сеть обмена информацией
+
+
+[FILES]
+auth.htm
+containers.htm
+faq.htm
+flst.htm
+grpc.htm
+index.htm
+msg_format.htm
+passport.htm
+proto_descr.htm
+routing.htm
+services.htm
+srvd.htm
+usrd.htm
+
+[INFOTYPES]
+

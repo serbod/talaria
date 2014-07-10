@@ -21,6 +21,37 @@ type
 
   TDnmpConf = class(TMemIniFile);
 
+  TDnmpStorageType = (stUnknown, stString, stInteger, stNumber, stList, stDictionary);
+
+  { TDnmpStorage }
+  TDnmpStorage = class(TObject)
+  private
+    { name:object items storage }
+    FItems: TStringList;
+  public
+    { stUnknown, stString, stInteger, stNumber, stList, stDictionary }
+    StorageType: TDnmpStorageType;
+    { Value for (String, Integer, Number) types }
+    Value: AnsiString;
+    constructor Create(AStorageType: TDnmpStorageType);
+    destructor Destroy; override;
+    { Items count for (List, Dictionary) types }
+    function Count(): integer;
+    procedure Add(AName: string; AValue: TDnmpStorage);
+    procedure Add(AName, AValue: string); overload;
+    procedure Add(AName: string; AValue: Integer); overload;
+    procedure Add(AName: string; AValue: Real); overload;
+    { Get storage item by name }
+    function GetObject(AName: string): TDnmpStorage;
+    { Get storage item by index }
+    function GetObject(Index: integer): TDnmpStorage; overload;
+    { Get name by index }
+    function GetObjectName(Index: integer): string;
+    function GetString(AName: string): string;
+    function GetInteger(AName: string): Integer;
+    function GetReal(AName: string): Real;
+  end;
+
   { TDnmpMsg Single message. Refcounted. }
 
   TDnmpMsg = class(TInterfacedObject)
@@ -66,6 +97,9 @@ type
   TDnmpLinkType = (ltPoint, ltNode, ltTemporary);
 
   { Link information. Refcounted. }
+
+  { TLinkInfo }
+
   TLinkInfo = class(TInterfacedObject)
   public
     Addr: TAddr;
@@ -85,8 +119,10 @@ type
     function AddrStr(): string;
     function SameAddr(FAddr: TAddr): Boolean;
     function SameNode(FAddr: TAddr): Boolean;
-    function FromString(Str: string): boolean;
-    function ToString(): string;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
+    function SaveToCSV(): string;
+    function LoadFromCSV(sData: string): boolean;
     function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
     function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
     procedure Assign(li: TLinkInfo);
@@ -242,19 +278,20 @@ type
 
   // Базовый класс обработчика входящих сообщений
   // services
+
+  { TDnmpMsgHandler }
+
   TDnmpMsgHandler = class(TObject)
   protected
     FMgr: TDnmpManager;
     {MsgTypes: TDnmpMsgTypes; }
   public
     property Mgr: TDnmpManager read FMgr;
+    { Add self to Mgr.MsgHandlers }
     constructor Create(AMgr: TDnmpManager);
-    //destructor Destroy(); override;
-    {// Запуск обработчика
-    function Start(): Boolean; virtual; abstract;
-    // Останов обработчика
-    function Stop(): Boolean; virtual; abstract; }
-    // Обработка команды (Thread-safe) от указанного адреса
+    { Remove self from Mgr.MsgHandlers }
+    destructor Destroy(); override;
+    { Обработка команды (Thread-safe) от указанного адреса }
     function Cmd(Text: string; Addr: TAddr): string; virtual; abstract;
     // Разбор сообщения и выполнение требуемых действий
     // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
@@ -388,6 +425,8 @@ type
   function FileToStr(FileName: string): AnsiString;
 
   function GenerateKey(): string;
+  // Extract and return first word from string
+  function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
 const
   csConfigFileName = 'settings.ini';
@@ -403,11 +442,13 @@ implementation
 uses RC4, dnmp_client, dnmp_server, dnmp_ip, Misc;
 
 // === Functions ===
-function DWordToStr(x: Longword): string;
+{
+function DWordToStr(x: Longword): AnsiString;
 begin
   result:='0000';
   Move(X, result[1], SizeOf(x));
 end;
+}
 
 function NewAddr(): TAddr;
 begin
@@ -527,6 +568,131 @@ begin
   for i:=1 to ciKeyLength do Result:=Result+sDict[Random(l)+1];
 end;
 
+function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
+var
+  i: integer;
+begin
+  Result:='';
+  i:=Pos(delimiter, s);
+  if i>0 then
+  begin
+    Result:=Copy(s, 1, i-1);
+    s:=Copy(s, i+1, maxint);
+  end
+  else
+  begin
+    Result:=s;
+    s:='';
+  end;
+end;
+
+
+{ TDnmpStorage }
+
+constructor TDnmpStorage.Create(AStorageType: TDnmpStorageType);
+begin
+  inherited Create();
+  StorageType:=AStorageType;
+  FItems:=TStringList.Create();
+  FItems.OwnsObjects:=True;
+end;
+
+destructor TDnmpStorage.Destroy();
+begin
+  FItems.Free();
+  inherited Destroy();
+end;
+
+function TDnmpStorage.Count(): integer;
+begin
+  Result:=FItems.Count;
+end;
+
+procedure TDnmpStorage.Add(AName: string; AValue: TDnmpStorage);
+begin
+  FItems.AddObject(AName, AValue);
+end;
+
+procedure TDnmpStorage.Add(AName, AValue: string);
+var
+  TmpItem: TDnmpStorage;
+begin
+  TmpItem:=TDnmpStorage.Create(stString);
+  TmpItem.Value:=AValue;
+  FItems.AddObject(AName, TmpItem);
+end;
+
+procedure TDnmpStorage.Add(AName: string; AValue: Integer);
+var
+  TmpItem: TDnmpStorage;
+begin
+  TmpItem:=TDnmpStorage.Create(stInteger);
+  TmpItem.Value:=IntToStr(AValue);
+  FItems.AddObject(AName, TmpItem);
+end;
+
+procedure TDnmpStorage.Add(AName: string; AValue: Real);
+var
+  TmpItem: TDnmpStorage;
+begin
+  TmpItem:=TDnmpStorage.Create(stNumber);
+  TmpItem.Value:=FloatToStr(AValue);
+  FItems.AddObject(AName, TmpItem);
+end;
+
+function TDnmpStorage.GetObject(AName: string): TDnmpStorage;
+var
+  n: integer;
+  TmpItem: TDnmpStorage;
+begin
+  Result:=nil;
+  n:=FItems.IndexOf(AName);
+  if n>=0 then
+  begin
+    TmpItem:=(FItems.Objects[n] as TDnmpStorage);
+    if TmpItem.StorageType=stDictionary then Result:=TmpItem;
+  end;
+end;
+
+function TDnmpStorage.GetObject(Index: integer): TDnmpStorage;
+begin
+  Result:=nil;
+  if (Index>=0) and (Index<Count) then
+  begin
+    Result:=(FItems.Objects[Index] as TDnmpStorage);
+  end;
+end;
+
+function TDnmpStorage.GetObjectName(Index: integer): string;
+begin
+  Result:='';
+  if (Index>=0) and (Index<FItems.Count) then Result:=FItems[Index];
+end;
+
+function TDnmpStorage.GetString(AName: string): string;
+var
+  n: integer;
+  TmpItem: TDnmpStorage;
+begin
+  Result:='';
+  n:=FItems.IndexOf(AName);
+  if n>=0 then
+  begin
+    TmpItem:=(FItems.Objects[n] as TDnmpStorage);
+    Result:=TmpItem.Value;
+    //if TmpItem.StorageType=stString then Result:=TmpItem.Value;
+  end;
+end;
+
+function TDnmpStorage.GetInteger(AName: string): Integer;
+begin
+  Result:=StrToIntDef(GetString(AName), 0);
+end;
+
+function TDnmpStorage.GetReal(AName: string): Real;
+begin
+  Result:=StrToFloatDef(GetString(AName), 0);
+end;
 
 // === TDnmpMsg ===
 constructor TDnmpMsg.Create(SAddr, TAddr: TAddr; AMsgType, Params,
@@ -836,27 +1002,45 @@ begin
   Result := (Addr.Node=FAddr.Node);
 end;
 
-function TLinkInfo.FromString(Str: string): boolean;
-var
-  sl: TStringList;
+function TLinkInfo.ToStorage(): TDnmpStorage;
 begin
-  sl:=TStringList.Create();
-  sl.DelimitedText:=Str;
-  Self.Addr:=StrToAddr(sl.Values['Addr']);
-  Self.Name:=sl.Values['Name'];
-  Self.Owner:=sl.Values['Owner'];
-  Self.IpAddr:=sl.Values['IpAddr'];
-  Self.PhoneNo:=sl.Values['PhoneNo'];
-  Self.Rating:=StrToIntDef(sl.Values['Rating'], 1);
-  Self.Key:=sl.Values['Key'];
-  sl.Free();
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('addr', Self.AddrStr);
+  Result.Add('guid', Self.GUID);
+  Result.Add('senior_guid', Self.SeniorGUID);
+  Result.Add('name', Self.Name);
+  Result.Add('owner', Self.Owner);
+  Result.Add('location', Self.Location);
+  Result.Add('ip_addr', Self.IpAddr);
+  Result.Add('phone', Self.PhoneNo);
+  Result.Add('other_info', Self.OtherInfo);
+  Result.Add('rating', Self.Rating);
+  Result.Add('key', Self.Key);
+end;
+
+function TLinkInfo.FromStorage(Storage: TDnmpStorage): boolean;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  Self.Addr:=StrToAddr(Storage.GetString('addr'));
+  Self.GUID:=Storage.GetString('guid');
+  Self.SeniorGUID:=Storage.GetString('senior_guid');
+  Self.Name:=Storage.getString('name');
+  Self.Owner:=Storage.getString('owner');
+  Self.Location:=Storage.getString('location');
+  Self.IpAddr:=Storage.getString('ip_addr');
+  Self.PhoneNo:=Storage.getString('phone');
+  Self.OtherInfo:=Storage.getString('other_info');
+  Self.Rating:=Storage.GetInteger('rating');
+  Self.Key:=Storage.getString('key');
   Result:=True;
 end;
 
-function TLinkInfo.ToString(): string;
+function TLinkInfo.SaveToCSV(): string;
 var
   sl: TStringList;
 begin
+  // TODO: from Storage
   sl:=TStringList.Create();
   sl.Values['Addr']:=Self.AddrStr;
   sl.Values['Name']:=Self.Name;
@@ -869,8 +1053,27 @@ begin
   sl.Free();
 end;
 
+function TLinkInfo.LoadFromCSV(sData: string): boolean;
+var
+  sl: TStringList;
+begin
+  // TODO: from Storage
+  sl:=TStringList.Create();
+  sl.DelimitedText:=sData;
+  Self.Addr:=StrToAddr(sl.Values['Addr']);
+  Self.Name:=sl.Values['Name'];
+  Self.Owner:=sl.Values['Owner'];
+  Self.IpAddr:=sl.Values['IpAddr'];
+  Self.PhoneNo:=sl.Values['PhoneNo'];
+  Self.Rating:=StrToIntDef(sl.Values['Rating'], 1);
+  Self.Key:=sl.Values['Key'];
+  sl.Free();
+  Result:=True;
+end;
+
 function TLinkInfo.FromConf(Conf: TDnmpConf; SectName: string): Boolean;
 begin
+  // TODO: from Storage
   Result:=False;
   if not Assigned(Conf) then Exit;
   Self.Addr:=StrToAddr(Conf.ReadString(SectName, 'Addr', ''));
@@ -889,6 +1092,7 @@ end;
 
 function TLinkInfo.ToConf(Conf: TDnmpConf; SectName: string): Boolean;
 begin
+  // TODO: from Storage
   Result:=False;
   if not Assigned(Conf) then Exit;
   Conf.WriteString(SectName, 'Addr', Self.AddrStr());
@@ -971,7 +1175,7 @@ begin
   sl:=TStringList.Create();
   for i:=0 to Count-1 do
   begin
-    sl.Add(Items[i].ToString);
+    sl.Add(Items[i].SaveToCSV);
   end;
   sl.SaveToFile(Filename);
   sl.Free();
@@ -997,7 +1201,7 @@ begin
   for i:=0 to sl.Count-1 do
   begin
     li:=TLinkInfo.Create();
-    if li.FromString(sl[i]) then self.Add(li);
+    if li.LoadFromCSV(sl[i]) then self.Add(li);
   end;
   sl.Free();
   Result:=True;
@@ -1263,6 +1467,12 @@ begin
   inherited Create();
   self.FMgr:=AMgr;
   if Assigned(AMgr) then AMgr.MsgHandlers.Add(self);
+end;
+
+destructor TDnmpMsgHandler.Destroy();
+begin
+  if Assigned(Mgr) then Mgr.MsgHandlers.Extract(self);
+  inherited Destroy();
 end;
 
 // ===================
