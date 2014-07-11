@@ -73,10 +73,10 @@ type
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     { Read BANLIST response CSV
-    [0] author_guid - GUID автора
-    [1] abonent_guid - GUID абонента
-    [2] reason - причина бана
-    [3] end_date - дата окончания бана }
+    [0] author_guid - GUID Р°РІС‚РѕСЂР°
+    [1] abonent_guid - GUID Р°Р±РѕРЅРµРЅС‚Р°
+    [2] reason - РїСЂРёС‡РёРЅР° Р±Р°РЅР°
+    [3] end_date - РґР°С‚Р° РѕРєРѕРЅС‡Р°РЅРёСЏ Р±Р°РЅР° }
     function UpdateFromCSV(sData: string): boolean;
   end;
 
@@ -152,7 +152,7 @@ type
   public
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
-    { входящая (принятая) команда }
+    { РІС…РѕРґСЏС‰Р°СЏ (РїСЂРёРЅСЏС‚Р°СЏ) РєРѕРјР°РЅРґР° }
     function ParseCmd(Text: string; Addr: TAddr): string; override;
     function ParseMsg(AMsg: TDnmpMsg): string; override;
     procedure Say(sText: string);
@@ -178,21 +178,21 @@ type
     Modes: string;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
-    { Обработка команды, отправленной с указанного адреса
-    JOIN <GUID_абонента> [текст]  Добавляет абонента в список подписчиков и пользователей канала.
-    LEAVE <GUID_абонента> [текст]    Убирает абонента из списка подписчиков и пользователей канала.
-    SET_TOPIC <текст>    Устанавливает тему канала
-    GET_TOPIC    Возвращает сообщение, содержащее заголовок (тему) канала.
-    GET_USERS    Возвращает список активных подписчиков
-    GET_ABONENTS    Возвращает список всех подписчиков
-    GET_LAST_MESSAGES [число сообщений]    Возвращает последние сообщения
-    GET_MODE    Возвращает строку режимов канала
-    SET_MODE    Устанавливает один или несколько режимов канала
-    KICK <GUID_абонента> <причина>    Убирает абонента из списка подписчиков с указанием причины
-    BAN <GUID_абонента> <срок> <причина>    Добавляет абонента в "черный список" на заданый срок в указанием причины.
-    UNBAN <GUID_абонента>    Удаляет абонента из "черного списка".
-    GET_BANLIST    Возвращает "черный список" абонентов
-    SAY <GUID_абонента> <текст>    Сообщение на канал от абонента
+    { РћР±СЂР°Р±РѕС‚РєР° РєРѕРјР°РЅРґС‹, РѕС‚РїСЂР°РІР»РµРЅРЅРѕР№ СЃ СѓРєР°Р·Р°РЅРЅРѕРіРѕ Р°РґСЂРµСЃР°
+    JOIN <GUID_Р°Р±РѕРЅРµРЅС‚Р°> [С‚РµРєСЃС‚]  Р”РѕР±Р°РІР»СЏРµС‚ Р°Р±РѕРЅРµРЅС‚Р° РІ СЃРїРёСЃРѕРє РїРѕРґРїРёСЃС‡РёРєРѕРІ Рё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РєР°РЅР°Р»Р°.
+    LEAVE <GUID_Р°Р±РѕРЅРµРЅС‚Р°> [С‚РµРєСЃС‚]    РЈР±РёСЂР°РµС‚ Р°Р±РѕРЅРµРЅС‚Р° РёР· СЃРїРёСЃРєР° РїРѕРґРїРёСЃС‡РёРєРѕРІ Рё РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РєР°РЅР°Р»Р°.
+    SET_TOPIC <С‚РµРєСЃС‚>    РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ С‚РµРјСѓ РєР°РЅР°Р»Р°
+    GET_TOPIC    Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ, СЃРѕРґРµСЂР¶Р°С‰РµРµ Р·Р°РіРѕР»РѕРІРѕРє (С‚РµРјСѓ) РєР°РЅР°Р»Р°.
+    GET_USERS    Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє Р°РєС‚РёРІРЅС‹С… РїРѕРґРїРёСЃС‡РёРєРѕРІ
+    GET_ABONENTS    Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРїРёСЃРѕРє РІСЃРµС… РїРѕРґРїРёСЃС‡РёРєРѕРІ
+    GET_LAST_MESSAGES [С‡РёСЃР»Рѕ СЃРѕРѕР±С‰РµРЅРёР№]    Р’РѕР·РІСЂР°С‰Р°РµС‚ РїРѕСЃР»РµРґРЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ
+    GET_MODE    Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃС‚СЂРѕРєСѓ СЂРµР¶РёРјРѕРІ РєР°РЅР°Р»Р°
+    SET_MODE    РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕРґРёРЅ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ СЂРµР¶РёРјРѕРІ РєР°РЅР°Р»Р°
+    KICK <GUID_Р°Р±РѕРЅРµРЅС‚Р°> <РїСЂРёС‡РёРЅР°>    РЈР±РёСЂР°РµС‚ Р°Р±РѕРЅРµРЅС‚Р° РёР· СЃРїРёСЃРєР° РїРѕРґРїРёСЃС‡РёРєРѕРІ СЃ СѓРєР°Р·Р°РЅРёРµРј РїСЂРёС‡РёРЅС‹
+    BAN <GUID_Р°Р±РѕРЅРµРЅС‚Р°> <СЃСЂРѕРє> <РїСЂРёС‡РёРЅР°>    Р”РѕР±Р°РІР»СЏРµС‚ Р°Р±РѕРЅРµРЅС‚Р° РІ "С‡РµСЂРЅС‹Р№ СЃРїРёСЃРѕРє" РЅР° Р·Р°РґР°РЅС‹Р№ СЃСЂРѕРє РІ СѓРєР°Р·Р°РЅРёРµРј РїСЂРёС‡РёРЅС‹.
+    UNBAN <GUID_Р°Р±РѕРЅРµРЅС‚Р°>    РЈРґР°Р»СЏРµС‚ Р°Р±РѕРЅРµРЅС‚Р° РёР· "С‡РµСЂРЅРѕРіРѕ СЃРїРёСЃРєР°".
+    GET_BANLIST    Р’РѕР·РІСЂР°С‰Р°РµС‚ "С‡РµСЂРЅС‹Р№ СЃРїРёСЃРѕРє" Р°Р±РѕРЅРµРЅС‚РѕРІ
+    SAY <GUID_Р°Р±РѕРЅРµРЅС‚Р°> <С‚РµРєСЃС‚>    РЎРѕРѕР±С‰РµРЅРёРµ РЅР° РєР°РЅР°Р» РѕС‚ Р°Р±РѕРЅРµРЅС‚Р°
     }
     function ParseCmd(Text: string; Addr: TAddr): string; override;
     function ParseMsg(AMsg: TDnmpMsg): string; override;
@@ -986,7 +986,7 @@ begin
   else if sCmd='SET_TOPIC' then
   begin
     //Result:=self.SetTopic();
-    // { TODO: Проверка полномочий }
+    // { TODO: РџСЂРѕРІРµСЂРєР° РїРѕР»РЅРѕРјРѕС‡РёР№ }
     // ...
     if n=1 then Self.Topic:='' else
     begin
@@ -1040,7 +1040,7 @@ begin
   if AMsg.MsgType <> Self.ServiceInfo.ServiceType then Exit;
   sChan:=Trim(AMsg.Info.Values['name']);
   if sChan <> self.ServiceInfo.Name then Exit;
-  // Это сообщение?
+  // Р­С‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ?
   s:=Trim(AMsg.Info.Values['author_addr']);
   if s <> '' then
   begin
@@ -1055,7 +1055,7 @@ begin
     Exit;
   end;
 
-  // Это команда?
+  // Р­С‚Рѕ РєРѕРјР°РЅРґР°?
   s:=Trim(AMsg.Info.Values['cmd']);
   if s <> '' then
   begin
@@ -1064,7 +1064,7 @@ begin
     Exit;
   end;
 
-  // Это данные?
+  // Р­С‚Рѕ РґР°РЅРЅС‹Рµ?
   s:=Trim(AMsg.Info.Values['data']);
   if s <> '' then
   begin
@@ -1262,7 +1262,7 @@ begin
   sChan:=Trim(AMsg.Info.Values['name']);
   if sChan <> self.ServiceInfo.Name then Exit;
 
-  // Это сообщение?
+  // Р­С‚Рѕ СЃРѕРѕР±С‰РµРЅРёРµ?
   sAGUID:=Trim(AMsg.Info.Values['author_guid']);
   if sAGUID <> '' then
   begin
@@ -1278,7 +1278,7 @@ begin
     Exit;
   end;
 
-  // Это команда?
+  // Р­С‚Рѕ РєРѕРјР°РЅРґР°?
   s:=Trim(AMsg.Info.Values['cmd']);
   if s <> '' then
   begin
@@ -1287,7 +1287,7 @@ begin
     Exit;
   end;
 
-  // Это данные?
+  // Р­С‚Рѕ РґР°РЅРЅС‹Рµ?
   s:=Trim(AMsg.Info.Values['data']);
   if s <> '' then
   begin

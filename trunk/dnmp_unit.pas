@@ -65,24 +65,24 @@ type
     SeenBy: TSeenBy;
     constructor Create(SAddr, TAddr: TAddr; AMsgType, Params, DataStr: string);
     destructor Destroy(); override;
-    /// Читает сообщение из цифрового потока AStream
+    /// Р§РёС‚Р°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РёР· С†РёС„СЂРѕРІРѕРіРѕ РїРѕС‚РѕРєР° AStream
     function FromStream(AStream: TStream): boolean;
-    /// Пишет сообщение в цифровой поток AStream
+    /// РџРёС€РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РІ С†РёС„СЂРѕРІРѕР№ РїРѕС‚РѕРє AStream
     function ToStream(AStream: TStream): boolean;
-    /// Читает сообщение из строки Str. Формат строки - цифровой поток
+    /// Р§РёС‚Р°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РёР· СЃС‚СЂРѕРєРё Str. Р¤РѕСЂРјР°С‚ СЃС‚СЂРѕРєРё - С†РёС„СЂРѕРІРѕР№ РїРѕС‚РѕРє
     function FromString(Str: AnsiString): boolean;
-    /// Возвращает сообщение в виде строки. Формат строки - цифровой поток
+    /// Р’РѕР·РІСЂР°С‰Р°РµС‚ СЃРѕРѕР±С‰РµРЅРёРµ РІ РІРёРґРµ СЃС‚СЂРѕРєРё. Р¤РѕСЂРјР°С‚ СЃС‚СЂРѕРєРё - С†РёС„СЂРѕРІРѕР№ РїРѕС‚РѕРє
     function ToString(): AnsiString;
-    /// Заполняет секцию параметров из строки, разделенной символами "|"
+    /// Р—Р°РїРѕР»РЅСЏРµС‚ СЃРµРєС†РёСЋ РїР°СЂР°РјРµС‚СЂРѕРІ РёР· СЃС‚СЂРѕРєРё, СЂР°Р·РґРµР»РµРЅРЅРѕР№ СЃРёРјРІРѕР»Р°РјРё "|"
     function ParseInfo(Str: string): boolean;
-    /// Проверяет наличие адреса в синбаях
+    /// РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ Р°РґСЂРµСЃР° РІ СЃРёРЅР±Р°СЏС…
     function HaveSeenBy(Addr: TAddr): boolean;
-    /// Добавляет адрес в синбаи
+    /// Р”РѕР±Р°РІР»СЏРµС‚ Р°РґСЂРµСЃ РІ СЃРёРЅР±Р°Рё
     function AddSeenBy(Addr: TAddr): boolean;
   //private
   end;
 
-  // { TODO: Сделать своп сообщений на диск }
+  // { TODO: РЎРґРµР»Р°С‚СЊ СЃРІРѕРї СЃРѕРѕР±С‰РµРЅРёР№ РЅР° РґРёСЃРє }
   TDnmpMsgQueue = class(TObjectList)
   private
     function GetMsg(Index: Integer): TDnmpMsg;
@@ -148,7 +148,7 @@ type
 
   TIncomingMsgEvent = procedure(Sender: TObject; Msg: TDnmpMsg) of object;
 
-  // Базовый класс линка
+  // Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ Р»РёРЅРєР°
   TDnmpLink = class(TObject)
   protected
     FOnIncomingMsg: TIncomingMsgEvent;
@@ -165,19 +165,19 @@ type
 
     constructor Create(AMgr: TDnmpManager);
     destructor Destroy(); override;
-    // Установить соединение
+    // РЈСЃС‚Р°РЅРѕРІРёС‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ
     function Connect(): boolean; virtual;
-    // Разорвать соединение
+    // Р Р°Р·РѕСЂРІР°С‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ
     function Disconnect(): boolean; virtual;
-    // Принимать входящие подключения
+    // РџСЂРёРЅРёРјР°С‚СЊ РІС…РѕРґСЏС‰РёРµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
     function Listen(): boolean; virtual;
-    // Проверить соединение. Возвращает FALSE, если соединение невозможно восстановить
+    // РџСЂРѕРІРµСЂРёС‚СЊ СЃРѕРµРґРёРЅРµРЅРёРµ. Р’РѕР·РІСЂР°С‰Р°РµС‚ FALSE, РµСЃР»Рё СЃРѕРµРґРёРЅРµРЅРёРµ РЅРµРІРѕР·РјРѕР¶РЅРѕ РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ
     function Check(): boolean; virtual;
     property Active: Boolean read FActive;
-    // Отправить сообщение через этот линк
+    // РћС‚РїСЂР°РІРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ С‡РµСЂРµР· СЌС‚РѕС‚ Р»РёРЅРє
     function SendMsg(Msg: TDnmpMsg): boolean; virtual;
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
-    // Утвердить линк, принять его в сеть
+    // РЈС‚РІРµСЂРґРёС‚СЊ Р»РёРЅРє, РїСЂРёРЅСЏС‚СЊ РµРіРѕ РІ СЃРµС‚СЊ
     function Approve(): Boolean;
   end;
 
@@ -192,8 +192,8 @@ type
 
   TIncomingLinkEvent = procedure(Sender: TObject; Link: TDnmpLink) of object;
 
-  // Базовый класс приемника подключений
-  // Создает новые входящие подключения, прозводит опознание клиентов
+  // Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РїСЂРёРµРјРЅРёРєР° РїРѕРґРєР»СЋС‡РµРЅРёР№
+  // РЎРѕР·РґР°РµС‚ РЅРѕРІС‹Рµ РІС…РѕРґСЏС‰РёРµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ, РїСЂРѕР·РІРѕРґРёС‚ РѕРїРѕР·РЅР°РЅРёРµ РєР»РёРµРЅС‚РѕРІ
   // NOT USED, see TDnmpLink
   TDnmpListener = class(TObject)
   protected
@@ -220,16 +220,16 @@ type
     DelayedMsgList: TDnmpMsgQueue;
   end;
 
-  // Запись таблицы маршрутизации
+  // Р—Р°РїРёСЃСЊ С‚Р°Р±Р»РёС†С‹ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё
   TDnmpRoutingTableRecord = record
-    DestNodeID: TNodeID; // Узел назначения
-    GateNodeID: TNodeID; // Соседний узел, за которым прячется узел назначения
-    TraceID: Cardinal;   // Таймштамп трассировки
+    DestNodeID: TNodeID; // РЈР·РµР» РЅР°Р·РЅР°С‡РµРЅРёСЏ
+    GateNodeID: TNodeID; // РЎРѕСЃРµРґРЅРёР№ СѓР·РµР», Р·Р° РєРѕС‚РѕСЂС‹Рј РїСЂСЏС‡РµС‚СЃСЏ СѓР·РµР» РЅР°Р·РЅР°С‡РµРЅРёСЏ
+    TraceID: Cardinal;   // РўР°Р№РјС€С‚Р°РјРї С‚СЂР°СЃСЃРёСЂРѕРІРєРё
   end;
 
   TDnmpRoutingTableRecordArray = array of TDnmpRoutingTableRecord;
 
-  // Таблица маршрутизации сервера
+  // РўР°Р±Р»РёС†Р° РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё СЃРµСЂРІРµСЂР°
   TDnmpRoutingTable = class(TObject)
   private
     FItems: TDnmpRoutingTableRecordArray;
@@ -241,33 +241,33 @@ type
     destructor Destroy; override;
     property Items: TDnmpRoutingTableRecordArray read FItems;
     property Count: Integer read FCount;
-    // Определяет линк для заданного адреса
+    // РћРїСЂРµРґРµР»СЏРµС‚ Р»РёРЅРє РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ Р°РґСЂРµСЃР°
     function LinkForDestAddr(Addr: TAddr): TDnmpLink;
-    // Добавляет запись таблицы маршрутизации
+    // Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РїРёСЃСЊ С‚Р°Р±Р»РёС†С‹ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё
     procedure AddItem(GateID, DestID: TNodeID; TraceID: Cardinal);
-    // Добавляет записи таблицы маршрутизации из синбаев
+    // Р”РѕР±Р°РІР»СЏРµС‚ Р·Р°РїРёСЃРё С‚Р°Р±Р»РёС†С‹ РјР°СЂС€СЂСѓС‚РёР·Р°С†РёРё РёР· СЃРёРЅР±Р°РµРІ
     procedure AddRountingItems(GateID: TNodeID; TraceID: Cardinal; SeenBy: TSeenBy);
-    // Удаляет все записи с указанным GateID
+    // РЈРґР°Р»СЏРµС‚ РІСЃРµ Р·Р°РїРёСЃРё СЃ СѓРєР°Р·Р°РЅРЅС‹Рј GateID
     procedure DelGate(GateID: TNodeID);
-    // Удаляет запись с указанным DestID
+    // РЈРґР°Р»СЏРµС‚ Р·Р°РїРёСЃСЊ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј DestID
     procedure DelDest(DestID: TNodeID);
-    // Удаляет все записи
+    // РЈРґР°Р»СЏРµС‚ РІСЃРµ Р·Р°РїРёСЃРё
     procedure Clear();
   end;
 
-  // Базовый класс обработчика входящих сообщений
+  // Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РѕР±СЂР°Р±РѕС‚С‡РёРєР° РІС…РѕРґСЏС‰РёС… СЃРѕРѕР±С‰РµРЅРёР№
   // for links only
   TDnmpParser = class(TObject)
   public
     Mgr: TDnmpManager;
     Link: TDnmpLink;
-    // Запуск парсера
+    // Р—Р°РїСѓСЃРє РїР°СЂСЃРµСЂР°
     function Start(): Boolean; virtual; abstract;
-    // Разбор сообщения и выполнение требуемых действий
+    // Р Р°Р·Р±РѕСЂ СЃРѕРѕР±С‰РµРЅРёСЏ Рё РІС‹РїРѕР»РЅРµРЅРёРµ С‚СЂРµР±СѓРµРјС‹С… РґРµР№СЃС‚РІРёР№
     function ParseMessage(Msg: TDnmpMsg): Boolean; virtual; abstract;
   end;
 
-  {// Список поддерживаемых типов сообщений
+  {// РЎРїРёСЃРѕРє РїРѕРґРґРµСЂР¶РёРІР°РµРјС‹С… С‚РёРїРѕРІ СЃРѕРѕР±С‰РµРЅРёР№
   TDnmpMsgTypes = class(TList)
   public
     constructor Create(sTypes: string);
@@ -276,7 +276,7 @@ type
     function HasType(sType: string): Boolean;
   end;}
 
-  // Базовый класс обработчика входящих сообщений
+  // Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РѕР±СЂР°Р±РѕС‚С‡РёРєР° РІС…РѕРґСЏС‰РёС… СЃРѕРѕР±С‰РµРЅРёР№
   // services
 
   { TDnmpMsgHandler }
@@ -291,10 +291,10 @@ type
     constructor Create(AMgr: TDnmpManager);
     { Remove self from Mgr.MsgHandlers }
     destructor Destroy(); override;
-    { Обработка команды (Thread-safe) от указанного адреса }
+    { РћР±СЂР°Р±РѕС‚РєР° РєРѕРјР°РЅРґС‹ (Thread-safe) РѕС‚ СѓРєР°Р·Р°РЅРЅРѕРіРѕ Р°РґСЂРµСЃР° }
     function Cmd(Text: string; Addr: TAddr): string; virtual; abstract;
-    // Разбор сообщения и выполнение требуемых действий
-    // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
+    // Р Р°Р·Р±РѕСЂ СЃРѕРѕР±С‰РµРЅРёСЏ Рё РІС‹РїРѕР»РЅРµРЅРёРµ С‚СЂРµР±СѓРµРјС‹С… РґРµР№СЃС‚РІРёР№
+    // Р’РѕР·РІСЂР°С‰Р°РµС‚ True РµСЃР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ Рё РґР°Р»СЊРЅРµР№С€Р°СЏ РѕР±СЂР°Р±РѕС‚РєР° РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
     function ParseMsg(AMsg: TDnmpMsg): Boolean; virtual; abstract;
   end;
 
@@ -305,7 +305,7 @@ type
   TChannelMsgEvent = procedure(SrcAddr: TAddr; AGroupName, AText: string) of object;
   TForumMsgEvent = procedure(SrcAddr: TAddr; AGroupName, ATopic, AText: string) of object;
 
-  // Базовый класс менеджера
+  // Р‘Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РјРµРЅРµРґР¶РµСЂР°
   TDnmpManager = class(TObject)
   private
     FOnLog: TLogEvent;
@@ -377,7 +377,7 @@ type
     function GetInfoByAddr(Addr: TAddr): TLinkInfo;
     function GetInfoByGUID(SomeGUID: string): TLinkInfo;
     function Approve(ALinkInfo: TLinkInfo): boolean;
-    // ==== Сервисные функции
+    // ==== РЎРµСЂРІРёСЃРЅС‹Рµ С„СѓРЅРєС†РёРё
     procedure SendChatMsg(DestAddr: TAddr; Text: string);
     //procedure SendPvtMsg(DestAddr: TAddr; Info, Text: string); virtual; abstract;
     //procedure SendChannelMsg(GroupName, Text: string); virtual; abstract;
@@ -870,7 +870,7 @@ begin
   Result:=True;
 end;
 
-/// Проверяет наличие адреса в синбаях
+/// РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ Р°РґСЂРµСЃР° РІ СЃРёРЅР±Р°СЏС…
 function TDnmpMsg.HaveSeenBy(Addr: TAddr): boolean;
 var
   i: Integer;
@@ -886,7 +886,7 @@ begin
   end;
 end;
 
-/// Добавляет адрес в синбаи
+/// Р”РѕР±Р°РІР»СЏРµС‚ Р°РґСЂРµСЃ РІ СЃРёРЅР±Р°Рё
 function TDnmpMsg.AddSeenBy(Addr: TAddr): boolean;
 begin
   Result:=False;
@@ -1338,7 +1338,7 @@ begin
   end;
 end;
 
-// Удаляет все записи с указанным GateID
+// РЈРґР°Р»СЏРµС‚ РІСЃРµ Р·Р°РїРёСЃРё СЃ СѓРєР°Р·Р°РЅРЅС‹Рј GateID
 procedure TDnmpRoutingTable.DelGate(GateID: TNodeID);
 var
   i: Integer;
@@ -1354,7 +1354,7 @@ begin
   end;
 end;
 
-// Удаляет запись с указанным DestID
+// РЈРґР°Р»СЏРµС‚ Р·Р°РїРёСЃСЊ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј DestID
 procedure TDnmpRoutingTable.DelDest(DestID: TNodeID);
 var
   i: Integer;
@@ -1371,7 +1371,7 @@ begin
   end;
 end;
 
-// Удаляет все записи
+// РЈРґР°Р»СЏРµС‚ РІСЃРµ Р·Р°РїРёСЃРё
 procedure TDnmpRoutingTable.Clear();
 begin
   FCount:=0;
@@ -1390,9 +1390,9 @@ end;
 
 destructor TDnmpLink.Destroy();
 begin
-  // Инфа о линке может попасть в поинтлист или нодлист
-  // Если мы ее убьем здесь, то в другом месте может возникнуть ошибка при попытке
-  // убить инфу второй раз
+  // РРЅС„Р° Рѕ Р»РёРЅРєРµ РјРѕР¶РµС‚ РїРѕРїР°СЃС‚СЊ РІ РїРѕРёРЅС‚Р»РёСЃС‚ РёР»Рё РЅРѕРґР»РёСЃС‚
+  // Р•СЃР»Рё РјС‹ РµРµ СѓР±СЊРµРј Р·РґРµСЃСЊ, С‚Рѕ РІ РґСЂСѓРіРѕРј РјРµСЃС‚Рµ РјРѕР¶РµС‚ РІРѕР·РЅРёРєРЅСѓС‚СЊ РѕС€РёР±РєР° РїСЂРё РїРѕРїС‹С‚РєРµ
+  // СѓР±РёС‚СЊ РёРЅС„Сѓ РІС‚РѕСЂРѕР№ СЂР°Р·
   if (Mgr.PointList.IndexOf(LinkInfo)=-1) and (Mgr.NodeList.IndexOf(LinkInfo)=-1) then
   begin
     FreeAndNil(LinkInfo);
@@ -1745,7 +1745,7 @@ begin
   if Assigned(CmdQueue) then CmdQueue.Add(CmdText);
 end;
 
-procedure TDnmpManager.Tick(); // Выполняет команды из очереди команд
+procedure TDnmpManager.Tick(); // Р’С‹РїРѕР»РЅСЏРµС‚ РєРѕРјР°РЅРґС‹ РёР· РѕС‡РµСЂРµРґРё РєРѕРјР°РЅРґ
 begin
   if Assigned(CmdQueue) then
   begin
@@ -1842,34 +1842,34 @@ begin
 
   if self.ServerMode then
   begin
-    // Сообщение другому поинту этого узла
+    // РЎРѕРѕР±С‰РµРЅРёРµ РґСЂСѓРіРѕРјСѓ РїРѕРёРЅС‚Сѓ СЌС‚РѕРіРѕ СѓР·Р»Р°
     if Msg.TargetAddr.Node = MyInfo.Addr.Node then
     begin
       TargetPoint:=Msg.TargetAddr.Point;
 
-      // Сообщение самому узлу
+      // РЎРѕРѕР±С‰РµРЅРёРµ СЃР°РјРѕРјСѓ СѓР·Р»Сѓ
       if TargetPoint = MyInfo.Addr.Point then
       begin
         //Mgr.IncomingMsg(Msg, Link);
         Exit;
       end;
 
-      // Поиск поинта назначения в списке поинт-линков
+      // РџРѕРёСЃРє РїРѕРёРЅС‚Р° РЅР°Р·РЅР°С‡РµРЅРёСЏ РІ СЃРїРёСЃРєРµ РїРѕРёРЅС‚-Р»РёРЅРєРѕРІ
       for i:=0 to LinkList.Count-1 do
       begin
         if not LinkList[i].Active then Continue;
         if not LinkList[i].LinkInfo.SameAddr(Msg.TargetAddr) then Continue;
-        // Отправка сообщения поинту
+        // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РїРѕРёРЅС‚Сѓ
         LinkList[i].SendMsg(Msg);
         Exit;
       end;
 
-      // Поиск поинта назначения в поинтлисте
+      // РџРѕРёСЃРє РїРѕРёРЅС‚Р° РЅР°Р·РЅР°С‡РµРЅРёСЏ РІ РїРѕРёРЅС‚Р»РёСЃС‚Рµ
       for i:=0 to PointList.Count-1 do
       begin
         if PointList[i].Addr.Point = TargetPoint then
         begin
-          // Помещаем сообщение в очередь отправки поинту
+          // РџРѕРјРµС‰Р°РµРј СЃРѕРѕР±С‰РµРЅРёРµ РІ РѕС‡РµСЂРµРґСЊ РѕС‚РїСЂР°РІРєРё РїРѕРёРЅС‚Сѓ
           //DelayMsg(Msg);
           //SendInfoMsg(Msg, '201', 'Message delayed');
           DebugText('201 - Message delayed');
@@ -1877,18 +1877,18 @@ begin
         end;
       end;
 
-      // Поинта назначения нет в поинтлисте, возвращаем ошибку
+      // РџРѕРёРЅС‚Р° РЅР°Р·РЅР°С‡РµРЅРёСЏ РЅРµС‚ РІ РїРѕРёРЅС‚Р»РёСЃС‚Рµ, РІРѕР·РІСЂР°С‰Р°РµРј РѕС€РёР±РєСѓ
       //SendErrorMsg(Msg, '101', 'Destination point not found');
       DebugText('101 - Destination point not found');
       Result:=False;
       Exit;
     end;
 
-    // Сообщение на другой узел
-    // Сообщение всем узлам
+    // РЎРѕРѕР±С‰РµРЅРёРµ РЅР° РґСЂСѓРіРѕР№ СѓР·РµР»
+    // РЎРѕРѕР±С‰РµРЅРёРµ РІСЃРµРј СѓР·Р»Р°Рј
     if SameAddr(Msg.TargetAddr, NewAddr()) then
     begin
-      // Отправка сообщения на узлы-линки
+      // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РЅР° СѓР·Р»С‹-Р»РёРЅРєРё
       for i:=0 to LinkList.Count-1 do
       begin
         if not LinkList[i].Active then Continue;
@@ -1896,7 +1896,7 @@ begin
         if Msg.HaveSeenBy(LinkList[i].LinkInfo.Addr) then Continue;
         LinkList[i].SendMsg(Msg);
       end;
-      // Отправка на аплинк
+      // РћС‚РїСЂР°РІРєР° РЅР° Р°РїР»РёРЅРє
       if Assigned(Uplink) then
       begin
         if not Msg.HaveSeenBy(Uplink.LinkInfo.Addr) then Uplink.SendMsg(Msg);
@@ -1904,19 +1904,19 @@ begin
       Exit;
     end;
 
-    // Поиск среди узлов-линков
+    // РџРѕРёСЃРє СЃСЂРµРґРё СѓР·Р»РѕРІ-Р»РёРЅРєРѕРІ
     for i:=0 to LinkList.Count-1 do
     begin
       //if LinkList[i].LinkType <> ltNode then Continue;
       if not LinkList[i].Active then Continue;
       if not LinkList[i].LinkInfo.SameNode(Msg.TargetAddr) then Continue;
       if Msg.HaveSeenBy(LinkList[i].LinkInfo.Addr) then Continue;
-      // Отправка сообщения на узел
+      // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РЅР° СѓР·РµР»
       LinkList[i].SendMsg(Msg);
       Exit;
     end;
 
-    // Отправка по правилам роутинга
+    // РћС‚РїСЂР°РІРєР° РїРѕ РїСЂР°РІРёР»Р°Рј СЂРѕСѓС‚РёРЅРіР°
     DnmpLink:=RoutingTable.LinkForDestAddr(Msg.TargetAddr);
     if Assigned(DnmpLink) then
     begin
@@ -1928,18 +1928,18 @@ begin
     end;
   end;
 
-  // Если аплинк существует
+  // Р•СЃР»Рё Р°РїР»РёРЅРє СЃСѓС‰РµСЃС‚РІСѓРµС‚
   if Assigned(Uplink) then
   begin
     if (Uplink.Active) and (not Msg.HaveSeenBy(Uplink.LinkInfo.Addr)) then
     begin
-      // Отправка на аплинк
+      // РћС‚РїСЂР°РІРєР° РЅР° Р°РїР»РёРЅРє
       Uplink.SendMsg(Msg);
       Exit;
     end;
   end;
 
-  // Отправка сообщения об ошибке
+  // РћС‚РїСЂР°РІРєР° СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ
   //SendErrorMsg(Msg, '102', 'Destination address not found');
   DebugText('102 - Destination address not found');
   Result:=False;
@@ -1979,7 +1979,7 @@ begin
   ExtractCmd(CmdText, sCmd, sParams);
   if sCmd='AUTH_OK' then
   begin
-    // Кто-то успешно авторизировался
+    // РљС‚Рѕ-С‚Рѕ СѓСЃРїРµС€РЅРѕ Р°РІС‚РѕСЂРёР·РёСЂРѕРІР°Р»СЃСЏ
     Event('MGR','REFRESH');
   end
 
@@ -1991,13 +1991,13 @@ begin
 
   else if sCmd='ASK' then
   begin
-    // Команда отправки запроса чего-то
+    // РљРѕРјР°РЅРґР° РѕС‚РїСЂР°РІРєРё Р·Р°РїСЂРѕСЃР° С‡РµРіРѕ-С‚Рѕ
   end
 
   else if sCmd='APPROVE' then
   begin
     // APPROVE <GUID>
-    // Подтверждает авторизацию линка с указанным GUID
+    // РџРѕРґС‚РІРµСЂР¶РґР°РµС‚ Р°РІС‚РѕСЂРёР·Р°С†РёСЋ Р»РёРЅРєР° СЃ СѓРєР°Р·Р°РЅРЅС‹Рј GUID
     if sParams='' then Exit;
     li:=GetInfoByGUID(sParams);
     if Assigned(li) then Approve(li);
@@ -2006,7 +2006,7 @@ begin
   else if sCmd='GET_INFO' then
   begin
     // GET_INFO <addr>
-    // Отправляет на указанный адрес запрос на получение информации
+    // РћС‚РїСЂР°РІР»СЏРµС‚ РЅР° СѓРєР°Р·Р°РЅРЅС‹Р№ Р°РґСЂРµСЃ Р·Р°РїСЂРѕСЃ РЅР° РїРѕР»СѓС‡РµРЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё
     if sParams='' then Exit;
     RequestInfoByAddr(StrToAddr(sParams));
   end
@@ -2014,7 +2014,7 @@ begin
   else if sCmd='GET_POINTLIST' then
   begin
     // GET_POINTLIST <addr>
-    // Отправляет на указанный адрес запрос на получение списка поинтов
+    // РћС‚РїСЂР°РІР»СЏРµС‚ РЅР° СѓРєР°Р·Р°РЅРЅС‹Р№ Р°РґСЂРµСЃ Р·Р°РїСЂРѕСЃ РЅР° РїРѕР»СѓС‡РµРЅРёРµ СЃРїРёСЃРєР° РїРѕРёРЅС‚РѕРІ
     if sParams='' then Exit;
     RequestPointlist(StrToAddr(sParams));
   end
@@ -2022,11 +2022,11 @@ begin
   else if sCmd='ROUTE' then
   begin
     // ROUTE VIA <gate_id> <node_id> [node2_id] ..
-    // Добавляет маршруты на указанные узлы через узел gate.
-    // Если на узел уже есть маршрут, то он будет заменен
+    // Р”РѕР±Р°РІР»СЏРµС‚ РјР°СЂС€СЂСѓС‚С‹ РЅР° СѓРєР°Р·Р°РЅРЅС‹Рµ СѓР·Р»С‹ С‡РµСЂРµР· СѓР·РµР» gate.
+    // Р•СЃР»Рё РЅР° СѓР·РµР» СѓР¶Рµ РµСЃС‚СЊ РјР°СЂС€СЂСѓС‚, С‚Рѕ РѕРЅ Р±СѓРґРµС‚ Р·Р°РјРµРЅРµРЅ
     //
     // ROUTE DEL <node_id>|ALL [node2_id] ...
-    // Удаляет маршруты на указанные узлы
+    // РЈРґР°Р»СЏРµС‚ РјР°СЂС€СЂСѓС‚С‹ РЅР° СѓРєР°Р·Р°РЅРЅС‹Рµ СѓР·Р»С‹
     //
     if sParams='' then Exit;
     saParams:=ParseStr(sParams);
@@ -2079,14 +2079,14 @@ begin
   Result:=false;
   if ServerMode then Exit;
 
-  // Создаем новый GUID (???)
+  // РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ GUID (???)
   CreateGUID(NewGUID);
   ALinkInfo.GUID:=GUIDToString(NewGUID);
   ALinkInfo.SeniorGUID:=MyInfo.GUID;
 
   if ALinkInfo.LinkType = ltPoint then
   begin
-    // Выделяем новый номер поинта
+    // Р’С‹РґРµР»СЏРµРј РЅРѕРІС‹Р№ РЅРѕРјРµСЂ РїРѕРёРЅС‚Р°
     if PointList.IndexOf(ALinkInfo)>=0 then Exit;
     ALinkInfo.Addr.Node:=MyInfo.Addr.Node;
     ALinkInfo.Addr.Point:=PointList.GetFreePointID();
@@ -2094,15 +2094,15 @@ begin
   end
   else if ALinkInfo.LinkType = ltNode then
   begin
-    // Выделяем новый номер узла (!!!)
-    // { TODO : Нужна проверка незанятости номера узла в сегменте }
+    // Р’С‹РґРµР»СЏРµРј РЅРѕРІС‹Р№ РЅРѕРјРµСЂ СѓР·Р»Р° (!!!)
+    // { TODO : РќСѓР¶РЅР° РїСЂРѕРІРµСЂРєР° РЅРµР·Р°РЅСЏС‚РѕСЃС‚Рё РЅРѕРјРµСЂР° СѓР·Р»Р° РІ СЃРµРіРјРµРЅС‚Рµ }
     if NodeList.IndexOf(ALinkInfo)>=0 then Exit;
     ALinkInfo.Addr.Node:=NodeList.GetFreeNodeID();
-    { TODO : Нужно учитывать свой адрес в нодлисте }
+    { TODO : РќСѓР¶РЅРѕ СѓС‡РёС‚С‹РІР°С‚СЊ СЃРІРѕР№ Р°РґСЂРµСЃ РІ РЅРѕРґР»РёСЃС‚Рµ }
     if ALinkInfo.Addr.Node=MyInfo.Addr.Node then Inc(ALinkInfo.Addr.Node);
     ALinkInfo.Addr.Point:=0;
     NodeList.Add(ALinkInfo);
-    // Сообщаем другим узлам данные нового узла
+    // РЎРѕРѕР±С‰Р°РµРј РґСЂСѓРіРёРј СѓР·Р»Р°Рј РґР°РЅРЅС‹Рµ РЅРѕРІРѕРіРѕ СѓР·Р»Р°
     //Mgr.SendLinkInfo(LinkInfo, NewAddr());
   end;
   if ContactList.IndexOf(ALinkInfo)>=0 then ContactList.Extract(ALinkInfo);
