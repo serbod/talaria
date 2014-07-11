@@ -70,6 +70,7 @@ object FramePointList: TFramePointList
         BorderSpacing.Around = 4
         ColCount = 2
         FixedCols = 0
+        PopupMenu = pmPointInfo
         TabOrder = 0
         TitleStyle = tsNative
         ColWidths = (

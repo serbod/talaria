@@ -142,6 +142,8 @@ type
     function LoadFromString(s: string): boolean;
   end;
 
+  { TDnmpServiceManager }
+
   TDnmpServiceManager = class(TDnmpMsgHandler)
   private
     FEvent: TDnmpServiceEvent;
@@ -175,7 +177,10 @@ type
     DefaultOwner: TDnmpAbonent;
     constructor Create(AMgr: TDnmpManager);
     destructor Destroy; override;
+    { Service type. For example, 'SRVD' }
     property ServiceType: string read FServiceType;
+    procedure SaveToFile();
+    procedure LoadFromFile();
     { (Server) Find service by sType and sName, then modify it, sAction:
     add - add service info (if not found), set owner by GUID from sParams
     del - delete service and service info
@@ -202,6 +207,7 @@ var
 const
   csSRVDInfoFileName = 'SRVD_info_list.json';
   csSRVDAbonFileName = 'SRVD_abon_list.json';
+  csSRVDKnownFileName = 'SRVD_known_list.json';
 
 function StorageToJson(AStorage: TDnmpStorage): string;
 function StorageFromJson(AStorage: TDnmpStorage; s: string): boolean;
@@ -851,6 +857,7 @@ begin
     begin
       ServiceInfo.Abonents.ParentList:=FServiceMgr.AllAbonents;
       ServiceInfo.Owners.ParentList:=ServiceInfo.Abonents.ParentList;
+      if ServiceInfo.Abonents.IndexOf(FServiceMgr.DefaultOwner)=-1 then ServiceInfo.Abonents.Add(FServiceMgr.DefaultOwner);
     end;
   end;  
 end;
@@ -1031,9 +1038,6 @@ begin
   self.RemoteServiceInfoList:=TDnmpServiceInfoList.Create(True);
   Self.ServiceList:=TDnmpServiceList.Create(True);
 
-  self.AllAbonents.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDAbonFileName));
-  self.ServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDInfoFileName));
-
   self.DefaultOwner:=self.AllAbonents.GetAbonentByGUID(AMgr.MyInfo.GUID);
   if not Assigned(self.DefaultOwner) then
   begin
@@ -1042,16 +1046,29 @@ begin
   end;
 end;
 
-destructor TDnmpServiceManager.Destroy;
+destructor TDnmpServiceManager.Destroy();
 begin
-  StrToFile(Self.Mgr.sDataPath+csSRVDInfoFileName, self.ServiceInfoList.SaveToString);
-  StrToFile(Self.Mgr.sDataPath+csSRVDAbonFileName, self.AllAbonents.SaveToString);
+  self.OnEvent:=nil;
   FreeAndNil(Self.ServiceList);
   FreeAndNil(Self.RemoteServiceInfoList);
   FreeAndNil(Self.ServiceInfoList);
   FreeAndNil(Self.AllAbonents);
   FreeAndNil(ServiceTypes);
   inherited Destroy();
+end;
+
+procedure TDnmpServiceManager.SaveToFile();
+begin
+  StrToFile(Self.Mgr.sDataPath+csSRVDAbonFileName, self.AllAbonents.SaveToString());
+  StrToFile(Self.Mgr.sDataPath+csSRVDInfoFileName, self.ServiceInfoList.SaveToString());
+  StrToFile(Self.Mgr.sDataPath+csSRVDKnownFileName, self.RemoteServiceInfoList.SaveToString());
+end;
+
+procedure TDnmpServiceManager.LoadFromFile();
+begin
+  self.AllAbonents.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDAbonFileName));
+  self.ServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDInfoFileName));
+  self.RemoteServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDKnownFileName));
 end;
 
 function TDnmpServiceManager.ParseMsg(AMsg: TDnmpMsg): boolean;

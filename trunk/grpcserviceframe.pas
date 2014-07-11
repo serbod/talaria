@@ -67,6 +67,10 @@ type
     function FGetSelectedUser(): TDnmpAbonent;
     function FGetSelectedAbonent(): TDnmpAbonent;
     function FGetSelectedBan(): TGrpcBanItem;
+    procedure UpdateAbonents();
+    procedure UpdateUsers();
+    procedure UpdateBanList();
+    procedure UpdateMessagesList();
   public
     { public declarations }
     property Grpc: TDnmpGrpc read FGrpc write FSetGrpc;
@@ -85,7 +89,8 @@ implementation
 procedure TFrameGrpcService.edTopicEditingDone(Sender: TObject);
 begin
   if not Assigned(Grpc) then Exit;
-  Grpc.ParseCmd('SET_TOPIC '+Trim(edTopic.Text), NewAddr());
+  if not Assigned(Grpc.Author) then Exit;
+  Grpc.SetTopic(Grpc.Author.GUID, Trim(edTopic.Text));
 end;
 
 procedure TFrameGrpcService.actBanUserExecute(Sender: TObject);
@@ -119,6 +124,7 @@ var
 begin
   s:=Trim(edSay.Text);
   if s<>'' then Grpc.SayText(Grpc.Author.GUID, s);
+  UpdateMessagesList();
 end;
 
 procedure TFrameGrpcService.actUnbanUserExecute(Sender: TObject);
@@ -192,12 +198,70 @@ begin
   end;
 end;
 
-procedure TFrameGrpcService.Update();
+procedure TFrameGrpcService.UpdateAbonents();
+var
+  i: integer;
+  Abon: TDnmpAbonent;
+begin
+  if Assigned(Grpc.ServiceInfo) then
+  begin
+    lboxAbonentsList.Clear();
+    for i:=0 to Grpc.ServiceInfo.Abonents.Count-1 do
+    begin
+      Abon:=Grpc.ServiceInfo.Abonents[i];
+      lboxAbonentsList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
+    end;
+  end;
+end;
+
+procedure TFrameGrpcService.UpdateUsers();
+var
+  i: integer;
+  Abon: TDnmpAbonent;
+begin
+  lboxUsersList.Clear();
+  for i:=0 to Grpc.UsersList.Count-1 do
+  begin
+    Abon:=Grpc.UsersList[i];
+    lboxUsersList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
+  end;
+end;
+
+procedure TFrameGrpcService.UpdateBanList();
 var
   i: integer;
   Abon: TDnmpAbonent;
   BanItem: TGrpcBanItem;
+begin
+  lboxBanList.Clear();
+  for i:=0 to Grpc.BanList.Count-1 do
+  begin
+    BanItem:=Grpc.BanList.GetItem(i);
+    Abon:=Grpc.GetAbonentByGUID(BanItem.AbonentGUID);
+    if Assigned(Abon) then
+      lboxBanList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, BanItem)
+    else
+      lboxBanList.AddItem(BanItem.AbonentGUID+': '+BanItem.Reason, BanItem);
+  end;
+end;
+
+procedure TFrameGrpcService.UpdateMessagesList();
+var
+  i: integer;
   ChatMsg: TDnmpChannelMessage;
+begin
+  memoMessages.Lines.Clear();
+  for i:=0 to Grpc.MessagesList.Count-1 do
+  begin
+    ChatMsg:=Grpc.MessagesList[i];
+    memoMessages.Lines.AddObject(FormatDateTime('[hh:nn:ss]', ChatMsg.Timestamp)+'<'+ChatMsg.AuthorName+'> '+ChatMsg.Text, ChatMsg);
+  end;
+end;
+
+procedure TFrameGrpcService.Update();
+var
+  i: integer;
+  Abon: TDnmpAbonent;
 begin
   if Assigned(Grpc) then
   begin
@@ -206,42 +270,17 @@ begin
       lbName.Caption:=Grpc.ServiceInfo.Name;
 
       // abonents
-      lboxAbonentsList.Clear();
-      for i:=0 to Grpc.ServiceInfo.Abonents.Count-1 do
-      begin
-        Abon:=Grpc.ServiceInfo.Abonents[i];
-        lboxAbonentsList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
-      end;
+      UpdateAbonents();
     end;
     edTopic.Text:=Grpc.Topic;
 
     // users
-    lboxUsersList.Clear();
-    for i:=0 to Grpc.UsersList.Count-1 do
-    begin
-      Abon:=Grpc.UsersList[i];
-      lboxUsersList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
-    end;
+    UpdateUsers();
 
     // ban list
-    lboxBanList.Clear();
-    for i:=0 to Grpc.BanList.Count-1 do
-    begin
-      BanItem:=Grpc.BanList.GetItem(i);
-      Abon:=Grpc.GetAbonentByGUID(BanItem.AbonentGUID);
-      if Assigned(Abon) then
-        lboxBanList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, BanItem)
-      else
-        lboxBanList.AddItem(BanItem.AbonentGUID+': '+BanItem.Reason, BanItem);
-    end;
+    UpdateBanList();
 
-    memoMessages.Lines.Clear();
-    for i:=0 to Grpc.MessagesList.Count-1 do
-    begin
-      ChatMsg:=Grpc.MessagesList[i];
-      memoMessages.Append(FormatDateTime('[hh:nn:ss]', ChatMsg.Timestamp)+'<'+ChatMsg.AuthorName+'> '+ChatMsg.Text);
-    end;
-
+    UpdateMessagesList();
   end;
 
   inherited Update();

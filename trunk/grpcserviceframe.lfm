@@ -6,8 +6,8 @@ object FrameGrpcService: TFrameGrpcService
   ClientHeight = 502
   ClientWidth = 596
   TabOrder = 0
-  DesignLeft = 346
-  DesignTop = 173
+  DesignLeft = 394
+  DesignTop = 199
   object lbTopic: TLabel
     Left = 168
     Height = 15

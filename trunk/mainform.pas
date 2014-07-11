@@ -28,6 +28,7 @@ type
     tbExit: TToolButton;
     tbOptions: TToolButton;
     procedure actAboutExecute(Sender: TObject);
+    procedure actExitExecute(Sender: TObject);
     procedure tbOptionsClick(Sender: TObject);
   private
     { private declarations }
@@ -54,6 +55,11 @@ procedure TFormMain.actAboutExecute(Sender: TObject);
 begin
   Core.Init();
   UpdatePages();
+end;
+
+procedure TFormMain.actExitExecute(Sender: TObject);
+begin
+  Close();
 end;
 
 procedure TFormMain.UpdatePages();

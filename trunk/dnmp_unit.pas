@@ -74,7 +74,7 @@ type
     /// Читает сообщение из строки Str. Формат строки - цифровой поток
     function FromString(Str: AnsiString): boolean;
     /// Возвращает сообщение в виде строки. Формат строки - цифровой поток
-    function ToString(): AnsiString;
+    function ToString(): AnsiString; reintroduce;
     /// Заполняет секцию параметров из строки, разделенной символами "|"
     function ParseInfo(Str: string): boolean;
     /// Проверяет наличие адреса в синбаях
@@ -84,10 +84,9 @@ type
   //private
   end;
 
-  // { TODO: Сделать своп сообщений на диск }
 
   { TDnmpMsgQueue }
-
+  // { TODO: Сделать своп сообщений на диск }
   TDnmpMsgQueue = class(TObjectList)
   private
     function GetMsg(Index: Integer): TDnmpMsg;
@@ -167,7 +166,7 @@ type
   TIncomingMsgEvent = procedure(Sender: TObject; Msg: TDnmpMsg) of object;
 
   // Базовый класс линка
-  TDnmpLink = class(TObject)
+  TDnmpLink = class(TInterfacedObject)
   protected
     FOnIncomingMsg: TIncomingMsgEvent;
     FActive: boolean;
@@ -191,12 +190,14 @@ type
     function Listen(): boolean; virtual;
     // Проверить соединение. Возвращает FALSE, если соединение невозможно восстановить
     function Check(): boolean; virtual;
-    property Active: Boolean read FActive;
     // Отправить сообщение через этот линк
     function SendMsg(Msg: TDnmpMsg): boolean; virtual;
-    property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
     // Утвердить линк, принять его в сеть
     function Approve(): Boolean;
+    { True when link connected or listening }
+    property Active: Boolean read FActive;
+    { Triggers when link received incoming message }
+    property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
   end;
 
   TDnmpLinkList = class(TObjectList)
@@ -209,26 +210,6 @@ type
   end;
 
   TIncomingLinkEvent = procedure(Sender: TObject; Link: TDnmpLink) of object;
-
-  // Базовый класс приемника подключений
-  // Создает новые входящие подключения, прозводит опознание клиентов
-  // NOT USED, see TDnmpLink
-  TDnmpListener = class(TObject)
-  protected
-    FOnIncomingLink: TIncomingLinkEvent;
-  public
-    Active: boolean;
-    Mgr: TDnmpManager;
-
-    MyInfo: TLinkInfo;
-
-    TmpLinkList: TDnmpLinkList;
-    constructor Create(AMgr: TDnmpManager);
-    destructor Destroy(); override;
-    function Start(): boolean; virtual;
-    function Stop(): boolean; virtual;
-    property OnIncomingLink: TIncomingLinkEvent read FOnIncomingLink write FOnIncomingLink;
-  end;
 
   TDnmpPassport = class(TObject)
   public
@@ -247,10 +228,8 @@ type
 
   TDnmpRoutingTableRecordArray = array of TDnmpRoutingTableRecord;
 
-  // Таблица маршрутизации сервера
-
   { TDnmpRoutingTable }
-
+  // Таблица маршрутизации сервера
   TDnmpRoutingTable = class(TObject)
   private
     FItems: TDnmpRoutingTableRecordArray;
@@ -300,11 +279,9 @@ type
     function HasType(sType: string): Boolean;
   end;}
 
+  { TDnmpMsgHandler }
   // Базовый класс обработчика входящих сообщений
   // services
-
-  { TDnmpMsgHandler }
-
   TDnmpMsgHandler = class(TObject)
   protected
     FMgr: TDnmpManager;
@@ -329,7 +306,10 @@ type
   TChannelMsgEvent = procedure(SrcAddr: TAddr; AGroupName, AText: string) of object;
   TForumMsgEvent = procedure(SrcAddr: TAddr; AGroupName, ATopic, AText: string) of object;
 
-  // Базовый класс менеджера
+  // Manager base class
+
+  { TDnmpManager }
+
   TDnmpManager = class(TObject)
   private
     FOnLog: TLogEvent;
@@ -338,32 +318,36 @@ type
     FOnIncomingMsg: TIncomingMsgEvent;
     FServerMode: Boolean;
     CmdQueue: TStringList;
+    FUplink: TDnmpLink;
+    FListenerLink: TDnmpLink;
+    procedure FSetUplink(Value: TDnmpLink);
+    procedure FSetListenerLink(Value: TDnmpLink);
     function CmdHandler(CmdText: string): string;
     procedure IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
     procedure ReadConfig();
     procedure WriteConfig();
   public
     MyInfo: TLinkInfo;
-    /// Known linkable nodes
+    // Known linkable nodes
     NodeList: TNodeList;
-    /// Owned points (Server only)
+    // Owned points (Server only)
     PointList: TPointList;
-    /// Known points
+    // Known points
     ContactList: TLinkInfoList;
-    /// Default uplink
-    Uplink: TDnmpLink;
-    /// Listener (Server only)
-    ListenerLink: TDnmpLink;
-    /// Active links
+    // Active links
     LinkList: TDnmpLinkList;
-    /// Outgoing messages queue
+    // Outgoing messages queue
     MsgQueue: TDnmpMsgQueue;
     Conf: TDnmpConf;
     RoutingTable: TDnmpRoutingTable;
-    /// Incoming messages handlers
+    // Incoming messages handlers
     MsgHandlers: TObjectList;
-    /// Path to data files
+    { Path to data files }
     sDataPath: string;
+    // Default uplink
+    property Uplink: TDnmpLink read FUplink write FSetUplink;
+    // Listener (Server only)
+    property ListenerLink: TDnmpLink read FListenerLink write FSetListenerLink;
 
     constructor Create(ConfName: string);
     destructor Destroy(); override;
@@ -386,11 +370,13 @@ type
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
     procedure IncomingMsgHandler(Sender: TObject; Msg: TDnmpMsg);
+    // Triggers OnLog
     procedure DebugText(s: string);
-    procedure DebugMsg(Msg: TDnmpMsg; Link: TDnmpLink; Comment: string);
-    // Execute text command
+    // Triggers OnLog, show Msg and Link (optional) details
+    procedure DebugMsg(Msg: TDnmpMsg; Link: TDnmpLink = nil; Comment: string = '');
+    // Execute text command, triggers OnCmd
     function Cmd(CmdText: string): string;
-    // Internal event
+    // Internal event, triggers OnEvent
     procedure Event(Sender, Text: string);
     // Add text command to commands queue
     procedure AddCmd(CmdText: string);
@@ -420,7 +406,7 @@ type
   end;
 
   /// Return addr 0.0
-  function NewAddr(): TAddr;
+  function EmptyAddr(): TAddr;
   function AddrToStr(Addr: TAddr): string;
   function StrToAddr(StrAddr: string): TAddr;
   /// Return True, if given addresses equal
@@ -475,7 +461,7 @@ begin
 end;
 }
 
-function NewAddr(): TAddr;
+function EmptyAddr(): TAddr;
 begin
   Result.Node:=0;
   Result.Point:=0;
@@ -1064,7 +1050,7 @@ begin
     end;
     ms.Clear();
     ms.CopyFrom(fs, msSize);
-    msg:=TDnmpMsg.Create(NewAddr, NewAddr, '','','');
+    msg:=TDnmpMsg.Create(EmptyAddr, EmptyAddr, '','','');
     if msg.FromStream(ms) then Self.Add(msg) else msg.Free();
   until fs.Position = fs.Size;
   ms.Free();
@@ -1572,32 +1558,6 @@ begin
   Result:=Active;
 end;
 
-
-// === TDnmpListener ===
-constructor TDnmpListener.Create(AMgr: TDnmpManager);
-begin
-  inherited Create();
-  Mgr:=AMgr;
-  MyInfo:=Mgr.MyInfo;
-end;
-
-destructor TDnmpListener.Destroy();
-begin
-  Self.Stop();
-  inherited Destroy();
-end;
-
-function TDnmpListener.Start(): boolean;
-begin
-  Result:=False;
-end;
-
-function TDnmpListener.Stop(): boolean;
-begin
-  Active:=False;
-  Result:=True;
-end;
-
 // === TDnmpMsgParser ===
 constructor TDnmpMsgHandler.Create(AMgr: TDnmpManager);
 begin
@@ -1646,6 +1606,12 @@ end;
 destructor TDnmpManager.Destroy();
 begin
   WriteConfig();
+  // remove events
+  Self.OnLog:=nil;
+  Self.OnCmd:=nil;
+  Self.OnEvent:=nil;
+  Self.OnIncomingMsg:=nil;
+
   // ServiceDirectory created not in constructor
   if Assigned(MsgHandlers) then FreeAndNil(MsgHandlers);
 
@@ -1721,6 +1687,7 @@ begin
   if not Assigned(ListenerLink) then Exit;
   LinkList.Remove(ListenerLink);
   //FreeAndNil(ListenerLink);
+  ListenerLink.OnIncomingMsg:=nil;
   ListenerLink:=nil;
   DebugText('Server stopped.');
 end;
@@ -1730,6 +1697,7 @@ begin
   if not Assigned(Uplink) then Exit;
   if Uplink.Disconnect() then LinkList.Remove(Uplink);
   //FreeAndNil(Uplink);
+  UpLink.OnIncomingMsg:=nil;
   Uplink:=nil;
   DebugText('Client stopped.');
 end;
@@ -1767,16 +1735,19 @@ end;
 procedure TDnmpManager.StopNodeConnection(NodeInfo: TLinkInfo);
 var
   i: Integer;
+  tmpLink: TDnmpLink;
 begin
-  if Assigned(Uplink) then
+  if Assigned(Uplink) and SameAddr(Uplink.LinkInfo.Addr, NodeInfo.Addr) then
   begin
-    if SameAddr(Uplink.LinkInfo.Addr, NodeInfo.Addr) then Uplink:=nil;
+    Uplink:=nil;
   end;
   for i:=0 to LinkList.Count-1 do
   begin
-    if SameAddr(TDnmpLink(LinkList[i]).LinkInfo.Addr, NodeInfo.Addr) then
+    tmpLink:=LinkList[i];
+    if SameAddr(tmpLink.LinkInfo.Addr, NodeInfo.Addr) then
     begin
       DebugText('Removing node link: '+NodeInfo.AddrStr()+' '+NodeInfo.Name);
+      tmpLink.OnIncomingMsg:=nil;
       LinkList.Delete(i);
       Event('MGR','REFRESH');
       Exit;
@@ -1802,6 +1773,7 @@ function TDnmpManager.DelLink(Link: TDnmpLink): Boolean;
 begin
   //Result:=self.LinkList.Remove(Link);
   Result:=True;
+  Link.OnIncomingMsg:=nil;
   self.LinkList.Extract(Link);
 end;
 
@@ -1816,21 +1788,21 @@ var
   i: integer;
 begin
   // Log message
-  if Assigned(FOnLog) then
+  if Assigned(FOnLog) and Assigned(Msg) then
   begin
     sLinkInfo:='';
     if Assigned(Link) then
     begin
       sLinkInfo:=Link.LinkInfo.AddrStr+' '+Link.LinkInfo.Name;
     end;
-    s:='---------------------------------------------'+#13+#10
-    +Comment+' '+sLinkInfo+#13+#10
-    +'['+Msg.MsgType+']  '+AddrToStr(Msg.SourceAddr)+' -> '+AddrToStr(Msg.TargetAddr)+'  ('+TimestampToStr(Msg.TimeStamp)+')'+#13+#10;
+    s:='---------------------------------------------'+LineEnding
+    +Comment+' '+sLinkInfo+LineEnding
+    +'['+Msg.MsgType+']  '+AddrToStr(Msg.SourceAddr)+' -> '+AddrToStr(Msg.TargetAddr)+'  ('+TimestampToStr(Msg.TimeStamp)+')'+LineEnding;
     for i:=0 to Msg.Info.Count-1 do
     begin
-      s:=s+Msg.Info[i]+#13+#10;
+      s:=s+Msg.Info[i]+LineEnding;
     end;
-    if Msg.Data.Size > 0 then s:=s+'Data size = '+IntToStr(Msg.Data.Size)+#13+#10;
+    if Msg.Data.Size > 0 then s:=s+'Data size = '+IntToStr(Msg.Data.Size)+LineEnding;
     OnLog(Self, s);
   end;
 end;
@@ -2023,7 +1995,7 @@ begin
 
     // Сообщение на другой узел
     // Сообщение всем узлам
-    if SameAddr(Msg.TargetAddr, NewAddr()) then
+    if SameAddr(Msg.TargetAddr, EmptyAddr()) then
     begin
       // Отправка сообщения на узлы-линки
       for i:=0 to LinkList.Count-1 do
@@ -2101,6 +2073,20 @@ end;
 procedure TDnmpManager.SendChatMsg(DestAddr: TAddr; Text: string);
 begin
   SendDataMsg(DestAddr, 'CHAT', '', Text);
+end;
+
+procedure TDnmpManager.FSetUplink(Value: TDnmpLink);
+begin
+  if Assigned(FUplink) then FUplink.OnIncomingMsg:=nil;
+  FUplink:=Value;
+  if Assigned(FUplink) then FUplink.OnIncomingMsg:=@IncomingMsgHandler;
+end;
+
+procedure TDnmpManager.FSetListenerLink(Value: TDnmpLink);
+begin
+  if Assigned(FListenerLink) then FListenerLink.OnIncomingMsg:=nil;
+  FListenerLink:=Value;
+  if Assigned(FListenerLink) then FListenerLink.OnIncomingMsg:=@IncomingMsgHandler;
 end;
 
 function TDnmpManager.CmdHandler(CmdText: string): string;
@@ -2235,12 +2221,12 @@ begin
     if ALinkInfo.Addr.Node=MyInfo.Addr.Node then Inc(ALinkInfo.Addr.Node);
     ALinkInfo.Addr.Point:=0;
     NodeList.Add(ALinkInfo);
-    // Сообщаем другим узлам данные нового узла
-    //Mgr.SendLinkInfo(LinkInfo, NewAddr());
+    // TODO : Сообщаем другим узлам данные нового узла
+    //Mgr.SendLinkInfo(LinkInfo, EmptyAddr());
   end;
   if ContactList.IndexOf(ALinkInfo)>=0 then ContactList.Extract(ALinkInfo);
   Result:=true;
-  Event('MGR','APPROVE');
+  self.Event('MGR','APPROVE');
 end;
 
 procedure TDnmpManager.RequestInfoByAddr(Addr: TAddr);
