@@ -43,17 +43,17 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
     function SaveToString(): string;
     function LoadFromString(s: string): boolean;
-    { Содержит список активных подписчиков в формате CSV.
-    Каждый элемент списка содержит сведения:
-    [0] guid - GUID абонента
-    [1] state - состояние (подключен или отключен)
-    [2] nick - ник (имя на канале, не зависит от реального имени)
-    [3] addr - адрес
-    [4] rights - полномочия (набор полномочий)
-    [5] status - статус (сообщение абонента) }
+    { РЎРѕРґРµСЂР¶РёС‚ СЃРїРёСЃРѕРє Р°РєС‚РёРІРЅС‹С… РїРѕРґРїРёСЃС‡РёРєРѕРІ РІ С„РѕСЂРјР°С‚Рµ CSV.
+    РљР°Р¶РґС‹Р№ СЌР»РµРјРµРЅС‚ СЃРїРёСЃРєР° СЃРѕРґРµСЂР¶РёС‚ СЃРІРµРґРµРЅРёСЏ:
+    [0] guid - GUID Р°Р±РѕРЅРµРЅС‚Р°
+    [1] state - СЃРѕСЃС‚РѕСЏРЅРёРµ (РїРѕРґРєР»СЋС‡РµРЅ РёР»Рё РѕС‚РєР»СЋС‡РµРЅ)
+    [2] nick - РЅРёРє (РёРјСЏ РЅР° РєР°РЅР°Р»Рµ, РЅРµ Р·Р°РІРёСЃРёС‚ РѕС‚ СЂРµР°Р»СЊРЅРѕРіРѕ РёРјРµРЅРё)
+    [3] addr - Р°РґСЂРµСЃ
+    [4] rights - РїРѕР»РЅРѕРјРѕС‡РёСЏ (РЅР°Р±РѕСЂ РїРѕР»РЅРѕРјРѕС‡РёР№)
+    [5] status - СЃС‚Р°С‚СѓСЃ (СЃРѕРѕР±С‰РµРЅРёРµ Р°Р±РѕРЅРµРЅС‚Р°) }
     function SaveToCSV(): string;
-    { Загрузить абонентов из сериализованого списка в формате CSV.
-    Состав сведений как в SaveToCSV() }
+    { Р—Р°РіСЂСѓР·РёС‚СЊ Р°Р±РѕРЅРµРЅС‚РѕРІ РёР· СЃРµСЂРёР°Р»РёР·РѕРІР°РЅРѕРіРѕ СЃРїРёСЃРєР° РІ С„РѕСЂРјР°С‚Рµ CSV.
+    РЎРѕСЃС‚Р°РІ СЃРІРµРґРµРЅРёР№ РєР°Рє РІ SaveToCSV() }
     function UpdateFromCSV(sData: string): boolean;
   end;
 
@@ -109,16 +109,16 @@ type
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); virtual;
     destructor Destroy; override;
     property Mgr: TDnmpManager read FMgr;
-    { Получить абрнента по его GUID
-      Ищет сперва в списке абонентов сервиса, затем в общем списке абонентов
-      затем в списках линков и контактов
-      Если не находит, то создает нового }
+    { РџРѕР»СѓС‡РёС‚СЊ Р°Р±СЂРЅРµРЅС‚Р° РїРѕ РµРіРѕ GUID
+      РС‰РµС‚ СЃРїРµСЂРІР° РІ СЃРїРёСЃРєРµ Р°Р±РѕРЅРµРЅС‚РѕРІ СЃРµСЂРІРёСЃР°, Р·Р°С‚РµРј РІ РѕР±С‰РµРј СЃРїРёСЃРєРµ Р°Р±РѕРЅРµРЅС‚РѕРІ
+      Р·Р°С‚РµРј РІ СЃРїРёСЃРєР°С… Р»РёРЅРєРѕРІ Рё РєРѕРЅС‚Р°РєС‚РѕРІ
+      Р•СЃР»Рё РЅРµ РЅР°С…РѕРґРёС‚, С‚Рѕ СЃРѕР·РґР°РµС‚ РЅРѕРІРѕРіРѕ }
     function GetAbonentByGUID(sGUID: string): TDnmpAbonent; virtual;
-    // Обработка команды (Thread-safe) с указанного адреса
+    // РћР±СЂР°Р±РѕС‚РєР° РєРѕРјР°РЅРґС‹ (Thread-safe) СЃ СѓРєР°Р·Р°РЅРЅРѕРіРѕ Р°РґСЂРµСЃР°
     function ParseCmd(Text: string; Addr: TAddr): string; virtual;
-    // Обработка сообщения
+    // РћР±СЂР°Р±РѕС‚РєР° СЃРѕРѕР±С‰РµРЅРёСЏ
     function ParseMsg(AMsg: TDnmpMsg): string; virtual;
-    // Обработчик события
+    // РћР±СЂР°Р±РѕС‚С‡РёРє СЃРѕР±С‹С‚РёСЏ
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
     function ToStorage(): TDnmpStorage; virtual;
     function FromStorage(Storage: TDnmpStorage): boolean; virtual;
@@ -187,10 +187,10 @@ type
     function ModService(sType, sName, sAction, sParams: string): Boolean;
     { Create service with given ServiceInfo }
     function CreateService(ServiceInfo: TDnmpServiceInfo): TDnmpService;
-    // Обработка команды от указанного адреса
+    // РћР±СЂР°Р±РѕС‚РєР° РєРѕРјР°РЅРґС‹ РѕС‚ СѓРєР°Р·Р°РЅРЅРѕРіРѕ Р°РґСЂРµСЃР°
     function Cmd(Text: string; Addr: TAddr): string; override;
-    // Разбор сообщения и выполнение требуемых действий
-    // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
+    // Р Р°Р·Р±РѕСЂ СЃРѕРѕР±С‰РµРЅРёСЏ Рё РІС‹РїРѕР»РЅРµРЅРёРµ С‚СЂРµР±СѓРµРјС‹С… РґРµР№СЃС‚РІРёР№
+    // Р’РѕР·РІСЂР°С‰Р°РµС‚ True РµСЃР»Рё СЃРѕРѕР±С‰РµРЅРёРµ РѕР±СЂР°Р±РѕС‚Р°РЅРѕ Рё РґР°Р»СЊРЅРµР№С€Р°СЏ РѕР±СЂР°Р±РѕС‚РєР° РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ
     function ParseMsg(AMsg: TDnmpMsg): boolean; override;
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
   end;
@@ -860,13 +860,13 @@ begin
   inherited Destroy();
 end;
 
-// Обработка команды
+// РћР±СЂР°Р±РѕС‚РєР° РєРѕРјР°РЅРґС‹
 function TDnmpService.ParseCmd(Text: string; Addr: TAddr): string;
 begin
   Result:='';
 end;
 
-// Обработка сообщения
+// РћР±СЂР°Р±РѕС‚РєР° СЃРѕРѕР±С‰РµРЅРёСЏ
 function TDnmpService.ParseMsg(AMsg: TDnmpMsg): string;
 begin
   Result:='';
@@ -984,7 +984,7 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    { TODO : Сервис создается без менеджера - непорядок }
+    { TODO : РЎРµСЂРІРёСЃ СЃРѕР·РґР°РµС‚СЃСЏ Р±РµР· РјРµРЅРµРґР¶РµСЂР° - РЅРµРїРѕСЂСЏРґРѕРє }
     Item:=TDnmpService.Create(nil, nil, nil); // <- !!
     if not Item.FromStorage(SubStorage.GetObject(i)) then
     begin
@@ -1064,7 +1064,7 @@ begin
   sType:=AMsg.MsgType;
   if sType = ServiceType then
   begin
-    // Это команда?
+    // Р­С‚Рѕ РєРѕРјР°РЅРґР°?
     s:=Trim(AMsg.Info.Values['cmd']);
     if s <> '' then
     begin
@@ -1074,7 +1074,7 @@ begin
       Exit;
     end;
 
-    // Это данные?
+    // Р­С‚Рѕ РґР°РЅРЅС‹Рµ?
     s:=Trim(AMsg.Info.Values['data']);
     if s <> '' then
     begin
@@ -1083,7 +1083,7 @@ begin
       Exit;
     end;
 
-    // Это описание сервиса?
+    // Р­С‚Рѕ РѕРїРёСЃР°РЅРёРµ СЃРµСЂРІРёСЃР°?
     s:=Trim(AMsg.Info.Values['type']);
     if s <> '' then
     begin
@@ -1431,17 +1431,17 @@ begin
   end;
 end;
 
-// Информация о сервисе
-// Параметры:
-// type - Тип сервиса
-// name - Название сервиса (до 256 печатаемых символов)
-// parent - Название сервиса-владельца (до 256 печатаемых символов)
-// abonent_count - Число подписчиков
-// provider - Адрес узла для подписки
-// rating - Рейтинг сервиса
-// ownerNN - Список GUID владельцев, где NN порядковый номер
-// Данные:
-// Описание сервиса (строка символов)
+// РРЅС„РѕСЂРјР°С†РёСЏ Рѕ СЃРµСЂРІРёСЃРµ
+// РџР°СЂР°РјРµС‚СЂС‹:
+// type - РўРёРї СЃРµСЂРІРёСЃР°
+// name - РќР°Р·РІР°РЅРёРµ СЃРµСЂРІРёСЃР° (РґРѕ 256 РїРµС‡Р°С‚Р°РµРјС‹С… СЃРёРјРІРѕР»РѕРІ)
+// parent - РќР°Р·РІР°РЅРёРµ СЃРµСЂРІРёСЃР°-РІР»Р°РґРµР»СЊС†Р° (РґРѕ 256 РїРµС‡Р°С‚Р°РµРјС‹С… СЃРёРјРІРѕР»РѕРІ)
+// abonent_count - Р§РёСЃР»Рѕ РїРѕРґРїРёСЃС‡РёРєРѕРІ
+// provider - РђРґСЂРµСЃ СѓР·Р»Р° РґР»СЏ РїРѕРґРїРёСЃРєРё
+// rating - Р РµР№С‚РёРЅРі СЃРµСЂРІРёСЃР°
+// ownerNN - РЎРїРёСЃРѕРє GUID РІР»Р°РґРµР»СЊС†РµРІ, РіРґРµ NN РїРѕСЂСЏРґРєРѕРІС‹Р№ РЅРѕРјРµСЂ
+// Р”Р°РЅРЅС‹Рµ:
+// РћРїРёСЃР°РЅРёРµ СЃРµСЂРІРёСЃР° (СЃС‚СЂРѕРєР° СЃРёРјРІРѕР»РѕРІ)
 //
 function TDnmpServiceManager.ReadServiceInfo(Msg: TDnmpMsg): Boolean;
 var
@@ -1472,13 +1472,13 @@ end;
 
 //
 // SERVICES_LIST
-// Содержит список сервисов в формате CSV.
-// type - тип сервиса
-// name - название сервиса
-// parent - имя вышестоящего сервиса-родителя
-// abonent_count - число абонентов
-// provider - адрес узла для подписки
-// rating - рейтинг сервиса
+// РЎРѕРґРµСЂР¶РёС‚ СЃРїРёСЃРѕРє СЃРµСЂРІРёСЃРѕРІ РІ С„РѕСЂРјР°С‚Рµ CSV.
+// type - С‚РёРї СЃРµСЂРІРёСЃР°
+// name - РЅР°Р·РІР°РЅРёРµ СЃРµСЂРІРёСЃР°
+// parent - РёРјСЏ РІС‹С€РµСЃС‚РѕСЏС‰РµРіРѕ СЃРµСЂРІРёСЃР°-СЂРѕРґРёС‚РµР»СЏ
+// abonent_count - С‡РёСЃР»Рѕ Р°Р±РѕРЅРµРЅС‚РѕРІ
+// provider - Р°РґСЂРµСЃ СѓР·Р»Р° РґР»СЏ РїРѕРґРїРёСЃРєРё
+// rating - СЂРµР№С‚РёРЅРі СЃРµСЂРІРёСЃР°
 //
 function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Boolean;
 var

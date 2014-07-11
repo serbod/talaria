@@ -12,16 +12,16 @@ procedure ShowLinksList(lv: TListView; ll: TDnmpLinkList);
 procedure IniToVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
 procedure IniFromVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
 
-// Копирует один файл в другой
+// РљРѕРїРёСЂСѓРµС‚ РѕРґРёРЅ С„Р°Р№Р» РІ РґСЂСѓРіРѕР№
 function CopyFile(FileNameSrc, FileNameDst: string): boolean;
-// Проверяет заданный путь. Создает каталоги, если их нет
+// РџСЂРѕРІРµСЂСЏРµС‚ Р·Р°РґР°РЅРЅС‹Р№ РїСѓС‚СЊ. РЎРѕР·РґР°РµС‚ РєР°С‚Р°Р»РѕРіРё, РµСЃР»Рё РёС… РЅРµС‚
 function CheckPath(sPath: string): Boolean;
 
-// Возвращает имя пользователя windows
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ windows
 function GetWinUserName(): string;
-// Возвращает имя компьютера
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРјСЏ РєРѕРјРїСЊСЋС‚РµСЂР°
 function GetWinCompName(): string;
-// Возвращает версию Windows
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РІРµСЂСЃРёСЋ Windows
 function GetWinVersion(): string;
 //
 function GetTimestampStr(): string;
@@ -30,15 +30,15 @@ function GetIpHost(sIpAddr: string): string;
 function GetIpPort(sIpAddr: string): string;
 
 type TStringArray = array of string;
-// Парсит строку с пробелами, с учетом двойных кавычек (")
+// РџР°СЂСЃРёС‚ СЃС‚СЂРѕРєСѓ СЃ РїСЂРѕР±РµР»Р°РјРё, СЃ СѓС‡РµС‚РѕРј РґРІРѕР№РЅС‹С… РєР°РІС‹С‡РµРє (")
 function ParseStr(s: String; bAddEmpty: boolean = false): TStringArray;
-// Нормализует строку (добавляет двойные кавычки)
+// РќРѕСЂРјР°Р»РёР·СѓРµС‚ СЃС‚СЂРѕРєСѓ (РґРѕР±Р°РІР»СЏРµС‚ РґРІРѕР№РЅС‹Рµ РєР°РІС‹С‡РєРё)
 function Norm(s: string): string;
-// Из указанной строки возвращает параметр по его номеру
+// РР· СѓРєР°Р·Р°РЅРЅРѕР№ СЃС‚СЂРѕРєРё РІРѕР·РІСЂР°С‰Р°РµС‚ РїР°СЂР°РјРµС‚СЂ РїРѕ РµРіРѕ РЅРѕРјРµСЂСѓ
 function ParamFromStr(s: string; ParamNum: integer): string;
-// Выделяет из строки первое слово и все остальные
+// Р’С‹РґРµР»СЏРµС‚ РёР· СЃС‚СЂРѕРєРё РїРµСЂРІРѕРµ СЃР»РѕРІРѕ Рё РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ
 procedure ExtractCmd(sText: string; var sCmd, sParam: string);
-// Извлекает из строки первое слово, возвращает это слово
+// РР·РІР»РµРєР°РµС‚ РёР· СЃС‚СЂРѕРєРё РїРµСЂРІРѕРµ СЃР»РѕРІРѕ, РІРѕР·РІСЂР°С‰Р°РµС‚ СЌС‚Рѕ СЃР»РѕРІРѕ
 function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
 
@@ -167,7 +167,7 @@ begin
   end;
 end;
 
-// Копирует один файл в другой
+// РљРѕРїРёСЂСѓРµС‚ РѕРґРёРЅ С„Р°Р№Р» РІ РґСЂСѓРіРѕР№
 function CopyFile(FileNameSrc, FileNameDst: string): boolean;
 var
   fss, fsd: TFileStream;
@@ -191,7 +191,7 @@ begin
   end;
 end;
 
-// Проверяет заданный путь. Создает каталоги, если их нет
+// РџСЂРѕРІРµСЂСЏРµС‚ Р·Р°РґР°РЅРЅС‹Р№ РїСѓС‚СЊ. РЎРѕР·РґР°РµС‚ РєР°С‚Р°Р»РѕРіРё, РµСЃР»Рё РёС… РЅРµС‚
 function CheckPath(sPath: string): Boolean;
 begin
   Result:=True;
@@ -201,7 +201,7 @@ begin
   end;
 end;
 
-// Возвращает имя пользователя windows
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ windows
 function GetWinUserName(): string;
 var
   lpBuffer: PChar;
@@ -213,7 +213,7 @@ begin
   result := String(lpBuffer);
 end;
 
-// Возвращает имя компьютера
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ РёРјСЏ РєРѕРјРїСЊСЋС‚РµСЂР°
 function GetWinCompName(): string;
 var
   lpBuffer: PChar;
@@ -261,7 +261,7 @@ begin
   else Result:=Trim(Copy(sIpAddr, i+1, maxint));
 end;
 
-// Нормализует строку
+// РќРѕСЂРјР°Р»РёР·СѓРµС‚ СЃС‚СЂРѕРєСѓ
 function Norm(s: string): string;
 begin
   if (Pos(' ', s)=0) and (s<>'') then result:=s
@@ -271,8 +271,8 @@ begin
   end;
 end;
 
-// Парсит строку с пробелами, с учетом двойных кавычек (")
-// bAddEmpty - признак добавления пустых строк
+// РџР°СЂСЃРёС‚ СЃС‚СЂРѕРєСѓ СЃ РїСЂРѕР±РµР»Р°РјРё, СЃ СѓС‡РµС‚РѕРј РґРІРѕР№РЅС‹С… РєР°РІС‹С‡РµРє (")
+// bAddEmpty - РїСЂРёР·РЅР°Рє РґРѕР±Р°РІР»РµРЅРёСЏ РїСѓСЃС‚С‹С… СЃС‚СЂРѕРє
 function ParseStr(s: String; bAddEmpty: boolean = false): TStringArray;
 var
   i,l,rl: integer;
