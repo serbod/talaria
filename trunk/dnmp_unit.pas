@@ -49,6 +49,7 @@ type
     function GetObjectName(Index: integer): string;
     function GetString(AName: string): string;
     function GetInteger(AName: string): Integer;
+    function GetCardinal(AName: string): Cardinal;
     function GetReal(AName: string): Real;
   end;
 
@@ -63,7 +64,8 @@ type
     Info: TStringList;
     Data: TMemoryStream;
     SeenBy: TSeenBy;
-    constructor Create(SAddr, TAddr: TAddr; AMsgType, Params, DataStr: string);
+    constructor Create();
+    constructor Create(SAddr, TAddr: TAddr; AMsgType, Params, DataStr: string); overload;
     destructor Destroy(); override;
     /// Читает сообщение из цифрового потока AStream
     function FromStream(AStream: TStream): boolean;
@@ -83,6 +85,9 @@ type
   end;
 
   // { TODO: Сделать своп сообщений на диск }
+
+  { TDnmpMsgQueue }
+
   TDnmpMsgQueue = class(TObjectList)
   private
     function GetMsg(Index: Integer): TDnmpMsg;
@@ -90,32 +95,44 @@ type
   public
     property Items[Index: Integer]: TDnmpMsg read GetMsg write SetMsg; default;
     function GetMsgByAddr(FAddr: TAddr): TDnmpMsg;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
     procedure SaveToFile(Filename: string);
     function LoadFromFile(Filename: string): Boolean;
   end;
 
   TDnmpLinkType = (ltPoint, ltNode, ltTemporary);
 
-  { Link information. Refcounted. }
-
   { TLinkInfo }
-
+  { Link information. Refcounted. }
   TLinkInfo = class(TInterfacedObject)
   public
+    { point address }
     Addr: TAddr;
+    { GUID assigned when link approved by node }
     GUID: string;
+    { GUID of node, that approved this link }
     SeniorGUID: string;
+    { Link name }
     Name: string;
+    { Owner info (name, organization, etc) }
     Owner: string;
+    { Location info (address, region) }
     Location: string;
+    { IP address (optional) }
     IpAddr: string;
+    { Phone number (optional) }
     PhoneNo: string;
+    { Any other info}
     OtherInfo: string;
+    { Private key }
     Key: string;
+    { Rating }
     Rating: integer;
+    { indicate, that link active }
     Online: Boolean;
+    { ltPoint, ltNode, ltTemporary }
     LinkType: TDnmpLinkType;
-    //SubscribedGroups: TGroupsList;
     function AddrStr(): string;
     function SameAddr(FAddr: TAddr): Boolean;
     function SameNode(FAddr: TAddr): Boolean;
@@ -125,6 +142,7 @@ type
     function LoadFromCSV(sData: string): boolean;
     function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
     function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
+    { Copy all info from another item }
     procedure Assign(li: TLinkInfo);
   end;
 
@@ -230,6 +248,9 @@ type
   TDnmpRoutingTableRecordArray = array of TDnmpRoutingTableRecord;
 
   // Таблица маршрутизации сервера
+
+  { TDnmpRoutingTable }
+
   TDnmpRoutingTable = class(TObject)
   private
     FItems: TDnmpRoutingTableRecordArray;
@@ -253,6 +274,9 @@ type
     procedure DelDest(DestID: TNodeID);
     // Удаляет все записи
     procedure Clear();
+    { save to storage }
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
   // Базовый класс обработчика входящих сообщений
@@ -425,6 +449,7 @@ type
   function FileToStr(FileName: string): AnsiString;
 
   function GenerateKey(): string;
+  function GenerateGUID(): string;
   // Extract and return first word from string
   function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
@@ -568,6 +593,14 @@ begin
   for i:=1 to ciKeyLength do Result:=Result+sDict[Random(l)+1];
 end;
 
+function GenerateGUID(): string;
+var
+  NewGuid: TGuid;
+begin
+  Result:='';
+  if CreateGUID(NewGuid)=0 then Result:=GUIDToString(NewGuid);
+end;
+
 function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 var
   i: integer;
@@ -689,12 +722,26 @@ begin
   Result:=StrToIntDef(GetString(AName), 0);
 end;
 
+function TDnmpStorage.GetCardinal(AName: string): Cardinal;
+begin
+  Result:=StrToQWordDef(GetString(AName), 0);
+end;
+
 function TDnmpStorage.GetReal(AName: string): Real;
 begin
   Result:=StrToFloatDef(GetString(AName), 0);
 end;
 
-// === TDnmpMsg ===
+{ === TDnmpMsg === }
+
+constructor TDnmpMsg.Create();
+begin
+  inherited Create();
+  self.Info:=TStringList.Create();
+  self.Data:=TMemoryStream.Create();
+  SetLength(Self.SeenBy, 0);
+end;
+
 constructor TDnmpMsg.Create(SAddr, TAddr: TAddr; AMsgType, Params,
   DataStr: string);
 var
@@ -921,6 +968,46 @@ begin
       Exit;
     end;
   end;
+end;
+
+function TDnmpMsgQueue.ToStorage(): TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.Items[i].ToString());
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpMsgQueue');
+  Result.Add('items', Storage);
+end;
+
+function TDnmpMsgQueue.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item: TDnmpMsg;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpMsgQueue' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=TDnmpMsg.Create();
+    if not Item.FromString(SubStorage.GetString(IntToStr(i))) then
+    begin
+      Item.Free();
+      Continue;
+    end;
+    self.Add(Item);
+  end;
+  Result:=True;
 end;
 
 procedure TDnmpMsgQueue.SaveToFile(Filename: string);
@@ -1377,6 +1464,56 @@ begin
   FCount:=0;
   SetLength(FItems, FCount);
 end;
+
+function TDnmpRoutingTable.ToStorage(): TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+
+function RoutingRecordToStorage(Item: TDnmpRoutingTableRecord): TDnmpStorage;
+begin
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('dest_node_id', IntToStr(Item.DestNodeID));
+  Result.Add('gate_node_id', IntToStr(Item.GateNodeID));
+  Result.Add('trace_id', IntToStr(Item.TraceID));
+end;
+
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), RoutingRecordToStorage(Self.Items[i]));
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpRoutingTable');
+  Result.Add('items', Storage);
+end;
+
+function TDnmpRoutingTable.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage, AStorage: TDnmpStorage;
+  i: Integer;
+  Item: TDnmpRoutingTableRecord;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpRoutingTable' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    AStorage:=SubStorage.GetObject(i);
+    if AStorage.StorageType <> stDictionary then Continue;
+    Item.DestNodeID:=AStorage.GetCardinal('dest_node_id');
+    Item.GateNodeID:=AStorage.GetCardinal('gate_node_id');
+    Item.TraceID:=AStorage.GetCardinal('trace_id');
+
+    self.AddItem(Item.DestNodeID, Item.GateNodeID, Item.TraceID);
+  end;
+  Result:=True;
+end;
+
 
 // === TDnmpLink ===
 constructor TDnmpLink.Create(AMgr: TDnmpManager);
@@ -2073,15 +2210,11 @@ begin
 end;
 
 function TDnmpManager.Approve(ALinkInfo: TLinkInfo): boolean;
-var
-  NewGUID: TGUID;
 begin
   Result:=false;
   if ServerMode then Exit;
 
-  // Создаем новый GUID (???)
-  CreateGUID(NewGUID);
-  ALinkInfo.GUID:=GUIDToString(NewGUID);
+  ALinkInfo.GUID:=GenerateGUID();
   ALinkInfo.SeniorGUID:=MyInfo.GUID;
 
   if ALinkInfo.LinkType = ltPoint then
