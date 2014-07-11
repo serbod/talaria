@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, ComCtrls, StdCtrls,
-  Grids, ActnList, Menus, dnmp_unit;
+  Grids, ActnList, Menus, dnmp_unit, Dialogs;
 
 type
 
@@ -48,10 +48,19 @@ type
     pmPointInfo: TPopupMenu;
     Splitter1: TSplitter;
     StringGridInfo: TStringGrid;
+    procedure actGenerateGUIDExecute(Sender: TObject);
+    procedure actPointDelExecute(Sender: TObject);
+    procedure actPointListSaveExecute(Sender: TObject);
+    procedure actPointListUpdateExecute(Sender: TObject);
+    procedure actPointSaveExecute(Sender: TObject);
+    procedure actPointUpdateExecute(Sender: TObject);
+    procedure lvPointListSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
   private
     { private declarations }
     procedure UpdatePointList();
     procedure UpdatePointInfo();
+    procedure FormToPointInfo();
     function GetSelectedPointInfo(): TLinkInfo;
   public
     { public declarations }
@@ -66,6 +75,58 @@ implementation
 {$R *.lfm}
 
 { TFramePointList }
+
+procedure TFramePointList.actPointUpdateExecute(Sender: TObject);
+begin
+  UpdatePointInfo();
+end;
+
+procedure TFramePointList.lvPointListSelectItem(Sender: TObject;
+  Item: TListItem; Selected: Boolean);
+begin
+  if not Selected then Exit;
+  UpdatePointInfo();
+end;
+
+procedure TFramePointList.actPointListUpdateExecute(Sender: TObject);
+begin
+  UpdatePointList();
+end;
+
+procedure TFramePointList.actPointSaveExecute(Sender: TObject);
+begin
+  FormToPointInfo();
+end;
+
+procedure TFramePointList.actGenerateGUIDExecute(Sender: TObject);
+var
+  LinkInfo: TLinkInfo;
+begin
+  LinkInfo:=GetSelectedPointInfo();
+  if not Assigned(LinkInfo) then Exit;
+  LinkInfo.GUID:=GenerateGUID();
+  UpdatePointInfo();
+end;
+
+procedure TFramePointList.actPointDelExecute(Sender: TObject);
+var
+  LinkInfo: TLinkInfo;
+begin
+  if not Assigned(PointList) then Exit;
+  LinkInfo:=GetSelectedPointInfo();
+  if not Assigned(LinkInfo) then Exit;
+
+  //Application.MessageBox('Delete selected point?', 'Attention', MB_);
+  if MessageDlg('Attention', 'Delete selected point?', mtConfirmation, [mbYes, mbNo], 0) = mrNo then Exit;
+
+  PointList.Extract(LinkInfo);
+  Update();
+end;
+
+procedure TFramePointList.actPointListSaveExecute(Sender: TObject);
+begin
+  PointList.SaveToFile();
+end;
 
 procedure TFramePointList.UpdatePointList();
 var
@@ -109,8 +170,9 @@ var
 
   procedure SetRow(RowNum: integer; Name, Value: string);
   begin
-    sg.Cells[1, RowNum]:=Name;
-    sg.Cells[2, RowNum]:=Value;
+    if sg.RowCount<=RowNum then sg.RowCount:=RowNum+1;
+    sg.Cells[0, RowNum]:=Name;
+    sg.Cells[1, RowNum]:=Value;
     n:=n+1;
   end;
 
@@ -122,7 +184,7 @@ begin
   sg.BeginUpdate();
   sg.Clean([gzNormal]);
 
-  n:=2;
+  n:=1;
   SetRow(n, 'Addr', AddrToStr(LinkInfo.Addr));
   SetRow(n, 'GUID', LinkInfo.GUID);
   SetRow(n, 'SeniorGUID', LinkInfo.SeniorGUID);
@@ -139,6 +201,43 @@ begin
 
 end;
 
+procedure TFramePointList.FormToPointInfo();
+var
+  LinkInfo: TLinkInfo;
+  sg: TStringGrid;
+
+function GetValue(Name: string): string;
+var
+  RowNum: integer;
+begin
+  Result:='';
+  for RowNum:=1 to sg.RowCount-1 do
+  begin
+    if sg.Cells[0, RowNum]<>Name then Continue;
+    Result:=sg.Cells[1, RowNum];
+    Break;
+  end;
+end;
+
+begin
+  LinkInfo:=GetSelectedPointInfo();
+  if not Assigned(LinkInfo) then Exit;
+  sg:=StringGridInfo;
+
+  LinkInfo.Addr:=StrToAddr(GetValue('Addr'));
+  LinkInfo.GUID:=GetValue('GUID');
+  LinkInfo.SeniorGUID:=GetValue('SeniorGUID');
+  LinkInfo.Name:=GetValue('Name');
+  LinkInfo.Owner:=GetValue('Owner');
+  LinkInfo.Location:=GetValue('Location');
+  LinkInfo.IpAddr:=GetValue('IpAddr');
+  LinkInfo.PhoneNo:=GetValue('PhoneNo');
+  LinkInfo.OtherInfo:=GetValue('OtherInfo');
+  LinkInfo.Rating:=StrToIntDef(GetValue('Rating'), 0);
+  LinkInfo.Key:=GetValue('Key');
+
+end;
+
 function TFramePointList.GetSelectedPointInfo(): TLinkInfo;
 begin
   Result:=nil;
@@ -149,6 +248,8 @@ end;
 
 procedure TFramePointList.Update();
 begin
+  UpdatePointList();
+  UpdatePointInfo();
   inherited Update();
 end;
 

@@ -73,6 +73,7 @@
         <ComponentName Value="FramePointList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="PointListFrame"/>
       </Unit4>
       <Unit5>
         <Filename Value="dnmp_unit.pas"/>

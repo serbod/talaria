@@ -106,7 +106,14 @@ type
     function SendData(Addr: TAddr; sDataType, sData: string): boolean;
     // Read data response
     function ReadData(sDataType, sData: string): string;
-    // Parse and update abonent state response
+    { Parse and update abonent state response
+    <GUID> <state> [state comment]
+    States:
+    ON - online
+    OFF - offline
+    AFK - online, away from keyboard
+    BUSY - online, busy (do not disturb)
+    There may be another states. }
     function SetAbonentState(sData: string): TDnmpAbonent;
   public
     Topic: string;
@@ -403,6 +410,7 @@ begin
   Result:=True;
 end;
 
+
 // === TDnmpChannelMessagesList ===
 function TDnmpChannelMessagesList.GetItem(Index: Integer): TDnmpChannelMessage;
 begin
@@ -596,27 +604,20 @@ var
   sCmd, sParams: string;
 begin
   Result:='';
+  sParams:=Text;
+  sCmd:=ExtractFirstWord(sParams);
   if SameAddr(Addr, NewAddr()) then Addr:=ServiceInfo.HostAddr;
-  ExtractCmd(Text, sCmd, sParams);
   Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'cmd='+sCmd, sParams);
 end;
 
 function TDnmpGrpc.SetAbonentState(sData: string): TDnmpAbonent;
 var
   s, sGUID, sState: string;
-  i: Integer;
 begin
   Result:=nil;
   s:=sData;
-  i:=Pos(' ', s);
-  if i=0 then Exit;
-  sGUID:=Copy(s, 1, i-1);
-  Delete(s, 1, i);
-
-  i:=Pos(' ', s);
-  if i=0 then i:=999999;
-  sState:=Copy(s, 1, i-1);
-  Delete(s, 1, i);
+  sGUID:=ExtractFirstWord(s);
+  sState:=ExtractFirstWord(s);
 
   Result:=self.UsersList.GetAbonentByGUID(sGUID);
   if not Assigned(Result) then Result:=self.ServiceInfo.Abonents.GetAbonentByGUID(sGUID);

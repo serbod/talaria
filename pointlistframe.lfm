@@ -43,6 +43,7 @@ object FramePointList: TFramePointList
       StateImages = FormMain.ImageList16
       TabOrder = 0
       ViewStyle = vsReport
+      OnSelectItem = lvPointListSelectItem
     end
     object Splitter1: TSplitter
       Left = 268
@@ -103,6 +104,7 @@ object FramePointList: TFramePointList
     object actPointListSave: TAction
       Category = 'PointList'
       Caption = 'Save pointlist'
+      OnExecute = actPointListSaveExecute
     end
     object actPointListLoad: TAction
       Category = 'PointList'
@@ -111,6 +113,7 @@ object FramePointList: TFramePointList
     object actPointListUpdate: TAction
       Category = 'PointList'
       Caption = 'Update pointlist'
+      OnExecute = actPointListUpdateExecute
     end
     object actApprove: TAction
       Category = 'Point'
@@ -119,6 +122,7 @@ object FramePointList: TFramePointList
     object actGenerateGUID: TAction
       Category = 'Point'
       Caption = 'Generate GUID'
+      OnExecute = actGenerateGUIDExecute
     end
     object actPointAdd: TAction
       Category = 'Point'
@@ -127,14 +131,17 @@ object FramePointList: TFramePointList
     object actPointDel: TAction
       Category = 'Point'
       Caption = 'Delete point'
+      OnExecute = actPointDelExecute
     end
     object actPointUpdate: TAction
       Category = 'Point'
       Caption = 'Update point'
+      OnExecute = actPointUpdateExecute
     end
     object actPointSave: TAction
       Category = 'Point'
       Caption = 'Save point'
+      OnExecute = actPointSaveExecute
     end
   end
   object pmPointList: TPopupMenu
