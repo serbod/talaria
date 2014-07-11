@@ -6,7 +6,7 @@ object FormMain: TFormMain
   Caption = 'Talaria'
   ClientHeight = 460
   ClientWidth = 678
-  LCLVersion = '1.3'
+  LCLVersion = '1.2.4.0'
   object panSidebar: TPanel
     Left = 620
     Height = 460
@@ -701,6 +701,7 @@ object FormMain: TFormMain
       Caption = 'Exit'
       Hint = 'Close program'
       ImageIndex = 2
+      OnExecute = actExitExecute
     end
   end
   object ImageList16: TImageList

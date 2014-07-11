@@ -37,19 +37,6 @@ type
     procedure Execute(); override;
   end;
 
-  // NOT USED, see TIpLink
-  TIpListener = class(TDnmpListener)
-  public
-    Socket: TBlockSocket;
-    Listener: TSockListener;
-    IpProto: string;
-    LinkHost: string;
-    LinkPort: string;
-    function Start(): boolean; override;
-    function Stop(): boolean; override;
-    procedure ListenerEventHandler(Sock: TSocket; LastError: integer; Data: string);
-  end;
-
   TIpLink = class(TDnmpLink)
   public
     //Socket: TTCPBlockSocket;
@@ -376,7 +363,7 @@ begin
     Disconnect();
     Exit;
   end;
-  MsgIn:=TDnmpMsg.Create(NewAddr(), NewAddr(), '', '', '');
+  MsgIn:=TDnmpMsg.Create(EmptyAddr(), EmptyAddr(), '', '', '');
   if not MsgIn.FromString(Data) then
   begin
     Mgr.DebugText('Msg error: '+Data);
@@ -423,73 +410,6 @@ begin
   Mgr.Cmd('REFRESH');
 end;
 
-// ===================
-// === TIpListener     ===
-// ===================
-function TIpListener.Start(): boolean;
-begin
-  Result:=false;
-  if Assigned(Socket) then FreeAndNil(Socket);
-  if self.LinkHost='' then self.LinkHost:='0.0.0.0';
-
-  if (IpProto = 'TCP') then
-  begin
-    Socket:=TTCPBlockSocket.Create();
-    //IgnoreTimeout:=False;
-    Socket.bind(self.LinkHost, self.LinkPort);
-    if Socket.LastError<>0 then
-    begin
-      Exit;
-    end;
-    Listener:=TSockListener.Create(TTCPBlockSocket(self.Socket), @ListenerEventHandler);
-  end
-  else if (IpProto = 'UDP') then
-  begin
-    Socket:=TUDPBlockSocket.Create();
-    //IgnoreTimeout:=True;
-    Socket.bind(self.LinkHost, self.LinkPort);
-    if Socket.LastError<>0 then
-    begin
-      Exit;
-    end;
-    //StartReader();
-  end;
-
-  Active:=true;
-  Result:=true;
-end;
-
-function TIpListener.Stop(): boolean;
-begin
-  Listener.Terminate();
-  Listener.WaitFor();
-  FreeAndNil(Socket);
-  Result:=True;
-end;
-
-procedure TIpListener.ListenerEventHandler(Sock: TSocket; LastError: integer; Data: string);
-var
-  NewIpLink: TIpLink;
-begin
-  if LastError<>0 then
-  begin
-    // Ошибка
-    Mgr.DebugText('IpListener error: '+IntToStr(LastError)+' '+Data);
-    //Disconnect();
-    Exit;
-  end;
-  Mgr.DebugText('Incoming connection: '+IntToStr(Sock)+' '+Data);
-
-  NewIpLink:=TIpLink.Create(Mgr, '','','TCP');
-  NewIpLink.Socket:=TTCPBlockSocket.Create();
-  NewIpLink.Socket.Socket:=Sock;
-  NewIpLink.Incoming:=True;
-  NewIpLink.StartReader();
-
-  if Assigned(OnIncomingLink) then OnIncomingLink(Self, NewIpLink)
-  else NewIpLink.Free();
-  //Mgr.LinkList.Add(NewIpLink);
-end;
 
 end.
 

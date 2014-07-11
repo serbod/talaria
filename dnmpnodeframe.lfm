@@ -27,9 +27,9 @@ object FrameDnmpNode: TFrameDnmpNode
     Height = 493
     Top = 26
     Width = 739
-    ActivePage = tsMyInfo
+    ActivePage = tsStatus
     Align = alClient
-    TabIndex = 5
+    TabIndex = 0
     TabOrder = 1
     OnChange = PageControlNodeChange
     object tsStatus: TTabSheet

@@ -95,7 +95,7 @@ end;
 function TDnmpParserServer.Start(): Boolean;
 begin
   if self.MyInfo.Key='' then Self.MyInfo.Key:=GenerateKey();
-  self.LinkInfo.Addr:=NewAddr();
+  self.LinkInfo.Addr:=EmptyAddr();
   self.SendAuthRequest();
   Result:=True;
 end;
@@ -269,7 +269,7 @@ var
 begin
   //MyInfo.Key:=GenerateKey();
   TempKey:=GenerateKey();
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, NewAddr, 'AURQ', '', TempKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'AURQ', '', TempKey);
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
   MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
@@ -445,7 +445,7 @@ begin
   if (not Found) and (Mgr.Conf.ReadBool('Main', 'AutoApprove', False)) then
   begin
     LinkInfo.Key:=TempKey;
-    LinkInfo.Addr:=NewAddr;
+    LinkInfo.Addr:=EmptyAddr();
     Link.Approve();
     li:=LinkInfo;
     Found:=True;
@@ -474,7 +474,7 @@ begin
   else
   begin
     LinkInfo.Key:=TempKey;
-    LinkInfo.Addr:=NewAddr;
+    LinkInfo.Addr:=EmptyAddr();
 
     // Сохраняем информацию линка в списке контактов
     Mgr.ContactList.Add(LinkInfo);
@@ -518,7 +518,7 @@ begin
   if sResult='OK' then
   begin
     // Опознание успешно
-    if SameAddr(MyInfo.Addr, NewAddr()) then
+    if SameAddr(MyInfo.Addr, EmptyAddr()) then
     begin
       MyInfo.Addr:=Msg.TargetAddr;
       MyInfo.GUID:=Msg.Info.Values['guid'];
@@ -685,7 +685,7 @@ begin
   sl.Values['avail']:='';
   sl.Values['speed']:=IntToStr(Link.Speed);
 
-  Msg:=TDnmpMsg.Create(MyInfo.Addr, NewAddr(), 'NINF', sl.Text, '');
+  Msg:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'NINF', sl.Text, '');
   FreeAndNil(sl);
 
   if Mgr.Uplink = Link then
@@ -711,7 +711,7 @@ begin
   if Msg.Info.Values['state']='off' then
   begin
     SomeAddr:=StrToAddr(Msg.Info.Values['addr']);
-    if not SameAddr(SomeAddr, NewAddr()) then Mgr.RoutingTable.DelDest(SomeAddr.Node);
+    if not SameAddr(SomeAddr, EmptyAddr()) then Mgr.RoutingTable.DelDest(SomeAddr.Node);
   end;
 end;
 

@@ -132,11 +132,14 @@ type
     { Remove abonent from users list }
     function LeaveAbonent(AbonentGUID: string): string;
     { Kick abonent from users list }
-    function KickAbonent(AbonentGUID: string): string;
+    function KickAbonent(AbonentGUID: string; sReason: string=''): string;
     { Move user to ban list }
-    function BanUser(AbonentGUID: string): string;
+    function BanUser(AbonentGUID: string; EndDate: TDateTime=0; sReason: string=''
+      ): string;
     { Remove user from ban list }
     function UnbanAbonent(AbonentGUID: string): string;
+    { Set channel topic message }
+    function SetTopic(AbonentGUID, sTopic: string): string;
     { Add text to messages list }
     function SayText(AbonentGUID: string; sText: string): string;
     //function Msg(Msg: TDnmpMsg): string; override;
@@ -188,7 +191,7 @@ type
     { Обработка команды, отправленной с указанного адреса
     JOIN <GUID_абонента> [текст]  Добавляет абонента в список подписчиков и пользователей канала.
     LEAVE <GUID_абонента> [текст]    Убирает абонента из списка подписчиков и пользователей канала.
-    SET_TOPIC <текст>    Устанавливает тему канала
+    SET_TOPIC <GUID_абонента> <текст>    Устанавливает тему канала
     GET_TOPIC    Возвращает сообщение, содержащее заголовок (тему) канала.
     GET_USERS    Возвращает список активных подписчиков
     GET_ABONENTS    Возвращает список всех подписчиков
@@ -357,6 +360,7 @@ var
   i: integer;
   sl, slData: TStringList;
 begin
+  Result:=False;
   sl:=TStringList.Create();
   slData:=TStringList.Create();
   slData.Text:=sData;
@@ -366,6 +370,7 @@ begin
     sl.DelimitedText:=slData[i];
     if sl.Count<3 then Continue;
     self.UpdateBan(sl[1], sl[3], StrToTimestamp(sl[2]));
+    Result:=True;
   end;
   FreeAndNil(slData);
   FreeAndNil(sl);
@@ -606,7 +611,7 @@ begin
   Result:='';
   sParams:=Text;
   sCmd:=ExtractFirstWord(sParams);
-  if SameAddr(Addr, NewAddr()) then Addr:=ServiceInfo.HostAddr;
+  if SameAddr(Addr, EmptyAddr()) then Addr:=ServiceInfo.HostAddr;
   Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'cmd='+sCmd, sParams);
 end;
 
@@ -735,7 +740,7 @@ begin
   if Assigned(OnUsersChange) then OnUsersChange(self);
 end;
 
-function TDnmpGrpc.KickAbonent(AbonentGUID: string): string;
+function TDnmpGrpc.KickAbonent(AbonentGUID: string; sReason: string = ''): string;
 var
   Abonent: TDnmpAbonent;
 begin
@@ -755,7 +760,7 @@ begin
   if Assigned(OnUsersChange) then OnUsersChange(self);
 end;
 
-function TDnmpGrpc.BanUser(AbonentGUID: string): string;
+function TDnmpGrpc.BanUser(AbonentGUID: string; EndDate: TDateTime = 0; sReason: string = ''): string;
 var
   Abonent: TDnmpAbonent;
 begin
@@ -774,8 +779,7 @@ begin
     Exit;
   end;
   self.UsersList.Extract(Abonent);
-  // TODO: ban prams
-  self.BanList.AddBan(AbonentGUID, '', 0);
+  self.BanList.AddBan(AbonentGUID, sReason, EndDate);
   if Assigned(OnBanlistChange) then OnBanlistChange(self);
   if Assigned(OnUsersChange) then OnUsersChange(self);
 end;
@@ -793,6 +797,20 @@ begin
   if Assigned(OnBanlistChange) then OnBanlistChange(self);
 end;
 
+function TDnmpGrpc.SetTopic(AbonentGUID, sTopic: string): string;
+begin
+  Result:='';
+  if self.BanList.GetBan(AbonentGUID)<>nil then
+  begin
+    Result:=('Cannot SET_TOPIC - abonent banned: '+AbonentGUID);
+    DebugText(Result);
+    Exit;
+  end;
+  // { TODO: Проверка полномочий }
+  self.Topic:=sTopic;
+  if Assigned(OnTopicChange) then OnTopicChange(self);
+end;
+
 function TDnmpGrpc.SayText(AbonentGUID: string; sText: string): string;
 var
   ChanMsg: TDnmpChannelMessage;
@@ -802,12 +820,14 @@ begin
   begin
     // Banned!
     Result:='Cannot SAY - user banned: '+AbonentGUID;
+    DebugText(Result);
     Exit;
   end;
-  if Self.ServiceInfo.Abonents.GetAbonentByGUID(AbonentGUID)=nil then
+  if Self.UsersList.GetAbonentByGUID(AbonentGUID)=nil then
   begin
     // Not in abonents list
     Result:='Cannot SAY - user not joined: '+AbonentGUID;
+    DebugText(Result);
     Exit;
   end;
 
@@ -816,6 +836,7 @@ begin
   begin
     // Not in abonents list
     Result:='Cannot SAY - message create error';
+    DebugText(Result);
     Exit;
   end;
   self.MessagesList.Add(ChanMsg);
@@ -887,7 +908,7 @@ function TDnmpGrpcServer.ParseCmd(Text: string; Addr: TAddr): string;
 var
   s, sCmd, sParams, sGUID: string;
   Params: TStringArray;
-  i, n: Integer;
+  i: Integer;
   Abonent: TDnmpAbonent;
 begin
   Result:='';
@@ -899,8 +920,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=Self.JoinAbonent(sGUID);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -920,8 +940,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=Self.LeaveAbonent(sGUID);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -932,8 +951,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=Self.KickAbonent(sGUID);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -948,8 +966,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=SayText(sGUID, sParams);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -960,8 +977,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=self.BanUser(sGUID);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -974,8 +990,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=self.UnbanAbonent(sGUID);
-    if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result)
-    else
+    if Result='' then
     begin
       // broadcast to others
       BroadcastCmd(Text);
@@ -986,17 +1001,12 @@ begin
 
   else if sCmd='SET_TOPIC' then
   begin
-    //Result:=self.SetTopic();
-    // { TODO: Проверка полномочий }
-    // ...
-    if n=1 then Self.Topic:='' else
+    sGUID:=ExtractFirstWord(sParams);
+    Result:=self.SetTopic(sGUID, sParams);
+    if Result='' then
     begin
-      i:=Pos(' ', Text);
-      s:=Copy(Text, i+1, MaxInt);
-      Self.Topic:=Trim(s);
+      BroadcastCmd(Text);
     end;
-    BroadcastCmd(Text);
-    if Assigned(OnTopicChange) then OnTopicChange(self);
   end
 
   else if sCmd='GET_TOPIC' then
@@ -1028,6 +1038,7 @@ begin
   begin
 
   end;
+  if Result<>'' then Mgr.SendErrorMsg(Addr, 'GRPC '+ServiceInfo.Name, Result);
 
 end;
 
@@ -1135,7 +1146,7 @@ var
   Msg: TDnmpMsg;
 begin
   if not Assigned(ChanMsg) then Exit;
-  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, NewAddr, 'GRPC', '', '');
+  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr, 'GRPC', '', '');
   Msg.Info.Values['name']:=ServiceInfo.Name;
   ChanMsg.FillMsg(Msg);
   // Broadcast to my points
@@ -1165,9 +1176,10 @@ var
   Msg: TDnmpMsg;
   sCmdName, sCmdParams: string;
 begin
-  Misc.ExtractCmd(sCmd, sCmdName, sCmdParams);
+  sCmdParams:=sCmd;
+  sCmdName:=ExtractFirstWord(sCmdParams);
 
-  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, NewAddr, 'GRPC', '', sCmdParams);
+  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr(), 'GRPC', '', sCmdParams);
   Msg.Info.Values['name']:=ServiceInfo.Name;
   Msg.Info.Values['cmd']:=sCmdName;
 

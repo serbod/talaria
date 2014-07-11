@@ -73,7 +73,7 @@ begin
   AddPage(TFrameChat.Create(nil), 'Chat');
   // node
   // TODO: clearing
-  // if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
+  if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
   ServiceDnmpNode:=TServiceDnmpNode.Create('1.0');
   frame:=TFrameDnmpNode.Create(nil);
   ServiceDnmpNode.Frame:=frame;
@@ -216,10 +216,12 @@ begin
   Mgr.OnIncomingMsg:=@MsgHandler;
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
+  ServMgr.LoadFromFile();
 end;
 
 destructor TServiceDnmpNode.Destroy();
 begin
+  ServMgr.SaveToFile();
   FreeAndNil(ServMgr);
   Mgr.OnLog:=nil;
   Mgr.OnEvent:=nil;
@@ -234,7 +236,7 @@ initialization
 finalization
   MainFormPages.ClearAll();
   FreeAndNil(MainFormPages);
-  //if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
+  if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
 
 end.
 

@@ -61,7 +61,7 @@ type
 
 implementation
 
-uses Misc;
+uses Misc, Core;
 
 {$R *.lfm}
 
@@ -250,23 +250,17 @@ end;
 
 procedure TFrameDnmpNode.OpenGrpcChannel(sName: string);
 var
-  si: TDnmpServiceInfo;
+  ServiceInfo: TDnmpServiceInfo;
   SomeService: TDnmpService;
-  //frmGrpcClient: TFrameGrpcClient;
-  tmpPage: TTabSheet;
 begin
   if not Assigned(ServMgr) then Exit;
-  si:=ServMgr.ServiceInfoList.GetServiceByTypeName('GRPC', sName);
-  if not Assigned(si) then Exit;
-  SomeService:=ServMgr.CreateService(si);
-  if Assigned(SomeService) then
+  SomeService:=ServMgr.ServiceList.GetService('GRPC', sName);
+  if not Assigned(SomeService) then
   begin
-    tmpPage:=TTabSheet.Create(PageControlNode);
-    tmpPage.Caption:='GRPC '+sName;
-    //frmGrpcClient:=TFrameGrpcClient.Create(tmpPage);
-    //frmGrpcClient.Mgr:=Mgr;
-    //frmGrpcClient.SetService(SomeService);
-    //frmGrpcClient.UpdateData();
+    ServiceInfo:=ServMgr.ServiceInfoList.GetServiceByTypeName('GRPC', sName);
+    if not Assigned(ServiceInfo) then Exit;
+    SomeService:=ServMgr.CreateService(ServiceInfo);
+    if Assigned(SomeService) then Core.AddServicePage(SomeService);
   end;
 end;
 
