@@ -4,7 +4,7 @@ interface
 uses SysUtils, Classes, dnmp_unit;
 
 type
-  TDnmpParserClient = class(TDnmpParser)
+  TDnmpParserClient = class(TDnmpMsgHandler)
   private
     MyInfo: TLinkInfo;
     LinkInfo: TLinkInfo;
@@ -36,11 +36,11 @@ type
     function SendMsg(Msg: TDnmpMsg): boolean;
 
   public
-    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink);
+    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil);
     // Запуск парсера
     function Start(): Boolean; override;
     // Разбор сообщения в контексте линка
-    function ParseMessage(Msg: TDnmpMsg): Boolean; override;
+    function ParseMsg(Msg: TDnmpMsg): Boolean; override;
   end;
 
 implementation
@@ -49,9 +49,7 @@ uses RC4;
 //=====================================
 constructor TDnmpParserClient.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
-  inherited Create();
-  Self.Mgr:=AMgr;
-  Self.Link:=ALink;
+  inherited Create(AMgr, ALink);
   MyInfo:=Link.MyInfo;
   LinkInfo:=Link.LinkInfo;
 end;
@@ -64,38 +62,48 @@ begin
 end;
 
 //=====================================
-function TDnmpParserClient.ParseMessage(Msg: TDnmpMsg): boolean;
+function TDnmpParserClient.ParseMsg(Msg: TDnmpMsg): boolean;
 var
   MsgType: string;
+  sCmd: string;
 begin
   Result:=True;
   MsgType:=Msg.MsgType;
   if MsgType='' then
   begin
   end
-  else if MsgType='AURQ' then // Authentication request
+  else if MsgType='AUTH' then // Built-in Authentication service
   begin
-    OnAuthRequest(Msg);
+    sCmd:=Msg.Info.Values['cmd'];
+    if sCmd='AURQ' then // Authentication request
+    begin
+      OnAuthRequest(Msg);
+    end
+    else if sCmd='ARPL' then // Authentication reply
+    begin
+      //OnAuthReply(Msg);
+    end
+    else if sCmd='ARSL' then // Authentication result
+    begin
+      OnAuthResult(Msg);
+    end;
   end
-  else if MsgType='ARPL' then // Authentication reply
+
+  else if MsgType='INFO' then // Built-in Information service
   begin
-    //OnAuthReply(Msg);
-  end
-  else if MsgType='ARSL' then // Authentication result
-  begin
-    OnAuthResult(Msg);
-  end
-  else if MsgType='LNRQ' then // Nodelist request
-  begin
-    //OnNodelistRequest(Msg);
-  end
-  else if MsgType='LNKI' then // Node info
-  begin
-    Mgr.ReadLinkInfo(Msg);
-  end
-  else if MsgType='ERRR' then // Error reply
-  begin
-    Mgr.DebugText('Error reply: '+AddrToStr(Msg.SourceAddr)+' '+Msg.Info.Values['err_code']+' '+StreamToStr(Msg.Data));
+    sCmd:=Msg.Info.Values['cmd'];
+    if sCmd='LNRQ' then // Nodelist request
+    begin
+      //OnNodelistRequest(Msg);
+    end
+    else if sCmd='LNKI' then // Node info
+    begin
+      Mgr.ReadLinkInfo(Msg);
+    end
+    else if sCmd='ERRR' then // Error reply
+    begin
+      Mgr.DebugText('Error reply: '+AddrToStr(Msg.SourceAddr)+' '+Msg.Info.Values['err_code']+' '+StreamToStr(Msg.Data));
+    end;
   end
   else
   begin
@@ -141,7 +149,8 @@ var
   MsgOut: TDnmpMsg;
   sMsgBody: AnsiString;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'ARPL', '', sKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH', '', sKey);
+  MsgOut.Info.Values['cmd']:='ARPL';
   MsgOut.Info.Values['addr']:=MyInfo.AddrStr;
   MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
@@ -195,7 +204,7 @@ procedure TDnmpParserClient.SendNodelistRequest();
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'LNRQ', '', '');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=LNRQ', '');
 
   SendMsg(MsgOut);
   MsgOut.Free();

@@ -1,63 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <HTML>
- <HEAD>
-  <META name="GENERATOR" content="htm2chm 3.0.9.3">
-  <!-- Sitemap 1.0 -->
- </HEAD>
-<BODY>
- <OBJECT type="text/site properties">
-  <PARAM name="Window Styles" value="0x800027">
- </OBJECT>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<OBJECT type="text/site properties">
+	<param name="Window Styles" value="0x800027">
+</OBJECT>
 <UL>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="Talaria - &eth;&agrave;&ntilde;&iuml;&eth;&aring;&auml;&aring;&euml;&aring;&iacute;&iacute;&agrave;&yuml; &ntilde;&aring;&ograve;&uuml; &icirc;&aacute;&igrave;&aring;&iacute;&agrave; &egrave;&iacute;&ocirc;&icirc;&eth;&igrave;&agrave;&ouml;&egrave;&aring;&eacute;">
-  <PARAM name="Local" value="index.htm">
- </OBJECT>
-<UL>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DN&Igrave;P - &icirc;&iuml;&egrave;&ntilde;&agrave;&iacute;&egrave;&aring;">
-  <PARAM name="Local" value="proto_descr.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DNMP - &ocirc;&icirc;&eth;&igrave;&agrave;&ograve; &ntilde;&icirc;&icirc;&aacute;&ugrave;&aring;&iacute;&egrave;&eacute;">
-  <PARAM name="Local" value="msg_format.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DNMP - &igrave;&agrave;&eth;&oslash;&eth;&oacute;&ograve;&egrave;&ccedil;&agrave;&ouml;&egrave;&yuml;">
-  <PARAM name="Local" value="routing.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DN&Igrave;P - &iuml;&agrave;&ntilde;&iuml;&icirc;&eth;&ograve;">
-  <PARAM name="Local" value="passport.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DNMP - &ntilde;&aring;&eth;&acirc;&egrave;&ntilde;&ucirc;">
-  <PARAM name="Local" value="services.htm">
- </OBJECT>
-<UL>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="&Ecirc;&agrave;&ograve;&agrave;&euml;&icirc;&atilde; &ntilde;&aring;&eth;&acirc;&egrave;&ntilde;&icirc;&acirc;">
-  <PARAM name="Local" value="srvd.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="Users Directory">
-  <PARAM name="Local" value="usrd.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="&Ecirc;&agrave;&iacute;&agrave;&euml; (&atilde;&eth;&oacute;&iuml;&iuml;&icirc;&acirc;&icirc;&eacute; &divide;&agrave;&ograve;)">
-  <PARAM name="Local" value="grpc.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="&Otilde;&eth;&agrave;&iacute;&egrave;&euml;&egrave;&ugrave;&aring; &ocirc;&agrave;&eacute;&euml;&icirc;&acirc;">
-  <PARAM name="Local" value="flst.htm">
- </OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Talaria - &eth;&agrave;&ntilde;&iuml;&eth;&aring;&auml;&aring;&euml;&aring;&iacute;&iacute;&agrave;&yuml; &ntilde;&aring;&ograve;&uuml; &icirc;&aacute;&igrave;&aring;&iacute;&agrave; &egrave;&iacute;&ocirc;&icirc;&eth;&igrave;&agrave;&ouml;&egrave;&aring;&eacute;">
+		<param name="Local" value="index.htm">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DN&Igrave;P - &icirc;&iuml;&egrave;&ntilde;&agrave;&iacute;&egrave;&aring;">
+			<param name="Local" value="proto_descr.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DNMP - &ocirc;&icirc;&eth;&igrave;&agrave;&ograve; &ntilde;&icirc;&icirc;&aacute;&ugrave;&aring;&iacute;&egrave;&eacute;">
+			<param name="Local" value="msg_format.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DNMP - &igrave;&agrave;&eth;&oslash;&eth;&oacute;&ograve;&egrave;&ccedil;&agrave;&ouml;&egrave;&yuml;">
+			<param name="Local" value="routing.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DN&Igrave;P - &iuml;&agrave;&ntilde;&iuml;&icirc;&eth;&ograve;">
+			<param name="Local" value="passport.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DNMP - &ntilde;&aring;&eth;&acirc;&egrave;&ntilde;&ucirc;">
+			<param name="Local" value="services.htm">
+			</OBJECT>
+		<UL>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Agrave;&oacute;&ograve;&aring;&iacute;&ograve;&egrave;&ocirc;&egrave;&ecirc;&agrave;&ouml;&egrave;&yuml;">
+				<param name="Local" value="auth.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Icirc;&aacute;&igrave;&aring;&iacute; &egrave;&iacute;&ocirc;&icirc;&eth;&igrave;&agrave;&ouml;&egrave;&aring;&eacute;">
+				<param name="Local" value="info.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Ecirc;&agrave;&ograve;&agrave;&euml;&icirc;&atilde; &ntilde;&aring;&eth;&acirc;&egrave;&ntilde;&icirc;&acirc;">
+				<param name="Local" value="srvd.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="Users Directory">
+				<param name="Local" value="usrd.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Ecirc;&agrave;&iacute;&agrave;&euml; (&atilde;&eth;&oacute;&iuml;&iuml;&icirc;&acirc;&icirc;&eacute; &divide;&agrave;&ograve;)">
+				<param name="Local" value="grpc.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Otilde;&eth;&agrave;&iacute;&egrave;&euml;&egrave;&ugrave;&aring; &ocirc;&agrave;&eacute;&euml;&icirc;&acirc;">
+				<param name="Local" value="flst.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Icirc;&aacute;&igrave;&aring;&iacute; &ecirc;&icirc;&eth;&icirc;&ograve;&ecirc;&egrave;&igrave;&egrave; &ntilde;&icirc;&icirc;&aacute;&ugrave;&aring;&iacute;&egrave;&yuml;&igrave;&egrave;">
+				<param name="Local" value="chat.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Icirc;&aacute;&igrave;&aring;&iacute; &auml;&euml;&egrave;&iacute;&iacute;&ucirc;&igrave;&egrave; &ntilde;&icirc;&icirc;&aacute;&ugrave;&aring;&iacute;&egrave;&yuml;&igrave;&egrave;">
+				<param name="Local" value="mail.htm">
+				</OBJECT>
+			<LI> <OBJECT type="text/sitemap">
+				<param name="Name" value="&Ocirc;&icirc;&eth;&oacute;&igrave;">
+				<param name="Local" value="foru.htm">
+				</OBJECT>
+		</UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DNMP - &ecirc;&icirc;&iacute;&ograve;&aring;&eacute;&iacute;&aring;&eth;&ucirc; &egrave; &igrave;&aring;&ograve;&agrave;&auml;&agrave;&iacute;&iacute;&ucirc;&aring;">
+			<param name="Local" value="containers.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="DNMP - &acirc;&icirc;&iuml;&eth;&icirc;&ntilde;&ucirc; &egrave; &icirc;&ograve;&acirc;&aring;&ograve;&ucirc; (FAQ)">
+			<param name="Local" value="faq.htm">
+			</OBJECT>
+	</UL>
 </UL>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DNMP - &ecirc;&icirc;&iacute;&ograve;&aring;&eacute;&iacute;&aring;&eth;&ucirc; &egrave; &igrave;&aring;&ograve;&agrave;&auml;&agrave;&iacute;&iacute;&ucirc;&aring;">
-  <PARAM name="Local" value="containers.htm">
- </OBJECT>
- <LI><OBJECT type="text/sitemap">
-  <PARAM name="Name" value="DNMP - &acirc;&icirc;&iuml;&eth;&icirc;&ntilde;&ucirc; &egrave; &icirc;&ograve;&acirc;&aring;&ograve;&ucirc; (FAQ)">
-  <PARAM name="Local" value="faq.htm">
- </OBJECT>
-</BODY>
-</HTML>
+</BODY></HTML>
