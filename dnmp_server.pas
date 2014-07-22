@@ -7,7 +7,10 @@ interface
 uses SysUtils, Classes, Contnrs, dnmp_unit;
 
 type
-  TDnmpParserServer = class(TDnmpParser)
+
+  { TDnmpParserServer }
+
+  TDnmpParserServer = class(TDnmpMsgHandler)
   private
     MyInfo: TLinkInfo;
     LinkInfo: TLinkInfo;
@@ -70,11 +73,11 @@ type
     function SendMsg(Msg: TDnmpMsg): boolean; // [SC]
 
   public
-    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink);
+    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil);
     // Запуск парсера
     function Start(): Boolean; override;
     // Разбор сообщения и выполнение требуемых действий
-    function ParseMessage(Msg: TDnmpMsg): Boolean; override;
+    function ParseMsg(Msg: TDnmpMsg): Boolean; override;
   end;
 
 implementation
@@ -84,9 +87,7 @@ uses RC4, dnmp_services, Misc;
 //=====================================
 constructor TDnmpParserServer.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
-  inherited Create();
-  Self.Mgr:=AMgr;
-  Self.Link:=ALink;
+  inherited Create(AMgr, ALink);
   Self.MyInfo:=Link.MyInfo;
   LinkInfo:=Link.LinkInfo;
 end;
@@ -193,55 +194,66 @@ end;
 //  end;
 //end;
 
-function TDnmpParserServer.ParseMessage(Msg: TDnmpMsg): Boolean;
+function TDnmpParserServer.ParseMsg(Msg: TDnmpMsg): Boolean;
 var
   MsgType: string;
+  sCmd: string;
 begin
-  Result:=True;
+  Result:=False;
+  if not Assigned(Msg) then Exit;
   MsgType:=Msg.MsgType;
+
   if MsgType='' then
   begin
   end
-  else if MsgType='AURQ' then // Authentication request
+
+  else if MsgType='AUTH' then // Built-in Authentication service
   begin
-    OnAuthRequest(Msg); // [SC]
+    sCmd:=Msg.Info.Values['cmd'];
+
+    if sCmd='AURQ' then // Authentication request
+    begin
+      OnAuthRequest(Msg); // [SC]
+    end
+    else if sCmd='ARPL' then // Authentication reply
+    begin
+      OnAuthReply(Msg); // [S]
+    end
+    else if sCmd='ARSL' then // Authentication result
+    begin
+      OnAuthResult(Msg); // [SC]
+    end;
   end
-  else if MsgType='ARPL' then // Authentication reply
-  begin
-    OnAuthReply(Msg); // [S]
-  end
-  else if MsgType='ARSL' then // Authentication result
-  begin
-    OnAuthResult(Msg); // [SC]
-  end
+
   else
   begin
     if SameAddr(Msg.TargetAddr, MyInfo.Addr) then
     begin
       // Msg for me
-      if MsgType='NLRQ' then // Nodelist request
+      if MsgType='INFO' then // Built-in Information service
       begin
-        OnNodelistRequest(Msg); // [S]
-      end
-      else if MsgType='LNKI' then // Link info
-      begin
-        Mgr.ReadLinkInfo(Msg); // [SC]
-      end
-      else if MsgType='NLST' then // Links list
-      begin
-        OnNodeLinksList(Msg); // [SC]
-      end
-      else if MsgType='GINF' then // Get info
-      begin
-        OnGetInfoRequest(Msg);
-      end
-      else if MsgType='ERRR' then // Error reply
-      begin
-        Mgr.DebugText('Error reply: '+AddrToStr(Msg.SourceAddr)+' '+Msg.Info.Values['err_code']+' '+StreamToStr(Msg.Data));
-      end
-      else
-      begin
-        Result:=False;
+        sCmd:=Msg.Info.Values['cmd'];
+
+        if sCmd='NLRQ' then // Nodelist request
+        begin
+          OnNodelistRequest(Msg); // [S]
+        end
+        else if sCmd='LNKI' then // Link info
+        begin
+          Mgr.ReadLinkInfo(Msg); // [SC]
+        end
+        else if sCmd='NLST' then // Links list
+        begin
+          OnNodeLinksList(Msg); // [SC]
+        end
+        else if sCmd='GINF' then // Get info
+        begin
+          OnGetInfoRequest(Msg);
+        end
+        else if sCmd='ERRR' then // Error reply
+        begin
+          Mgr.DebugText('Error reply: '+AddrToStr(Msg.SourceAddr)+' '+Msg.Info.Values['err_code']+' '+StreamToStr(Msg.Data));
+        end;
       end;
     end
     else
@@ -257,7 +269,9 @@ begin
 
   end;
 
+  Result:=True;
 end;
+
 
 //=====================================
 // Сервер -> Клинт
@@ -269,7 +283,8 @@ var
 begin
   //MyInfo.Key:=GenerateKey();
   TempKey:=GenerateKey();
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'AURQ', '', TempKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'AUTH', '', TempKey);
+  MsgOut.Info.Values['cmd']:='AURQ';
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
   MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
@@ -331,7 +346,8 @@ var
   MsgOut: TDnmpMsg;
   sMsgBody: AnsiString;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'ARPL', '', sKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH', '', sKey);
+  MsgOut.Info.Values['cmd']:='ARPL';
   MsgOut.Info.Values['addr']:=MyInfo.AddrStr;
   MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
@@ -495,7 +511,8 @@ var
 begin
   //sMsgBody:='AuthResult=OK';
 
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'ARSL','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH','','');
+  MsgOut.Info.Values['cmd']:='ARSL';
   MsgOut.Info.Values['addr']:=LinkInfo.AddrStr;
   MsgOut.Info.Values['guid']:=LinkInfo.GUID;
   MsgOut.Info.Values['senior_guid']:=LinkInfo.SeniorGUID;
@@ -570,6 +587,7 @@ begin
   Self.SendNodeLinkInfo();
 end;
 
+
 //=====================================
 // Клиент -> Сервер
 // Запрос списка узлов
@@ -577,7 +595,7 @@ procedure TDnmpParserServer.SendNodelistRequest();
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'NLRQ', '', '');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=NLRQ', '');
 
   SendMsg(MsgOut);
   MsgOut.Free();
@@ -679,13 +697,14 @@ var
 begin
   if Link.Active then s:='on' else s:='off';
   sl:=TStringList.Create();
+  sl.Values['cmd']:='NINF';
   sl.Values['addr']:=LinkInfo.AddrStr();
   sl.Values['state']:=s;
   sl.Values['rate']:=IntToStr(LinkInfo.Rating);
   sl.Values['avail']:='';
   sl.Values['speed']:=IntToStr(Link.Speed);
 
-  Msg:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'NINF', sl.Text, '');
+  Msg:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'INFO', sl.Text, '');
   FreeAndNil(sl);
 
   if Mgr.Uplink = Link then
@@ -723,7 +742,7 @@ var
   s, s1: string;
   l: TDnmpLink;
 begin
-  Msg:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'NLST', '', '');
+  Msg:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=NLST', '');
   sl:=TStringList.Create();
   for i:=0 to Mgr.LinkList.Count-1 do
   begin
@@ -763,7 +782,8 @@ procedure TDnmpParserServer.SendErrorMsg(OrigMsg: TDnmpMsg; ErrCode, ErrText: st
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'ERRR','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO','','');
+  MsgOut.Info.Values['cmd']:='ERRR';
   MsgOut.Info.Values['code']:=ErrCode;
   MsgOut.Info.Values['text']:=ErrText;
   if Assigned(OrigMsg) then
@@ -783,6 +803,7 @@ var
   MsgOut: TDnmpMsg;
 begin
   MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO','','');
+  MsgOut.Info.Values['cmd']:='INFO';
   MsgOut.Info.Values['code']:=InfoCode;
   MsgOut.Info.Values['text']:=InfoText;
   if Assigned(OrigMsg) then

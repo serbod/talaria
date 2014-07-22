@@ -15,7 +15,7 @@ type
   TSeenBy = array of TNodeID;
 
   TDnmpManager = class;
-  TDnmpParser = class;
+  TDnmpMsgHandler = class;
 
   { TDnmpConf }
 
@@ -178,7 +178,7 @@ type
     LinkInfo: TLinkInfo;
     Speed: Integer;
 
-    Parser: TDnmpParser;
+    MsgHandler: TDnmpMsgHandler;
 
     constructor Create(AMgr: TDnmpManager);
     destructor Destroy(); override;
@@ -258,18 +258,6 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
-  // Базовый класс обработчика входящих сообщений
-  // for links only
-  TDnmpParser = class(TObject)
-  public
-    Mgr: TDnmpManager;
-    Link: TDnmpLink;
-    // Запуск парсера
-    function Start(): Boolean; virtual; abstract;
-    // Разбор сообщения и выполнение требуемых действий
-    function ParseMessage(Msg: TDnmpMsg): Boolean; virtual; abstract;
-  end;
-
   {// Список поддерживаемых типов сообщений
   TDnmpMsgTypes = class(TList)
   public
@@ -280,20 +268,26 @@ type
   end;}
 
   { TDnmpMsgHandler }
-  // Базовый класс обработчика входящих сообщений
-  // services
+  { Базовый класс обработчика входящих сообщений
+    Если при вызове Create указан Link, то сервис привязывается к данному линку }
+  // links, services
   TDnmpMsgHandler = class(TObject)
   protected
     FMgr: TDnmpManager;
+    FLink: TDnmpLink;
     {MsgTypes: TDnmpMsgTypes; }
   public
     property Mgr: TDnmpManager read FMgr;
+    // for links only
+    property Link: TDnmpLink read FLink;
     { Add self to Mgr.MsgHandlers }
-    constructor Create(AMgr: TDnmpManager);
+    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil);
     { Remove self from Mgr.MsgHandlers }
     destructor Destroy(); override;
+    // Запуск запуск обработчика
+    function Start(): Boolean; virtual;
     { Обработка команды (Thread-safe) от указанного адреса }
-    function Cmd(Text: string; Addr: TAddr): string; virtual; abstract;
+    function Cmd(Text: string; Addr: TAddr): string; virtual;
     // Разбор сообщения и выполнение требуемых действий
     // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
     function ParseMsg(AMsg: TDnmpMsg): Boolean; virtual; abstract;
@@ -301,10 +295,6 @@ type
 
   TLogEvent = procedure(Sender: TObject; LogMsg: string) of object;
   TMgrEvent = procedure(Sender, AText: string) of object;
-  TChatMsgEvent = procedure(SrcAddr: TAddr; TAext: string) of object;
-  TPvtMsgEvent = procedure(SrcAddr: TAddr; AInfo, AText: string) of object;
-  TChannelMsgEvent = procedure(SrcAddr: TAddr; AGroupName, AText: string) of object;
-  TForumMsgEvent = procedure(SrcAddr: TAddr; AGroupName, ATopic, AText: string) of object;
 
   // Manager base class
 
@@ -389,16 +379,6 @@ type
     function Approve(ALinkInfo: TLinkInfo): boolean;
     // ==== Сервисные функции
     procedure SendChatMsg(DestAddr: TAddr; Text: string);
-    //procedure SendPvtMsg(DestAddr: TAddr; Info, Text: string); virtual; abstract;
-    //procedure SendChannelMsg(GroupName, Text: string); virtual; abstract;
-    //procedure SendForumMsg(GroupName, Topic, Text: string); virtual; abstract;
-    //procedure SendDeliveryReport(DestAddr: TAddr; OrigTimestamp: TDateTime; ResultCode: Integer); virtual; abstract;
-    // ==============
-    //procedure OnChatMsg(SrcAddr: TAddr; Text: string); virtual; abstract;
-    //procedure OnPvtMsg(SrcAddr: TAddr; Info, Text: string); virtual; abstract;
-    //procedure OnChannelMsg(GroupName, Text: string); virtual; abstract;
-    //procedure OnForumMsg(GroupName, Topic, Text: string); virtual; abstract;
-    //procedure OnDeliveryReport(SrcAddr: TAddr; OrigTimestamp: TDateTime; ResultCode: Integer); virtual; abstract;
     procedure RequestInfoByAddr(Addr: TAddr);
     procedure RequestPointlist(Addr: TAddr);
     procedure SendLinkInfo(ALinkInfo: TLinkInfo; TargetAddr: TAddr); // [S]
@@ -445,6 +425,7 @@ const
   csNodelistFileName = 'NodeList.lst';
   csMsgQueueFileName = 'MsgQueue.dta';
   ciKeyLength = 64;
+  CRLF = #13#10;
 
 var
   sDnmpDataDir: string = 'data';
@@ -1558,18 +1539,29 @@ begin
   Result:=Active;
 end;
 
-// === TDnmpMsgParser ===
-constructor TDnmpMsgHandler.Create(AMgr: TDnmpManager);
+// === TDnmpMsgHandler ===
+constructor TDnmpMsgHandler.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
   inherited Create();
   self.FMgr:=AMgr;
-  if Assigned(AMgr) then AMgr.MsgHandlers.Add(self);
+  self.FLink:=ALink;
+  if Assigned(Mgr) and (not Assigned(Link)) then AMgr.MsgHandlers.Add(self);
 end;
 
 destructor TDnmpMsgHandler.Destroy();
 begin
-  if Assigned(Mgr) then Mgr.MsgHandlers.Extract(self);
+  if Assigned(Mgr) and (not Assigned(Link)) then Mgr.MsgHandlers.Extract(self);
   inherited Destroy();
+end;
+
+function TDnmpMsgHandler.Start: Boolean;
+begin
+  Result:=False;
+end;
+
+function TDnmpMsgHandler.Cmd(Text: string; Addr: TAddr): string;
+begin
+  Result:='';
 end;
 
 // ===================
@@ -1643,7 +1635,7 @@ begin
   tmpLink:=TIpLink.Create(self, '', sTcpPort, 'TCP');
   tmpLink.LinkType:=ltTemporary;
   tmpLink.Mgr:=Self;
-  tmpLink.Parser:=TDnmpParserServer.Create(Self, tmpLink);
+  tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
   tmpLink.MyInfo:=Self.MyInfo;
   if tmpLink.Listen() then
@@ -1669,7 +1661,7 @@ begin
   tmpLink:=TIpLink.Create(Self, sUplinkAddr, sTcpPort, 'TCP');
   tmpLink.LinkType:=ltPoint;
   tmpLink.Mgr:=Self;
-  tmpLink.Parser:=TDnmpParserClient.Create(Self, tmpLink);
+  tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
   tmpLink.MyInfo:=Self.MyInfo;
   if tmpLink.Connect() then
@@ -1718,7 +1710,7 @@ begin
   tmpLink:=TIpLink.Create(Self, sIpHost, sIpPort, 'TCP');
   tmpLink.LinkType:=ltNode;
   tmpLink.Mgr:=Self;
-  tmpLink.Parser:=TDnmpParserServer.Create(Self, tmpLink);
+  tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
   tmpLink.MyInfo:=Self.MyInfo;
   if tmpLink.Connect() then
@@ -1760,13 +1752,13 @@ begin
   Result:=self.LinkList.Add(Link);
   if ServerMode then
   begin
-    Link.Parser:=TDnmpParserServer.Create(Self, Link);
+    Link.MsgHandler:=TDnmpParserServer.Create(Self, Link);
   end
   else
   begin
-    Link.Parser:=TDnmpParserClient.Create(Self, Link);
+    Link.MsgHandler:=TDnmpParserClient.Create(Self, Link);
   end;
-  if Assigned(Link.Parser) then Link.Parser.Start();
+  if Assigned(Link.MsgHandler) then Link.MsgHandler.Start();
 end;
 
 function TDnmpManager.DelLink(Link: TDnmpLink): Boolean;
@@ -1815,7 +1807,7 @@ begin
   //DebugMsg(Msg, Link, '<<');
 
   // Pre-parse incomong msg
-  if not Link.Parser.ParseMessage(Msg) then
+  if not Link.MsgHandler.ParseMsg(Msg) then
   begin
     // Message type unknown for parser, maybe it's service
     if SameAddr(Msg.TargetAddr, MyInfo.Addr) then
@@ -2067,7 +2059,7 @@ end;
 
 procedure TDnmpManager.SendErrorMsg(DestAddr: TAddr; ErrCode, ErrText: string);
 begin
-  SendDataMsg(DestAddr, 'ERRR', 'err_code='+ErrCode, ErrText);
+  SendDataMsg(DestAddr, 'INFO', 'cmd=ERRR'+CRLF+'err_code='+ErrCode, ErrText);
 end;
 
 procedure TDnmpManager.SendChatMsg(DestAddr: TAddr; Text: string);
@@ -2240,7 +2232,7 @@ begin
 
   TmpAddr.Node:=Addr.Node;
   TmpAddr.Point:=0;
-  SendDataMsg(TmpAddr, 'GINF', 'addr='+AddrToStr(Addr), '');
+  SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr='+AddrToStr(Addr), '');
 end;
 
 procedure TDnmpManager.RequestPointlist(Addr: TAddr);
@@ -2254,14 +2246,15 @@ begin
     Exit;
   end;
 
-  SendDataMsg(TmpAddr, 'GINF', 'addr=points', '');
+  SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr=points', '');
 end;
 
 procedure TDnmpManager.SendLinkInfo(ALinkInfo: TLinkInfo; TargetAddr: TAddr);
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, TargetAddr, 'LNKI','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, TargetAddr, 'INFO','','');
+  MsgOut.Info.Values['cmd']:='LNKI';
   MsgOut.Info.Values['addr']:=ALinkInfo.AddrStr;
   MsgOut.Info.Values['guid']:=ALinkInfo.GUID;
   MsgOut.Info.Values['senior_guid']:=ALinkInfo.SeniorGUID;
