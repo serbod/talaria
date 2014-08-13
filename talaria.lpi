@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="13">
+    <Units Count="15">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -128,6 +128,18 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="GrpcServiceFrame"/>
       </Unit12>
+      <Unit13>
+        <Filename Value="mailboxframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameMailbox"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="MailboxFrame"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="dnmp_mail.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_mail"/>
+      </Unit14>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

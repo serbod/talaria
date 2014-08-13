@@ -5,7 +5,8 @@ unit Core;
 interface
 
 uses
-  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame, Misc;
+  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame,
+  Misc, dnmp_mail;
 
 type
 
@@ -66,19 +67,52 @@ type
 
   { TChatRoom }
 
-  TChatRoom = class(TObject)
+  TChatRoom = class(TInterfacedObject)
   private
     FContactItemList: TContactItemList;
   public
+    DataObject: TObject;
     Name: string;
-    DataSource: TObject;
     constructor Create();
     destructor Destroy(); override;
     property ContactItemList: TContactItemList read FContactItemList;
   end;
 
-  TMailBox = class(TObject)
+  { TMailMessage }
 
+  TMailMessage = class(TInterfacedObject)
+  protected
+    function FGetTopic(): string; virtual;
+    function FGetText(): string; virtual;
+  public
+    DataObject: TObject;
+    property Topic: string read FGetTopic;
+    property Text: string read FGetText;
+  end;
+
+  { TMailBox }
+
+  TMailBox = class(TInterfacedObject)
+  protected
+    function FGetName(): string; virtual;
+    function FGetParent(): TMailBox; virtual;
+  public
+    DataObject: TObject;
+    property Parent: TMailBox read FGetParent;
+    property Name: string read FGetName;
+    function MessagesCount(): integer; virtual;
+    function UnreadMessagesCount(): integer; virtual;
+    function GetMessage(Index: integer): TMailMessage; virtual;
+    function IsGroup(): boolean; virtual;
+  end;
+
+  { TMailRoom }
+
+  TMailRoom = class(TInterfacedObject)
+  public
+    DataObject: TObject;
+    function MailboxCount(): integer; virtual;
+    function GetMailbox(Index: integer): TMailBox; virtual;
   end;
 
 var
@@ -92,11 +126,13 @@ procedure AddServicePage(AService: TDnmpService);
 
 const
   ciIconFolder = 9;
+  ciIconNote = 18;
   ciIconUser = 20;
 
 implementation
 
-uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm;
+uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
+  MailboxFrame;
 
 procedure Init();
 var
@@ -106,10 +142,6 @@ begin
   if not Assigned(MainFormPages) then Exit;
   MainFormPages.ClearAll();
 
-  // status page
-  AddPage(TFrameStatus.Create(nil), 'Status');
-  // chat page
-  AddPage(TFrameChat.Create(nil), 'Chat');
   // node
   // TODO: clearing
   if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
@@ -119,6 +151,18 @@ begin
   (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;
   (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpNode.ServMgr;
   Core.AddPage(frame, 'Node');
+
+  // status page
+  AddPage(TFrameStatus.Create(nil), 'Status');
+  // chat page
+  AddPage(TFrameChat.Create(nil), 'Chat');
+
+  // mail page
+  frame:=TFrameMailbox.Create(nil);
+  (frame as TFrameMailbox).MailRoom:=TMailRoom.Create();
+  (frame as TFrameMailbox).MailRoom.DataObject:=ServiceDnmpNode.ServMgr.GetService('MAIL','');
+  (frame as TFrameMailbox).Update();
+  AddPage(frame, 'Mail');
 end;
 
 procedure AddPage(AFrame: TFrame; ACaption: string);
@@ -139,6 +183,98 @@ begin
     (TmpFrame as TFrameGrpcService).Grpc:=(AService as TDnmpGrpc);
     AddPage(TmpFrame, AService.ServiceInfo.Name);
   end;
+end;
+
+{ TMailRoom }
+
+function TMailRoom.MailboxCount(): integer;
+begin
+  Result:=0;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMail) then
+  begin
+    Result:=1;
+  end;
+end;
+
+function TMailRoom.GetMailbox(Index: integer): TMailBox;
+var
+  TmpItem: TDnmpMailMessagesList;
+begin
+  Result:=nil;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMail) then
+  begin
+    TmpItem:=(DataObject as TDnmpMail).MessagesList;
+    if not Assigned(TmpItem) then Exit;
+    Result:=TMailBox.Create();
+    Result.DataObject:=TmpItem;
+  end;
+end;
+
+{ TMailBox }
+
+function TMailBox.FGetName(): string;
+begin
+  Result:='Mailbox';
+  if not Assigned(DataObject) then Exit;
+
+end;
+
+function TMailBox.FGetParent(): TMailBox;
+begin
+  Result:=nil;
+  if not Assigned(DataObject) then Exit;
+
+end;
+
+function TMailBox.MessagesCount(): integer;
+begin
+  Result:=0;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMailMessagesList) then Result:=(DataObject as TDnmpMailMessagesList).Count;
+end;
+
+function TMailBox.UnreadMessagesCount(): integer;
+begin
+  Result:=0;
+  if not Assigned(DataObject) then Exit;
+end;
+
+function TMailBox.GetMessage(Index: integer): TMailMessage;
+var
+  TmpItem: TDnmpMailMessage;
+begin
+  Result:=nil;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMailMessagesList) then
+  begin
+    TmpItem:=(DataObject as TDnmpMailMessagesList).Items[Index];
+    if not Assigned(TmpItem) then Exit;
+    Result:=TMailMessage.Create();
+    Result.DataObject:=TmpItem;
+  end;
+end;
+
+function TMailBox.IsGroup(): boolean;
+begin
+  Result:=False;
+end;
+
+{ TMailMessage }
+
+function TMailMessage.FGetTopic(): string;
+begin
+  Result:='';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMailMessage) then Result:=(DataObject as TDnmpMailMessage).Topic;
+end;
+
+function TMailMessage.FGetText(): string;
+begin
+  Result:='';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMailMessage) then Result:=(DataObject as TDnmpMailMessage).Text;
 end;
 
 { TChatRoom }
@@ -180,7 +316,7 @@ var
 begin
   for i:=0 to self.Count-1 do
   begin
-    Result:=self.Items[i];
+    Result:=(self.Items[i] as TContactItem);
     if Result.DataObject=ADataObject then Exit;
   end;
   Result:=nil;
@@ -303,6 +439,7 @@ begin
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   ServMgr.LoadFromFile();
+  ServMgr.Start();
 end;
 
 destructor TServiceDnmpNode.Destroy();

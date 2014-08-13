@@ -53,7 +53,7 @@ type
     ContactItemList: TContactItemList;
     procedure AddText(AText: string);
     procedure AddBBCode(AText: string);
-    procedure AfterConstruction(); override;
+    procedure UpdateContactList();
   end;
 
 implementation

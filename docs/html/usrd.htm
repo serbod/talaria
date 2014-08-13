@@ -78,13 +78,23 @@ SET_INFO &lt;GUID&gt; &lt;param_name&gt; &lt;value&gt;<br>
 <p><b>Данные:</b></p>
 
 <p>
-USERS_LIST<br>
+<b>USERS_LIST</b><br>
 Содержит список пользователей в формате CSV.<br>
 <b>guid</b> - GUID пользователя<br>
 <b>name</b> - краткое имя<br>
 <b>addr</b> - основной адрес<br>
 <b>state</b> - состояние<br>
 <b>rating</b> - рейтинг<br>
+</p>
+
+<p>
+<b>PASSPORT</b><br>
+Паспорт пользователя<br>
+<b>serialization</b> - варианты: JSON, XML, YAML<br> 
+<b>compression</b> - варианты: ZIP, NONE, GZIP, 7ZIP, RAR<br>
+<b>encription</b> - варианты: RC4, SEAL, AES, XOR, NONE<br>
+Данные:<br>
+сериализованный пакованный шифрованный паспорт<br>
 </p>
 
 </body>
