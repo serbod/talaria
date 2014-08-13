@@ -44,7 +44,6 @@ object FormMain: TFormMain
         Left = 1
         Top = 2
         Action = actOptions
-        OnClick = tbOptionsClick
       end
     end
     object imgSidebarTop: TImage

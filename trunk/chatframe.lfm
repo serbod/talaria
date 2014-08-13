@@ -6,8 +6,8 @@ object FrameChat: TFrameChat
   ClientHeight = 481
   ClientWidth = 734
   TabOrder = 0
-  DesignLeft = 475
-  DesignTop = 238
+  DesignLeft = 476
+  DesignTop = 189
   object panRight: TPanel
     Left = 564
     Height = 481
@@ -44,6 +44,7 @@ object FrameChat: TFrameChat
       Width = 170
       Align = alClient
       DefaultItemHeight = 18
+      StateImages = FormMain.ImageList16
       TabOrder = 2
     end
   end
@@ -135,7 +136,6 @@ object FrameChat: TFrameChat
         Width = 551
         Align = alClient
         BorderSpacing.Around = 4
-        OnChange = TextToSendChange
         OnKeyDown = TextToSendKeyDown
         TabOrder = 1
       end
@@ -171,7 +171,6 @@ object FrameChat: TFrameChat
       Category = 'Message'
       Caption = 'Italic'
       ImageIndex = 11
-      OnExecute = actItalicExecute
     end
     object actUnderline: TAction
       Category = 'Message'

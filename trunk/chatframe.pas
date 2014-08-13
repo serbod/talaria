@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, ComCtrls,
-  StdCtrls, ActnList, LCLType;
+  StdCtrls, ActnList, LCLType, Core;
 
 type
 
@@ -43,16 +43,17 @@ type
     ToolButton2: TToolButton;
     tbFreezeScrolling: TToolButton;
     tvUserList: TTreeView;
-    procedure actItalicExecute(Sender: TObject);
-    procedure TextToSendChange(Sender: TObject);
     procedure TextToSendKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
   private
     { private declarations }
   public
     { public declarations }
+    ChatRoom: TChatRoom;
+    ContactItemList: TContactItemList;
     procedure AddText(AText: string);
     procedure AddBBCode(AText: string);
+    procedure AfterConstruction(); override;
   end;
 
 implementation
@@ -60,16 +61,6 @@ implementation
 {$R *.lfm}
 
 { TFrameChat }
-
-procedure TFrameChat.actItalicExecute(Sender: TObject);
-begin
-
-end;
-
-procedure TFrameChat.TextToSendChange(Sender: TObject);
-begin
-
-end;
 
 procedure TFrameChat.TextToSendKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
@@ -90,6 +81,27 @@ end;
 procedure TFrameChat.AddBBCode(AText: string);
 begin
   //MemoText.Lines;
+end;
+
+procedure TFrameChat.UpdateContactList();
+var
+  tv: TTreeView;
+  i: integer;
+  Item: TContactItem;
+  tvItem: TTreeNode;
+begin
+  if not Assigned(ContactItemList) then Exit;
+  tv:=tvUserList;
+  tv.BeginUpdate();
+  tv.Items.Clear();
+  for i:=0 to ContactItemList.Count-1 do
+  begin
+    Item:=(ContactItemList.Items[i] as TContactItem);
+    tvItem:=tv.Items.AddChild(nil, Item.Caption);
+    if Item.IsGroup then tvItem.StateIndex:=ciIconFolder
+    else tvItem.StateIndex:=ciIconUser;
+  end;
+  tv.EndUpdate();
 end;
 
 end.

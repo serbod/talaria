@@ -29,7 +29,6 @@ type
     tbOptions: TToolButton;
     procedure actAboutExecute(Sender: TObject);
     procedure actExitExecute(Sender: TObject);
-    procedure tbOptionsClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -46,11 +45,6 @@ implementation
 
 { TFormMain }
 
-procedure TFormMain.tbOptionsClick(Sender: TObject);
-begin
-
-end;
-
 procedure TFormMain.actAboutExecute(Sender: TObject);
 begin
   Core.Init();
@@ -66,7 +60,7 @@ procedure TFormMain.UpdatePages();
 var
   i, ii: integer;
   tsheet: TTabSheet;
-  frame: TFrame;
+  //frame: TFrame;
   PageItem: TMainFormPageItem;
 begin
   if not Assigned(MainFormPages) then Exit;

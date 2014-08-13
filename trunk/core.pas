@@ -47,6 +47,40 @@ type
     procedure ClearAll;
   end;
 
+  TContactItem = class(TCollectionItem)
+  public
+    Caption: string;
+    IsGroup: boolean;
+    StateIcon: integer;
+    ParentItem: TContactItem;
+    DataObject: TObject;
+  end;
+
+  { TContactItemList }
+
+  TContactItemList = class(TCollection)
+    procedure AddContact(ACaption: string; AParentItem: TContactItem; ADataObject: TObject; AIsGroup: boolean = False);
+    procedure ClearAll();
+    function GetByData(ADataObject: TObject): TContactItem;
+  end;
+
+  { TChatRoom }
+
+  TChatRoom = class(TObject)
+  private
+    FContactItemList: TContactItemList;
+  public
+    Name: string;
+    DataSource: TObject;
+    constructor Create();
+    destructor Destroy(); override;
+    property ContactItemList: TContactItemList read FContactItemList;
+  end;
+
+  TMailBox = class(TObject)
+
+  end;
+
 var
   MainFormPages: TMainFormPages;
   ServiceDnmpNode: TServiceDnmpNode;
@@ -54,6 +88,11 @@ var
 procedure Init();
 procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure AddServicePage(AService: TDnmpService);
+
+
+const
+  ciIconFolder = 9;
+  ciIconUser = 20;
 
 implementation
 
@@ -102,6 +141,51 @@ begin
   end;
 end;
 
+{ TChatRoom }
+
+constructor TChatRoom.Create();
+begin
+  inherited Create();
+  FContactItemList:=TContactItemList.Create(TContactItem);
+end;
+
+destructor TChatRoom.Destroy();
+begin
+  FreeAndNil(FContactItemList);
+  inherited Destroy();
+end;
+
+{ TContactItemList }
+
+procedure TContactItemList.AddContact(ACaption: string;
+  AParentItem: TContactItem; ADataObject: TObject; AIsGroup: boolean);
+var
+  Item: TContactItem;
+begin
+  Item:=(self.Add() as TContactItem);
+  Item.Caption:=ACaption;
+  Item.IsGroup:=AIsGroup;
+  Item.ParentItem:=AParentItem;
+  Item.DataObject:=ADataObject;
+end;
+
+procedure TContactItemList.ClearAll();
+begin
+  Clear();
+end;
+
+function TContactItemList.GetByData(ADataObject: TObject): TContactItem;
+var
+  i: integer;
+begin
+  for i:=0 to self.Count-1 do
+  begin
+    Result:=self.Items[i];
+    if Result.DataObject=ADataObject then Exit;
+  end;
+  Result:=nil;
+end;
+
 { TMainFormPages }
 
 procedure TMainFormPages.AddPage(AFrame: TFrame; ACaption: string);
@@ -145,6 +229,8 @@ procedure TServiceDnmpNode.EventHandler(Sender, Text: string);
 var
   sCmd, sParam: string;
 begin
+  sCmd:='';
+  sParam:='';
   if Sender='MGR' then
   begin
     ExtractCmd(Text, sCmd, sParam);

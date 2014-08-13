@@ -58,6 +58,7 @@
         <ComponentName Value="FrameStatus"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="StatusFrame"/>
       </Unit2>
       <Unit3>
         <Filename Value="chatframe.pas"/>
@@ -117,6 +118,7 @@
         <ComponentName Value="FrameConfig"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ConfigFrame"/>
       </Unit11>
       <Unit12>
         <Filename Value="grpcserviceframe.pas"/>
@@ -145,6 +147,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">
