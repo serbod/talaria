@@ -109,6 +109,7 @@ type
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); virtual;
     destructor Destroy; override;
     property Mgr: TDnmpManager read FMgr;
+    property ServiceMgr: TDnmpServiceManager read FServiceMgr;
     { Получить абрнента по его GUID
       Ищет сперва в списке абонентов сервиса, затем в общем списке абонентов
       затем в списках линков и контактов
@@ -120,6 +121,8 @@ type
     function ParseMsg(AMsg: TDnmpMsg): string; virtual;
     // Обработчик события
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
+    // Отладочное сообщение
+    procedure DebugText(s: string);
     function ToStorage(): TDnmpStorage; virtual;
     function FromStorage(Storage: TDnmpStorage): boolean; virtual;
     function SaveToString(): string; virtual;
@@ -181,6 +184,7 @@ type
     property ServiceType: string read FServiceType;
     procedure SaveToFile();
     procedure LoadFromFile();
+    function Start(): boolean; override;
     { (Server) Find service by sType and sName, then modify it, sAction:
     add - add service info (if not found), set owner by GUID from sParams
     del - delete service and service info
@@ -192,10 +196,13 @@ type
     function ModService(sType, sName, sAction, sParams: string): Boolean;
     { Create service with given ServiceInfo }
     function CreateService(ServiceInfo: TDnmpServiceInfo): TDnmpService;
+    { Get service by type and name }
+    function GetService(AServiceType, AServiceName: string): TDnmpService;
     // Обработка команды от указанного адреса
     function Cmd(Text: string; Addr: TAddr): string; override;
     // Разбор сообщения и выполнение требуемых действий
     // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
+    // Try to create service !!!
     function ParseMsg(AMsg: TDnmpMsg): boolean; override;
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
   end;
@@ -214,7 +221,7 @@ function StorageFromJson(AStorage: TDnmpStorage; s: string): boolean;
 
 
 implementation
-uses Misc, dnmp_grpc;
+uses Misc, dnmp_grpc, dnmp_mail;
 
 function StorageToJson(AStorage: TDnmpStorage): string;
 var
@@ -877,6 +884,11 @@ begin
   Result:='';
 end;
 
+procedure TDnmpService.DebugText(s: string);
+begin
+  if Assigned(Mgr) and Assigned(ServiceInfo) then Mgr.DebugText(self.ServiceInfo.ServiceType +': '+s);
+end;
+
 function TDnmpService.GetAbonentByGUID(sGUID: string): TDnmpAbonent;
 var
   li: TLinkInfo;
@@ -1030,6 +1042,7 @@ begin
   ServiceTypes:=TStringList.Create();
   ServiceTypes.Add(ServiceType);
   ServiceTypes.Add('GRPC');
+  ServiceTypes.Add('MAIL');
 
   Self.AllAbonents:=TDnmpAbonentList.Create(True);
   self.ServiceInfoList:=TDnmpServiceInfoList.Create(True);
@@ -1067,6 +1080,19 @@ begin
   self.AllAbonents.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDAbonFileName));
   self.ServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDInfoFileName));
   self.RemoteServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDKnownFileName));
+end;
+
+function TDnmpServiceManager.Start(): boolean;
+var
+  si: TDnmpServiceInfo;
+begin
+  Result:=inherited Start();
+  // default services
+  // Mail
+  si:=ServiceInfoList.UpdateServiceInfo('MAIL', '', '', '', '', '', 'Mailer');
+  if Assigned(si) then self.CreateService(si);
+
+  Result:=True;
 end;
 
 function TDnmpServiceManager.ParseMsg(AMsg: TDnmpMsg): boolean;
@@ -1117,7 +1143,7 @@ begin
   sName:=AMsg.Info.Values['name'];
   tmpService:=ServiceList.GetService(sType, sName);
 
-  // Try to create service
+  // Try to create service (!!!)
   if not Assigned(tmpService) then
   begin
     tmpServiceInfo:=ServiceInfoList.GetServiceByTypeName(sType, sName);
@@ -1153,6 +1179,7 @@ function TDnmpServiceManager.CreateService(ServiceInfo: TDnmpServiceInfo): TDnmp
 begin
   Result:=self.ServiceList.GetService(ServiceInfo.ServiceType, ServiceInfo.Name);
   if Assigned(Result) then Exit;
+
   if ServiceInfo.ServiceType='GRPC' then
   begin
     if Mgr.ServerMode then
@@ -1161,11 +1188,23 @@ begin
       Result:=TDnmpGrpcClient.Create(Mgr, Self, ServiceInfo);
     (Result as TDnmpGrpc).Author:=self.DefaultOwner;
   end;
-  if not Assigned(Result) then
+
+  if ServiceInfo.ServiceType='MAIL' then
   begin
-    Result:=CreateService(ServiceInfo);
+    if Mgr.ServerMode then
+      Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo)
+    else
+      Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo);
+    (Result as TDnmpMail).Author:=self.DefaultOwner;
   end;
+
   if Assigned(Result) then Self.ServiceList.Add(Result);
+end;
+
+function TDnmpServiceManager.GetService(AServiceType, AServiceName: string
+  ): TDnmpService;
+begin
+  Result:=self.ServiceList.GetService(AServiceType, AServiceName);
 end;
 
 function TDnmpServiceManager.ModService(sType, sName, sAction, sParams: string): Boolean;

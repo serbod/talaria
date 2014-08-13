@@ -1,0 +1,135 @@
+object FrameMailbox: TFrameMailbox
+  Left = 0
+  Height = 436
+  Top = 0
+  Width = 773
+  ClientHeight = 436
+  ClientWidth = 773
+  TabOrder = 0
+  DesignLeft = 250
+  DesignTop = 155
+  object gbMailboxTree: TGroupBox
+    Left = 0
+    Height = 436
+    Top = 0
+    Width = 209
+    Align = alLeft
+    Caption = 'Mailboxes'
+    ClientHeight = 418
+    ClientWidth = 205
+    TabOrder = 0
+    object tvMailboxes: TTreeView
+      Left = 4
+      Height = 410
+      Top = 4
+      Width = 197
+      Align = alClient
+      BorderSpacing.Around = 4
+      DefaultItemHeight = 18
+      PopupMenu = pmMailboxes
+      StateImages = FormMain.ImageList16
+      TabOrder = 0
+      OnSelectionChanged = tvMailboxesSelectionChanged
+    end
+  end
+  object Splitter1: TSplitter
+    Left = 209
+    Height = 436
+    Top = 0
+    Width = 5
+  end
+  object panRight: TPanel
+    Left = 214
+    Height = 436
+    Top = 0
+    Width = 559
+    Align = alClient
+    BevelOuter = bvNone
+    ClientHeight = 436
+    ClientWidth = 559
+    TabOrder = 2
+    object gbMessagesList: TGroupBox
+      Left = 0
+      Height = 153
+      Top = 0
+      Width = 559
+      Align = alTop
+      Caption = 'Box name - 123 messages, 45 unread'
+      ClientHeight = 135
+      ClientWidth = 555
+      TabOrder = 0
+      object tvMessagesTree: TTreeView
+        Left = 4
+        Height = 127
+        Top = 4
+        Width = 547
+        Align = alClient
+        BorderSpacing.Around = 4
+        DefaultItemHeight = 18
+        PopupMenu = pmMessages
+        RowSelect = True
+        StateImages = FormMain.ImageList16
+        TabOrder = 0
+        OnSelectionChanged = tvMessagesTreeSelectionChanged
+        Options = [tvoAutoItemHeight, tvoHideSelection, tvoKeepCollapsedNodes, tvoRowSelect, tvoShowButtons, tvoShowLines, tvoShowRoot, tvoToolTips, tvoThemedDraw]
+      end
+    end
+    object Splitter2: TSplitter
+      Cursor = crVSplit
+      Left = 0
+      Height = 5
+      Top = 153
+      Width = 559
+      Align = alTop
+      ResizeAnchor = akTop
+    end
+    object gbMessageText: TGroupBox
+      Left = 0
+      Height = 278
+      Top = 158
+      Width = 559
+      Align = alClient
+      Caption = 'Message topic - 45 KBytes'
+      ClientHeight = 260
+      ClientWidth = 555
+      TabOrder = 2
+      object memoMessageText: TMemo
+        Left = 4
+        Height = 252
+        Top = 4
+        Width = 547
+        Align = alClient
+        BorderSpacing.Around = 4
+        Lines.Strings = (
+          'memoMessageText'
+        )
+        PopupMenu = pmMessageText
+        TabOrder = 0
+      end
+    end
+  end
+  object alMailboxes: TActionList
+    left = 72
+    top = 112
+  end
+  object alMessages: TActionList
+    left = 378
+    top = 60
+  end
+  object alMessageText: TActionList
+    left = 374
+    top = 252
+  end
+  object pmMailboxes: TPopupMenu
+    left = 72
+    top = 184
+  end
+  object pmMessages: TPopupMenu
+    left = 475
+    top = 60
+  end
+  object pmMessageText: TPopupMenu
+    left = 374
+    top = 328
+  end
+end

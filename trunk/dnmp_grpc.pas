@@ -123,7 +123,6 @@ type
     MessagesList: TDnmpChannelMessagesList;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
-    procedure DebugText(s: string);
     function SendCmd(Text: string; Addr: TAddr): string;
     function ToStorage(): TDnmpStorage; override;
     function FromStorage(Storage: TDnmpStorage): boolean; override;
@@ -549,11 +548,6 @@ begin
   FreeAndNil(BanList);
   FreeAndNil(UsersList);
   inherited Destroy();
-end;
-
-procedure TDnmpGrpc.DebugText(s: string);
-begin
-  if Assigned(Mgr) then Mgr.DebugText('GRPC: '+s);
 end;
 
 function TDnmpGrpc.CreateChannelMsg(AbonGUID, sText: string): TDnmpChannelMessage;
