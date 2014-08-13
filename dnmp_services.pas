@@ -457,8 +457,6 @@ begin
 end;
 
 function TDnmpAbonentList.AddAbonentByGUID(sGUID: string): TDnmpAbonent;
-var
-  i: Integer;
 begin
   Result:=nil;
   if sGuid='' then Exit;
@@ -555,7 +553,7 @@ function TDnmpAbonentList.FromStorage(Storage: TDnmpStorage): boolean;
 var
   SubStorage: TDnmpStorage;
   i: Integer;
-  Abonent: TDnmpAbonent;
+  Item: TDnmpAbonent;
 begin
   Result:=False;
   if Storage.StorageType <> stDictionary then Exit;
@@ -564,13 +562,13 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    Abonent:=TDnmpAbonent.Create();
-    if not Abonent.FromStorage(SubStorage.GetObject(i)) then
+    Item:=TDnmpAbonent.Create();
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
     begin
-      Abonent.Free();
+      Item.Free();
       Continue;
     end;
-    self.Add(Abonent);
+    self.Add(Item);
   end;
   Result:=True;
 end;
@@ -1279,7 +1277,7 @@ end;
 
 function TDnmpServiceManager.SendServList(Addr: TAddr; Filter: string = ''): Boolean;
 var
-  i, n: Integer;
+  i: Integer;
   sFilter: string;
   si: TDnmpServiceInfo;
   sl, slData: TStringList;
@@ -1500,9 +1498,9 @@ end;
 function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Boolean;
 var
   sl, slData: TStringList;
-  i, n: Integer;
+  i: Integer;
   Abonent: TDnmpAbonent;
-  si: TDnmpServiceInfo;
+  //si: TDnmpServiceInfo;
 
 procedure UpdateServiceInfoList(siList: TDnmpServiceInfoList; sl: TStrings);
 begin

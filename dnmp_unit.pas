@@ -145,6 +145,8 @@ type
     procedure Assign(li: TLinkInfo);
   end;
 
+  { TLinkInfoList }
+
   TLinkInfoList = class(TObjectList)
   private
     function GetLinkInfo(Index: Integer): TLinkInfo;
@@ -154,9 +156,13 @@ type
     property Items[Index: Integer]: TLinkInfo read GetLinkInfo write SetLinkInfo; default;
     function GetLinkInfoByAddr(FAddr: TAddr): TLinkInfo;
     function GetLinkInfoByGUID(SomeGUID: string): TLinkInfo;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
     procedure SaveToFile();
     function LoadFromFile(): Boolean;
+    // Return maximum point ID +1
     function GetFreePointID(): TPointID;
+    // Return maximum node ID +1
     function GetFreeNodeID(): TNodeID;
   end;
 
@@ -312,6 +318,20 @@ type
     FListenerLink: TDnmpLink;
     procedure FSetUplink(Value: TDnmpLink);
     procedure FSetListenerLink(Value: TDnmpLink);
+    { Commands handler:
+    AUTH_OK - someone succesfully authorised
+    EVENT <sender> <text> - internal event
+    ASK - request for some info (not implemented)
+    APPROVE <GUID> - approve link
+    GET_INFO <addr> - send info request to specified address
+    GET_POINTLIST <addr> - send pointlist request to specified address
+    ROUTE VIA <gate_id> <node_id> [node2_id] ..
+      Add routes to specified nodes via 'gate'
+      Добавляет маршруты на указанные узлы через узел gate.
+      Если на узел уже есть маршрут, то он будет заменен
+    ROUTE DEL <node_id>|ALL [node2_id] ...
+      Удаляет маршруты на указанные узлы
+    }
     function CmdHandler(CmdText: string): string;
     procedure IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
     procedure ReadConfig();
@@ -382,6 +402,7 @@ type
     procedure RequestInfoByAddr(Addr: TAddr);
     procedure RequestPointlist(Addr: TAddr);
     procedure SendLinkInfo(ALinkInfo: TLinkInfo; TargetAddr: TAddr); // [S]
+    // !! not used
     procedure ReadLinkInfo(Msg: TDnmpMsg); // [SC]
   end;
 
@@ -798,6 +819,9 @@ var
 begin
   Result:=False;
   if not Assigned(AStream) then Exit;
+  iSeenbyOffset:=0;
+  iParamsSize:=0;
+  iDataSize:=0;
   AStream.Seek(0, soFromBeginning);
   //AStream.Read(iMsgSize, SizeOf(iMsgSize));
   //if iMsgSize<>(AStream.Size-SizeOf(iMsgSize)) then Exit;
@@ -1012,6 +1036,7 @@ var
   msg: TDnmpMsg;
 begin
   Result:=false;
+  msSize:=0;
   Self.Clear();
   if not FileExists(Filename) then Exit;
   try
@@ -1220,6 +1245,46 @@ begin
   end;
 end;
 
+function TLinkInfoList.ToStorage(): TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpLinkInfoList');
+  Result.Add('items', Storage);
+end;
+
+function TLinkInfoList.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item: TLinkInfo;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpLinkInfoList' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=TLinkInfo.Create();
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
+    begin
+      Item.Free();
+      Continue;
+    end;
+    self.Add(Item);
+  end;
+  Result:=True;
+end;
+
 procedure TLinkInfoList.SaveToFile();
 var
   sl: TStringList;
@@ -1380,6 +1445,7 @@ var
 begin
   Result:=nil;
   if not Assigned(Links) then Exit;
+  GateID:=0;
   if not FGetGateForDest(Addr.Node, GateID) then Exit;
 
   for i:=0 to Links.Count-1 do
@@ -2085,12 +2151,14 @@ function TDnmpManager.CmdHandler(CmdText: string): string;
 var
   sCmd, sParams: string;
   saParams: TStringArray;
-  n, m: Integer;
+  i: Integer;
   TraceID: Cardinal;
   Msg: TDnmpMsg;
   li: TLinkInfo;
 begin
   Result:='';
+  sCmd:='';
+  sParams:='';
   ExtractCmd(CmdText, sCmd, sParams);
   if sCmd='AUTH_OK' then
   begin
@@ -2148,18 +2216,18 @@ begin
     if saParams[0]='VIA' then
     begin
       TraceID:=DateTimeToFileDate(Now());
-      for m:=2 to Length(saParams)-1 do
+      for i:=2 to Length(saParams)-1 do
       begin
-        RoutingTable.AddItem(StrToIntDef(saParams[1], 0), StrToIntDef(saParams[m], 0), TraceID);
+        RoutingTable.AddItem(StrToIntDef(saParams[1], 0), StrToIntDef(saParams[i], 0), TraceID);
       end;
     end
 
     else if saParams[0]='DEL' then
     begin
-      for m:=1 to Length(saParams)-1 do
+      for i:=1 to Length(saParams)-1 do
       begin
-        if (m=1) and (UpperCase(saParams[m])='ALL') then RoutingTable.Clear()
-        else RoutingTable.DelDest(StrToIntDef(saParams[m], 0));
+        if (i=1) and (UpperCase(saParams[i])='ALL') then RoutingTable.Clear()
+        else RoutingTable.DelDest(StrToIntDef(saParams[i], 0));
       end;
 
     end;
@@ -2210,7 +2278,7 @@ begin
     if NodeList.IndexOf(ALinkInfo)>=0 then Exit;
     ALinkInfo.Addr.Node:=NodeList.GetFreeNodeID();
     { TODO : Нужно учитывать свой адрес в нодлисте }
-    if ALinkInfo.Addr.Node=MyInfo.Addr.Node then Inc(ALinkInfo.Addr.Node);
+    if SameNode(ALinkInfo.Addr, MyInfo.Addr) then Inc(ALinkInfo.Addr.Node);
     ALinkInfo.Addr.Point:=0;
     NodeList.Add(ALinkInfo);
     // TODO : Сообщаем другим узлам данные нового узла
@@ -2277,7 +2345,7 @@ end;
 
 procedure TDnmpManager.ReadLinkInfo(Msg: TDnmpMsg);
 var
-  i: integer;
+  //i: integer;
   SomeAddr: TAddr;
   li: TLinkInfo;
   ReadAllInfo: Boolean;

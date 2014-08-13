@@ -4,7 +4,7 @@
 unit dnmp_server;
 
 interface
-uses SysUtils, Classes, Contnrs, dnmp_unit;
+uses SysUtils, Classes, dnmp_unit;
 
 type
 
@@ -81,7 +81,7 @@ type
   end;
 
 implementation
-uses RC4, dnmp_services, Misc;
+uses RC4, dnmp_services;
 
 
 //=====================================

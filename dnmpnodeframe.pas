@@ -152,6 +152,8 @@ procedure TFrameDnmpNode.MgrEventHandler(Sender, AText: string);
 var
   sCmd, sParam: string;
 begin
+  sCmd:='';
+  sParam:='';
   if Sender='MGR' then
   begin
     ExtractCmd(AText, sCmd, sParam);
