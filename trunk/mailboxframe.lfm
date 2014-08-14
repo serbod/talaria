@@ -115,6 +115,10 @@ object FrameMailbox: TFrameMailbox
   object alMessages: TActionList
     left = 378
     top = 60
+    object actCreateMessage: TAction
+      Caption = 'Create message'
+      OnExecute = actCreateMessageExecute
+    end
   end
   object alMessageText: TActionList
     left = 374
@@ -127,6 +131,9 @@ object FrameMailbox: TFrameMailbox
   object pmMessages: TPopupMenu
     left = 475
     top = 60
+    object MenuItem1: TMenuItem
+      Action = actCreateMessage
+    end
   end
   object pmMessageText: TPopupMenu
     left = 374

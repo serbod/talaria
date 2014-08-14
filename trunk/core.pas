@@ -104,6 +104,7 @@ type
     function UnreadMessagesCount(): integer; virtual;
     function GetMessage(Index: integer): TMailMessage; virtual;
     function IsGroup(): boolean; virtual;
+    function CreateMessage(): TMailMessage; virtual;
   end;
 
   { TMailRoom }
@@ -193,19 +194,19 @@ begin
   if not Assigned(DataObject) then Exit;
   if (DataObject is TDnmpMail) then
   begin
-    Result:=1;
+    Result:=(DataObject as TDnmpMail).MailboxCount();
   end;
 end;
 
 function TMailRoom.GetMailbox(Index: integer): TMailBox;
 var
-  TmpItem: TDnmpMailMessagesList;
+  TmpItem: TDnmpMailbox;
 begin
   Result:=nil;
   if not Assigned(DataObject) then Exit;
   if (DataObject is TDnmpMail) then
   begin
-    TmpItem:=(DataObject as TDnmpMail).MessagesList;
+    TmpItem:=(DataObject as TDnmpMail).GetMailbox(Index);
     if not Assigned(TmpItem) then Exit;
     Result:=TMailBox.Create();
     Result.DataObject:=TmpItem;
@@ -218,7 +219,7 @@ function TMailBox.FGetName(): string;
 begin
   Result:='Mailbox';
   if not Assigned(DataObject) then Exit;
-
+  if (DataObject is TDnmpMailbox) then Result:=(DataObject as TDnmpMailbox).Name;
 end;
 
 function TMailBox.FGetParent(): TMailBox;
@@ -232,7 +233,7 @@ function TMailBox.MessagesCount(): integer;
 begin
   Result:=0;
   if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailMessagesList) then Result:=(DataObject as TDnmpMailMessagesList).Count;
+  if (DataObject is TDnmpMailbox) then Result:=(DataObject as TDnmpMailbox).Count;
 end;
 
 function TMailBox.UnreadMessagesCount(): integer;
@@ -247,9 +248,9 @@ var
 begin
   Result:=nil;
   if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailMessagesList) then
+  if (DataObject is TDnmpMailbox) then
   begin
-    TmpItem:=(DataObject as TDnmpMailMessagesList).Items[Index];
+    TmpItem:=(DataObject as TDnmpMailbox).Items[Index];
     if not Assigned(TmpItem) then Exit;
     Result:=TMailMessage.Create();
     Result.DataObject:=TmpItem;
@@ -259,6 +260,24 @@ end;
 function TMailBox.IsGroup(): boolean;
 begin
   Result:=False;
+end;
+
+function TMailBox.CreateMessage(): TMailMessage;
+var
+  TmpItem: TDnmpMailMessage;
+begin
+  Result:=nil;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpMailbox) then
+  begin
+    TmpItem:=TDnmpMailMessage.Create();
+    if not Assigned(TmpItem) then Exit;
+    (DataObject as TDnmpMailbox).AddItem(TmpItem);
+    //TmpItem.Author:=;
+    Result:=TMailMessage.Create();
+    Result.DataObject:=TmpItem;
+  end;
+
 end;
 
 { TMailMessage }

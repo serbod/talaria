@@ -13,6 +13,7 @@ type
   { TFrameMailbox }
 
   TFrameMailbox = class(TFrame)
+    actCreateMessage: TAction;
     alMessageText: TActionList;
     alMessages: TActionList;
     alMailboxes: TActionList;
@@ -20,6 +21,7 @@ type
     gbMessagesList: TGroupBox;
     gbMessageText: TGroupBox;
     memoMessageText: TMemo;
+    MenuItem1: TMenuItem;
     panRight: TPanel;
     pmMailboxes: TPopupMenu;
     pmMessages: TPopupMenu;
@@ -28,6 +30,7 @@ type
     Splitter2: TSplitter;
     tvMessagesTree: TTreeView;
     tvMailboxes: TTreeView;
+    procedure actCreateMessageExecute(Sender: TObject);
     procedure tvMailboxesSelectionChanged(Sender: TObject);
     procedure tvMessagesTreeSelectionChanged(Sender: TObject);
   private
@@ -59,6 +62,12 @@ procedure TFrameMailbox.tvMailboxesSelectionChanged(Sender: TObject);
 begin
   if Assigned(SelectedMailbox) then Mailbox:=SelectedMailbox;
   UpdateMessages();
+end;
+
+procedure TFrameMailbox.actCreateMessageExecute(Sender: TObject);
+begin
+  if not Assigned(Mailbox) then Exit;
+  // ...
 end;
 
 procedure TFrameMailbox.tvMessagesTreeSelectionChanged(Sender: TObject);
