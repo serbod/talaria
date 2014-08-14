@@ -26,15 +26,29 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
-  { TDnmpMailMessagesList }
+  TDnmpMail = class;
+  TDnmpMailboxType = (mbtInbox, mbtOutbox, mbtStore);
+
+  { TDnmpMailbox }
   // Mail messages list
   // Serializable
-  TDnmpMailMessagesList = class(TObjectList)
+  TDnmpMailbox = class(TInterfacedObject)
   private
+    FMailer: TDnmpMail;
+    FMessagesList: TObjectList;
     function GetItem(Index: Integer): TDnmpMailMessage;
     procedure SetItem(Index: Integer; Value: TDnmpMailMessage);
+    function FCount(): integer;
   public
+    Name: string;
+    BoxType: TDnmpMailboxType;
+    MaxCount: Integer;
+    DestAddr: TAddr;
+    constructor Create(AMailer: TDnmpMail);
+    destructor Destroy(); override;
+    property Mailer: TDnmpMail read FMailer;
     property Items[Index: Integer]: TDnmpMailMessage read GetItem write SetItem; default;
+    property Count: integer read FCount;
     function AddItem(Item: TDnmpMailMessage): Integer; overload;
     { Add message to list:
       Timestamp - datetime
@@ -47,21 +61,6 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
     function SaveToString(): AnsiString;
     function LoadFromString(s: AnsiString): boolean;
-  end;
-
-  TDnmpMailboxType = (mbtInbox, mbtOutbox, mbtStore);
-
-  { TDnmpMailbox }
-
-  TDnmpMailbox = class(TInterfacedObject)
-  public
-    Name: string;
-    BoxType: TDnmpMailboxType;
-    MaxCount: Integer;
-    DestAddr: TAddr;
-    MessagesList: TDnmpMailMessagesList;
-    constructor Create;
-    destructor Destroy; override;
   end;
 
   { TDnmpMail }
@@ -77,12 +76,14 @@ type
     function SendData(Addr: TAddr; sBoxName, sData: string): boolean;
   public
     Author: TDnmpAbonent;
-    MessagesList: TDnmpMailMessagesList;
+    MailboxList: TStringList;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
     function SendCmd(Text: string; Addr: TAddr): string;
     function ToStorage(): TDnmpStorage; override;
     function FromStorage(Storage: TDnmpStorage): boolean; override;
+    function MailboxCount(): integer;
+    function GetMailbox(Index: integer): TDnmpMailbox;
   end;
 
 
@@ -90,17 +91,127 @@ implementation
 
 { TDnmpMailbox }
 
-constructor TDnmpMailbox.Create();
+function TDnmpMailbox.GetItem(Index: Integer): TDnmpMailMessage;
+begin
+  Result:=(FMessagesList.Items[index] as TDnmpMailMessage);
+end;
+
+procedure TDnmpMailbox.SetItem(Index: Integer; Value: TDnmpMailMessage);
+begin
+  FMessagesList.Items[Index]:=Value
+end;
+
+function TDnmpMailbox.FCount(): integer;
+begin
+  Result:=FMessagesList.Count;
+end;
+
+constructor TDnmpMailbox.Create(AMailer: TDnmpMail);
 begin
   inherited Create();
-  MessagesList:=TDnmpMailMessagesList.Create(True);
+  FMailer:=AMailer;
+  FMessagesList:=TObjectList.Create(True);
 end;
 
 destructor TDnmpMailbox.Destroy();
 begin
-  FreeAndNil(MessagesList);
+  FreeAndNil(FMessagesList);
   inherited Destroy();
 end;
+
+function TDnmpMailbox.AddItem(Item: TDnmpMailMessage): Integer;
+begin
+  Result:=FMessagesList.Add(Item);
+end;
+
+function TDnmpMailbox.AddItem(ATimestamp: TDateTime; ATopic: string;
+  AText: string; AAuthorGUID: string; AAbonent: TDnmpAbonent): TDnmpMailMessage;
+var
+  i: Integer;
+begin
+  Result:=nil;
+  // Check for duplicate
+  for i:=0 to Count-1 do
+  begin
+    Result:=self.GetItem(i);
+    if (Result.Timestamp = ATimestamp) and (Result.AuthorGUID = AAuthorGUID) then Exit;
+  end;
+  Result:=TDnmpMailMessage.Create();
+  Result.Timestamp:=ATimestamp;
+  Result.Topic:=ATopic;
+  Result.Text:=AText;
+  Result.AuthorGUID:=AAuthorGUID;
+  Result.Author:=AAbonent;
+  if Assigned(AAbonent) then
+  begin
+    Result.AuthorAddr:=AAbonent.Addr;
+    Result.AuthorName:=AAbonent.Nick;
+  end;
+  self.AddItem(Result);
+end;
+
+function TDnmpMailbox.ToStorage(): TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpMailbox');
+  Result.Add('name', Self.Name);
+  Result.Add('items', Storage);
+end;
+
+function TDnmpMailbox.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item: TDnmpMailMessage;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpMailbox' then Exit;
+  Self.Name:=Storage.GetString('name');
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=TDnmpMailMessage.Create();
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
+    begin
+      Item.Free();
+      Continue;
+    end;
+    self.AddItem(Item);
+  end;
+  Result:=True;
+end;
+
+function TDnmpMailbox.SaveToString: AnsiString;
+var
+  Storage: TDnmpStorage;
+begin
+  Storage:=self.ToStorage();
+  Result:=StorageToJson(Storage);
+  FreeAndNil(Storage);
+end;
+
+function TDnmpMailbox.LoadFromString(s: AnsiString): boolean;
+var
+  Storage: TDnmpStorage;
+begin
+  Result:=False;
+  Storage:=TDnmpStorage.Create(stDictionary);
+  if not StorageFromJson(Storage, s) then Exit;
+  Result:=self.FromStorage(Storage);
+  FreeAndNil(Storage);
+end;
+
 
 { TDnmpMail }
 
@@ -151,14 +262,33 @@ end;
 
 constructor TDnmpMail.Create(AMgr: TDnmpManager;
   AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo);
+var
+  Item: TDnmpMailbox;
 begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
-  Self.MessagesList:=TDnmpMailMessagesList.Create(True);
+  Self.MailboxList:=TStringList.Create();
+  Self.MailboxList.OwnsObjects:=True;
+
+  // default mailboxes
+  Item:=TDnmpMailbox.Create(self);
+  Item.Name:='Inbox';
+  Item.BoxType:=mbtInbox;
+  Self.MailboxList.AddObject(Item.Name, Item);
+
+  Item:=TDnmpMailbox.Create(self);
+  Item.Name:='Outbox';
+  Item.BoxType:=mbtOutbox;
+  Self.MailboxList.AddObject(Item.Name, Item);
+
+  Item:=TDnmpMailbox.Create(self);
+  Item.Name:='Store';
+  Item.BoxType:=mbtStore;
+  Self.MailboxList.AddObject(Item.Name, Item);
 end;
 
 destructor TDnmpMail.Destroy();
 begin
-  FreeAndNil(MessagesList);
+  FreeAndNil(Self.MailboxList);
   inherited Destroy();
 end;
 
@@ -177,109 +307,16 @@ begin
   Result:=inherited FromStorage(Storage);
 end;
 
-{ TDnmpMailMessagesList }
-
-function TDnmpMailMessagesList.GetItem(Index: Integer): TDnmpMailMessage;
+function TDnmpMail.MailboxCount(): integer;
 begin
-  Result:=TDnmpMailMessage(inherited Items[index]);
+  Result:=Self.MailboxList.Count;
 end;
 
-procedure TDnmpMailMessagesList.SetItem(Index: Integer; Value: TDnmpMailMessage
-  );
+function TDnmpMail.GetMailbox(Index: integer): TDnmpMailbox;
 begin
-  inherited Items[Index]:=Value;
+  Result:=(Self.MailboxList.Objects[Index] as TDnmpMailbox);
 end;
 
-function TDnmpMailMessagesList.AddItem(Item: TDnmpMailMessage): Integer;
-begin
-  Result:=self.Add(Item);
-end;
-
-function TDnmpMailMessagesList.AddItem(ATimestamp: TDateTime; ATopic: string;
-  AText: string; AAuthorGUID: string; AAbonent: TDnmpAbonent): TDnmpMailMessage;
-var
-  i: Integer;
-begin
-  Result:=nil;
-  // Check for duplicate
-  for i:=0 to Count-1 do
-  begin
-    Result:=self.GetItem(i);
-    if (Result.Timestamp = ATimestamp) and (Result.AuthorGUID = AAuthorGUID) then Exit;
-  end;
-  Result:=TDnmpMailMessage.Create();
-  Result.Timestamp:=ATimestamp;
-  Result.Topic:=ATopic;
-  Result.Text:=AText;
-  Result.AuthorGUID:=AAuthorGUID;
-  Result.Author:=AAbonent;
-  if Assigned(AAbonent) then
-  begin
-    Result.AuthorAddr:=AAbonent.Addr;
-    Result.AuthorName:=AAbonent.Nick;
-  end;
-  self.Add(Result);
-end;
-
-function TDnmpMailMessagesList.ToStorage: TDnmpStorage;
-var
-  Storage: TDnmpStorage;
-  i: Integer;
-begin
-  Storage:=TDnmpStorage.Create(stDictionary);
-  for i:=0 to Self.Count-1 do
-  begin
-    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
-  end;
-
-  Result:=TDnmpStorage.Create(stDictionary);
-  Result.Add('type', 'DnmpMailMessagesList');
-  Result.Add('items', Storage);
-end;
-
-function TDnmpMailMessagesList.FromStorage(Storage: TDnmpStorage): boolean;
-var
-  SubStorage: TDnmpStorage;
-  i: Integer;
-  Item: TDnmpMailMessage;
-begin
-  Result:=False;
-  if Storage.StorageType <> stDictionary then Exit;
-  if Storage.GetString('type')<>'DnmpMailMessagesList' then Exit;
-  SubStorage:=Storage.GetObject('items');
-  if SubStorage.StorageType <> stDictionary then Exit;
-  for i:=0 to SubStorage.Count-1 do
-  begin
-    Item:=TDnmpMailMessage.Create();
-    if not Item.FromStorage(SubStorage.GetObject(i)) then
-    begin
-      Item.Free();
-      Continue;
-    end;
-    self.Add(Item);
-  end;
-  Result:=True;
-end;
-
-function TDnmpMailMessagesList.SaveToString: AnsiString;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpMailMessagesList.LoadFromString(s: AnsiString): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  if not StorageFromJson(Storage, s) then Exit;
-  Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
 
 { TDnmpMailMessage }
 
