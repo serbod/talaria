@@ -64,8 +64,8 @@ type
     { private declarations }
     FGrpc: TDnmpGrpc;
     procedure FSetGrpc(Value: TDnmpGrpc);
-    function FGetSelectedUser(): TDnmpAbonent;
-    function FGetSelectedAbonent(): TDnmpAbonent;
+    function FGetSelectedUser(): TDnmpContact;
+    function FGetSelectedAbonent(): TDnmpContact;
     function FGetSelectedBan(): TGrpcBanItem;
     procedure UpdateAbonents();
     procedure UpdateUsers();
@@ -74,8 +74,8 @@ type
   public
     { public declarations }
     property Grpc: TDnmpGrpc read FGrpc write FSetGrpc;
-    property SelectedUser: TDnmpAbonent read FGetSelectedUser;
-    property SelectedAbonent: TDnmpAbonent read FGetSelectedAbonent;
+    property SelectedUser: TDnmpContact read FGetSelectedUser;
+    property SelectedAbonent: TDnmpContact read FGetSelectedAbonent;
     property SelectedBan: TGrpcBanItem read FGetSelectedBan;
     procedure Update(); override;
   end;
@@ -95,7 +95,7 @@ end;
 
 procedure TFrameGrpcService.actBanUserExecute(Sender: TObject);
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
   s: string;
 begin
   Abonent:=SelectedUser;
@@ -153,7 +153,7 @@ begin
   Update();
 end;
 
-function TFrameGrpcService.FGetSelectedUser(): TDnmpAbonent;
+function TFrameGrpcService.FGetSelectedUser: TDnmpContact;
 var
   i: integer;
 begin
@@ -162,13 +162,13 @@ begin
   begin
     if lboxUsersList.Selected[i] then
     begin
-      Result:=(lboxUsersList.Items.Objects[i] as TDnmpAbonent);
+      Result:=(lboxUsersList.Items.Objects[i] as TDnmpContact);
       Exit;
     end;
   end;
 end;
 
-function TFrameGrpcService.FGetSelectedAbonent: TDnmpAbonent;
+function TFrameGrpcService.FGetSelectedAbonent: TDnmpContact;
 var
   i: integer;
 begin
@@ -177,7 +177,7 @@ begin
   begin
     if lboxAbonentsList.Selected[i] then
     begin
-      Result:=(lboxAbonentsList.Items.Objects[i] as TDnmpAbonent);
+      Result:=(lboxAbonentsList.Items.Objects[i] as TDnmpContact);
       Exit;
     end;
   end;
@@ -201,15 +201,15 @@ end;
 procedure TFrameGrpcService.UpdateAbonents();
 var
   i: integer;
-  Abon: TDnmpAbonent;
+  Item: TDnmpContact;
 begin
   if Assigned(Grpc.ServiceInfo) then
   begin
     lboxAbonentsList.Clear();
-    for i:=0 to Grpc.ServiceInfo.Abonents.Count-1 do
+    for i:=0 to Grpc.ServiceMgr.AllAbonents.Count-1 do
     begin
-      Abon:=Grpc.ServiceInfo.Abonents[i];
-      lboxAbonentsList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
+      Item:=Grpc.ServiceMgr.AllAbonents[i];
+      lboxAbonentsList.AddItem(AddrToStr(Item.Addr)+': '+Item.Nick, Item);
     end;
   end;
 end;
@@ -217,7 +217,7 @@ end;
 procedure TFrameGrpcService.UpdateUsers();
 var
   i: integer;
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
 begin
   lboxUsersList.Clear();
   for i:=0 to Grpc.UsersList.Count-1 do
@@ -230,7 +230,7 @@ end;
 procedure TFrameGrpcService.UpdateBanList();
 var
   i: integer;
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
   BanItem: TGrpcBanItem;
 begin
   lboxBanList.Clear();
@@ -261,7 +261,7 @@ end;
 procedure TFrameGrpcService.Update();
 var
   i: integer;
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
 begin
   if Assigned(Grpc) then
   begin

@@ -50,7 +50,6 @@ type
   public
     { public declarations }
     ChatRoom: TChatRoom;
-    ContactItemList: TContactItemList;
     procedure AddText(AText: string);
     procedure AddBBCode(AText: string);
     procedure UpdateContactList();
@@ -90,16 +89,17 @@ var
   Item: TContactItem;
   tvItem: TTreeNode;
 begin
-  if not Assigned(ContactItemList) then Exit;
+  if not Assigned(ChatRoom) then Exit;
   tv:=tvUserList;
   tv.BeginUpdate();
   tv.Items.Clear();
-  for i:=0 to ContactItemList.Count-1 do
+  for i:=0 to ChatRoom.ContactCount-1 do
   begin
-    Item:=(ContactItemList.Items[i] as TContactItem);
+    Item:=ChatRoom.GetContact(i);
     tvItem:=tv.Items.AddChild(nil, Item.Caption);
-    if Item.IsGroup then tvItem.StateIndex:=ciIconFolder
-    else tvItem.StateIndex:=ciIconUser;
+    tvItem.StateIndex:=Item.StateIcon();
+    //if Item.IsGroup then tvItem.StateIndex:=ciIconFolder
+    //else tvItem.StateIndex:=ciIconUser;
   end;
   tv.EndUpdate();
 end;

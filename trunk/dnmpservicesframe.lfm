@@ -94,61 +94,18 @@ object FrameDnmpServices: TFrameDnmpServices
         ParentColor = False
         ParentFont = False
       end
-      object gbAbonents: TGroupBox
-        Left = 9
-        Height = 129
-        Top = 152
-        Width = 423
-        Caption = 'Abonents'
-        ClientHeight = 111
-        ClientWidth = 419
-        TabOrder = 0
-        object lvAbonents: TListView
-          Left = 4
-          Height = 103
-          Top = 4
-          Width = 411
-          Align = alClient
-          BorderSpacing.Around = 4
-          Columns = <          
-            item
-              Caption = 'Addr'
-            end          
-            item
-              Caption = 'Nick'
-              Width = 100
-            end          
-            item
-              Caption = 'State'
-            end          
-            item
-              Caption = 'GUID'
-            end          
-            item
-              Caption = 'Rights'
-            end          
-            item
-              Caption = 'Status'
-            end>
-          GridLines = True
-          ReadOnly = True
-          RowSelect = True
-          TabOrder = 0
-          ViewStyle = vsReport
-        end
-      end
       object gbOwners: TGroupBox
         Left = 9
-        Height = 97
+        Height = 136
         Top = 48
         Width = 423
         Caption = 'Owners'
-        ClientHeight = 79
+        ClientHeight = 118
         ClientWidth = 419
-        TabOrder = 1
+        TabOrder = 0
         object lvOwners: TListView
           Left = 4
-          Height = 71
+          Height = 110
           Top = 4
           Width = 411
           Align = alClient
@@ -168,7 +125,7 @@ object FrameDnmpServices: TFrameDnmpServices
               Caption = 'GUID'
             end          
             item
-              Caption = 'Rights'
+              Caption = 'SGUID'
             end          
             item
               Caption = 'Status'
@@ -193,6 +150,7 @@ object FrameDnmpServices: TFrameDnmpServices
     end
     object actAddGrpc: TAction
       Caption = 'Add group chat'
+      OnExecute = actAddGrpcExecute
     end
     object actDelService: TAction
       Caption = 'Delete service'
