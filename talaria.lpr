@@ -9,7 +9,8 @@ uses
   Interfaces, // this includes the LCL widgetset
   Forms, MainForm, StatusFrame, ChatFrame, PointListFrame, dnmp_unit,
   dnmp_services, Core, DnmpNodeFrame, Misc, DnmpServicesFrame, laz_synapse,
-  ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters;
+  ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters, 
+ContactListFrame;
 
 {$R *.res}
 

@@ -21,6 +21,11 @@ object FrameDnmpNode: TFrameDnmpNode
       Top = 2
       Action = actTest
     end
+    object ToolButton2: TToolButton
+      Left = 24
+      Top = 2
+      Action = actContactList
+    end
   end
   object PageControlNode: TPageControl
     Left = 0
@@ -77,6 +82,12 @@ object FrameDnmpNode: TFrameDnmpNode
       Caption = 'Test'
       ImageIndex = 35
       OnExecute = actTestExecute
+    end
+    object actContactList: TAction
+      Caption = 'Contact list'
+      Hint = 'Contact list'
+      ImageIndex = 37
+      OnExecute = actContactListExecute
     end
   end
 end

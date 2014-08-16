@@ -489,7 +489,8 @@ begin
       Item.Free();
       Continue;
     end;
-    self.Add(Item);
+    if not Assigned(self.GetServiceByTypeName(Item.ServiceType, Item.Name)) then self.Add(Item)
+    else Item.Free();
   end;
   Result:=True;
 end;

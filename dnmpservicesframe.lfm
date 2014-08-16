@@ -29,6 +29,7 @@ object FrameDnmpServices: TFrameDnmpServices
       PopupMenu = pmServices
       StateImages = FormMain.ImageList16
       TabOrder = 0
+      OnDblClick = tvServicesDblClick
       OnSelectionChanged = tvServicesSelectionChanged
     end
   end
