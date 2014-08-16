@@ -24,7 +24,7 @@ type
   TDnmpStorageType = (stUnknown, stString, stInteger, stNumber, stList, stDictionary);
 
   { TDnmpStorage }
-  TDnmpStorage = class(TObject)
+  TDnmpStorage = class(TInterfacedObject)
   private
     { name:object items storage }
     FItems: TStringList;
@@ -100,19 +100,72 @@ type
     function LoadFromFile(Filename: string): Boolean;
   end;
 
+
+  TDnmpContactState = (asUnknown, asOnline, asOffline, asBusy);
+
+  { TDnmpContact }
+
+  TDnmpContact = class(TInterfacedObject)
+  public
+    { Contact name }
+    Nick: string;
+    { point address }
+    Addr: TAddr;
+    { GUID assigned when contact approved by node }
+    GUID: string;
+    { GUID of node, that approved this contact }
+    SeniorGUID: string;
+    { Contact state }
+    State: TDnmpContactState;  // asUnknown, asOnline, asOffline, asBusy
+    { Avatar picture }
+    Picture: AnsiString;
+    StatusMessage: string; // Status message
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
+    function StateStr(): string;
+    function StateFromStr(s: string): boolean;
+    // Assign data from Item
+    procedure Assign(Item: TDnmpContact); virtual;
+  end;
+
+  { TDnmpContactList }
+
+  TDnmpContactList = class(TObjectList)
+  private
+    function GetItem(Index: Integer): TDnmpContact;
+    procedure SetItem(Index: Integer; Value: TDnmpContact);
+  public
+    ParentList: TDnmpContactList;
+    property Items[Index: Integer]: TDnmpContact read GetItem write SetItem; default;
+    function GetByGUID(sGUID: string): TDnmpContact;
+    function AddByGUID(sGUID: string): TDnmpContact;
+    function DelByGUID(sGUID: string): TDnmpContact;
+    function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sNick, sState, sStatus: string): TDnmpContact; overload;
+    function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
+    { Содержит список контактов в формате CSV.
+    Каждый элемент списка содержит сведения:
+    [0] addr - адрес
+    [1] guid - GUID абонента
+    [2] senior_guid - SeniorGUID абонента
+    [3] state - состояние (подключен или отключен)
+    [4] nick - ник (имя на канале, не зависит от реального имени)
+    [5] status - статус (сообщение абонента) }
+    function SaveToCSV(): string;
+    { Загрузить контакты из сериализованого списка в формате CSV.
+    Состав сведений как в SaveToCSV() }
+    function UpdateFromCSV(sData: string): boolean;
+  end;
+
+
+
   TDnmpLinkType = (ltPoint, ltNode, ltTemporary);
 
   { TLinkInfo }
   { Link information. Refcounted. }
-  TLinkInfo = class(TInterfacedObject)
+  TLinkInfo = class(TDnmpContact)
   public
-    { point address }
-    Addr: TAddr;
-    { GUID assigned when link approved by node }
-    GUID: string;
-    { GUID of node, that approved this link }
-    SeniorGUID: string;
-    { Link name }
     Name: string;
     { Owner info (name, organization, etc) }
     Owner: string;
@@ -142,7 +195,7 @@ type
     function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
     function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
     { Copy all info from another item }
-    procedure Assign(li: TLinkInfo);
+    procedure Assign(Item: TLinkInfo);
   end;
 
   { TLinkInfoList }
@@ -605,6 +658,267 @@ begin
     Result:=s;
     s:='';
   end;
+end;
+
+{ TDnmpContactList }
+
+function TDnmpContactList.GetItem(Index: Integer): TDnmpContact;
+begin
+  Result:=TDnmpContact(inherited Items[index]);
+end;
+
+procedure TDnmpContactList.SetItem(Index: Integer; Value: TDnmpContact);
+begin
+  inherited Items[Index]:=Value;
+end;
+
+function TDnmpContactList.GetByGUID(sGUID: string): TDnmpContact;
+var
+  i: Integer;
+begin
+  // Search only in this list
+  Result:=nil;
+  for i:=0 to Count-1 do
+  begin
+    if TDnmpContact(Items[i]).GUID=sGUID then
+    begin
+      Result:=TDnmpContact(Items[i]);
+      Exit;
+    end;
+  end;
+end;
+
+function TDnmpContactList.AddByGUID(sGUID: string): TDnmpContact;
+begin
+  Result:=nil;
+  if sGuid='' then Exit;
+  // Search in this list and parent list
+  Result:=GetByGUID(sGUID);
+  if Assigned(Result) then Exit;
+
+  if Assigned(ParentList) then Result:=ParentList.GetByGUID(sGUID);
+  if not Assigned(Result) then
+  begin
+    Result:=TDnmpContact.Create();
+    Result.GUID:=sGUID;
+    if Assigned(ParentList) then ParentList.Add(Result);
+  end;
+  Self.Add(Result);
+end;
+
+function TDnmpContactList.DelByGUID(sGUID: string): TDnmpContact;
+begin
+  Result:=GetByGUID(sGUID);
+  if Assigned(Result) then
+  begin
+    self.Extract(Result);
+  end;
+end;
+
+function TDnmpContactList.UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sNick,
+  sState, sStatus: string): TDnmpContact;
+begin
+  Result:=GetByGUID(sGUID);
+  if not Assigned(Result) then
+  begin
+    // Not found in this list, look in parent list
+    if Assigned(ParentList) then Result:=ParentList.GetByGUID(sGUID);
+    if Assigned(Result) then self.Add(Result);
+  end;
+
+  if not Assigned(Result) then
+  begin
+    // Contact not found anywhere, create new
+    Result:=TDnmpContact.Create();
+    Result.GUID:=sGUID;
+    Result.SeniorGUID:=sSeniorGUID;
+    self.Add(Result);
+    if Assigned(ParentList) then ParentList.Add(Result);
+  end;
+  Result.Nick:=sNick;
+  Result.Addr:=Addr;
+  Result.StateFromStr(sState);
+  Result.StatusMessage:=sStatus;
+end;
+
+function TDnmpContactList.UpdateItem(Item: TDnmpContact): TDnmpContact;
+begin
+  Result:=Self.GetByGUID(Item.GUID);
+  if not Assigned(Result) then
+  begin
+    // Not found in this list, look in parent list
+    if Assigned(ParentList) then Result:=ParentList.GetByGUID(Item.GUID);
+    if Assigned(Result) then self.Add(Result);
+  end;
+
+  if not Assigned(Result) then
+  begin
+    // Contact not found anywhere (fishy!)
+    Result:=Item;
+    self.Add(Result);
+    if Assigned(ParentList) then ParentList.Add(Result);
+    Exit;
+  end;
+  Result.Assign(Item);
+end;
+
+function TDnmpContactList.ToStorage: TDnmpStorage;
+var
+  Storage: TDnmpStorage;
+  i: Integer;
+begin
+  Storage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
+  end;
+
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpContactList');
+  Result.Add('items', Storage);
+end;
+
+function TDnmpContactList.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item: TDnmpContact;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpContactList' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=TDnmpContact.Create();
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
+    begin
+      Item.Free();
+      Continue;
+    end;
+    //self.Add(Item);
+    self.UpdateItem(Item);
+  end;
+  Result:=True;
+end;
+
+function TDnmpContactList.SaveToCSV(): string;
+var
+  i: Integer;
+  Item: TDnmpContact;
+  sl, slData: TStringList;
+begin
+  Result:='';
+  sl:=TStringList.Create();
+  slData:=TStringList.Create();
+  for i:=0 to self.Count-1 do
+  begin
+    Item:=self[i];
+
+    sl.Clear();
+    // Send service info
+//    sl.Values['guid']:=Item.GUID;
+//    sl.Values['state']:=Item.Status;
+//    sl.Values['nick']:=Item.Name;
+//    sl.Values['addr']:=AddrToStr(Item.Addr);
+//    sl.Values['rights']:='';
+//    sl.Values['status']:=Item.StatusMsg;
+
+    sl.Add(AddrToStr(Item.Addr));
+    sl.Add(Item.GUID);
+    sl.Add(Item.SeniorGUID);
+    sl.Add(Item.StateStr());
+    sl.Add(Item.Nick);
+    sl.Add(Item.StatusMessage);
+    slData.Add(sl.DelimitedText);
+  end;
+  sl.Free();
+
+  if slData.Count>0 then Result:=slData.Text;
+  slData.Free();
+end;
+
+function TDnmpContactList.UpdateFromCSV(sData: string): boolean;
+var
+  sl, slData: TStringList;
+  i: Integer;
+begin
+  Result:=False;
+  sl:=TStringList.Create();
+  slData:=TStringList.Create();
+  slData.Text:=sData;
+  for i:=0 to slData.Count-1 do
+  begin
+    sl.Clear();
+    sl.DelimitedText:=slData[i];
+    if sl.Count<6 then Continue;
+    self.UpdateItem(StrToAddr(sl[0]), sl[1], sl[2], sl[4], sl[3], sl[5]);
+    Result:=True;
+  end;
+  FreeAndNil(slData);
+  FreeAndNil(sl);
+end;
+
+{ TDnmpContact }
+
+function TDnmpContact.ToStorage(): TDnmpStorage;
+begin
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('addr', AddrToStr(Self.Addr));
+  Result.Add('guid', Self.GUID);
+  Result.Add('senior_guid', Self.SeniorGUID);
+  Result.Add('state', Self.StateStr());
+  Result.Add('nick', Self.Nick);
+  Result.Add('status', Self.StatusMessage);
+  Result.Add('picture', Self.Picture);
+end;
+
+function TDnmpContact.FromStorage(Storage: TDnmpStorage): boolean;
+begin
+  Result:=False;
+  if Storage.StorageType <> stDictionary then Exit;
+  Self.Addr:=StrToAddr(Storage.GetString('addr'));
+  Self.GUID:=Storage.GetString('guid');
+  Self.SeniorGUID:=Storage.GetString('senior_guid');
+  Self.StateFromStr(Storage.GetString('state'));
+  Self.Nick:=Storage.getString('nick');
+  Self.StatusMessage:=Storage.GetString('status');
+  Self.Picture:=Storage.GetString('picture');
+  Result:=True;
+end;
+
+function TDnmpContact.StateStr: string;
+begin
+  Result:='Unknown';
+  case State of
+    asUnknown: Result:='Unknown';
+    asOnline: Result:='Online';
+    asOffline: Result:='Offline';
+    asBusy: Result:='Busy';
+  end;
+end;
+
+function TDnmpContact.StateFromStr(s: string): boolean;
+begin
+  Result:=True;
+  if s='Unknown' then State:=asUnknown
+  else if s='Online' then State:=asOnline
+  else if s='Offline' then State:=asOffline
+  else if s='Busy' then State:=asBusy
+  else Result:=False;
+end;
+
+procedure TDnmpContact.Assign(Item: TDnmpContact);
+begin
+  if not Assigned(Item) then Exit;
+  Self.Nick:=Item.Nick;
+  Self.Addr:=Item.Addr;
+  Self.GUID:=Item.GUID;
+  Self.SeniorGUID:=Item.SeniorGUID;
+  Self.State:=Item.State;
+  Self.StatusMessage:=Item.StatusMessage;
+  Self.Picture:=Item.Picture;
 end;
 
 
@@ -1188,20 +1502,21 @@ begin
   Result:=True;
 end;
 
-procedure TLinkInfo.Assign(li: TLinkInfo);
+procedure TLinkInfo.Assign(Item: TLinkInfo);
 begin
-  if not Assigned(li) then Exit;
-  Self.Addr:=li.Addr;
-  Self.GUID:=li.GUID;
-  Self.SeniorGUID:=li.SeniorGUID;
-  Self.Name:=li.Name;
-  Self.Owner:=li.Owner;
-  Self.Location:=li.Location;
-  Self.IpAddr:=li.IpAddr;
-  Self.PhoneNo:=li.PhoneNo;
-  Self.OtherInfo:=li.OtherInfo;
-  Self.Key:=li.Key;
-  Self.Rating:=li.Rating;
+  inherited Assign(Item);
+  if not Assigned(Item) then Exit;
+  Self.Addr:=Item.Addr;
+  Self.GUID:=Item.GUID;
+  Self.SeniorGUID:=Item.SeniorGUID;
+  Self.Name:=Item.Name;
+  Self.Owner:=Item.Owner;
+  Self.Location:=Item.Location;
+  Self.IpAddr:=Item.IpAddr;
+  Self.PhoneNo:=Item.PhoneNo;
+  Self.OtherInfo:=Item.OtherInfo;
+  Self.Key:=Item.Key;
+  Self.Rating:=Item.Rating;
 end;
 
 // === TLinkInfoList ===

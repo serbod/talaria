@@ -48,73 +48,35 @@ type
     procedure ClearAll;
   end;
 
-  TContactItem = class(TCollectionItem)
+  { TContactItem }
+
+  TContactItem = class(TInterfacedObject)
+  protected
+    function FGetCaption(): string; virtual;
+    function FGetHint(): string; virtual;
   public
-    Caption: string;
-    IsGroup: boolean;
-    StateIcon: integer;
-    ParentItem: TContactItem;
     DataObject: TObject;
-  end;
-
-  { TContactItemList }
-
-  TContactItemList = class(TCollection)
-    procedure AddContact(ACaption: string; AParentItem: TContactItem; ADataObject: TObject; AIsGroup: boolean = False);
-    procedure ClearAll();
-    function GetByData(ADataObject: TObject): TContactItem;
+    IsGroup: boolean;
+    ParentItem: TContactItem;
+    property Caption: string read FGetCaption;
+    property Hint: string read FGetHint;
+    function StateIcon(): integer; virtual;
   end;
 
   { TChatRoom }
 
   TChatRoom = class(TInterfacedObject)
-  private
-    FContactItemList: TContactItemList;
-  public
-    DataObject: TObject;
-    Name: string;
-    constructor Create();
-    destructor Destroy(); override;
-    property ContactItemList: TContactItemList read FContactItemList;
-  end;
-
-  { TMailMessage }
-
-  TMailMessage = class(TInterfacedObject)
-  protected
-    function FGetTopic(): string; virtual;
-    function FGetText(): string; virtual;
-  public
-    DataObject: TObject;
-    property Topic: string read FGetTopic;
-    property Text: string read FGetText;
-  end;
-
-  { TMailBox }
-
-  TMailBox = class(TInterfacedObject)
   protected
     function FGetName(): string; virtual;
-    function FGetParent(): TMailBox; virtual;
+    function FGetContactCount(): integer; virtual;
   public
     DataObject: TObject;
-    property Parent: TMailBox read FGetParent;
     property Name: string read FGetName;
-    function MessagesCount(): integer; virtual;
-    function UnreadMessagesCount(): integer; virtual;
-    function GetMessage(Index: integer): TMailMessage; virtual;
-    function IsGroup(): boolean; virtual;
-    function CreateMessage(): TMailMessage; virtual;
+    property ContactCount: integer read FGetContactCount;
+    function GetContact(Index: integer): TContactItem;
   end;
 
-  { TMailRoom }
 
-  TMailRoom = class(TInterfacedObject)
-  public
-    DataObject: TObject;
-    function MailboxCount(): integer; virtual;
-    function GetMailbox(Index: integer): TMailBox; virtual;
-  end;
 
 var
   MainFormPages: TMainFormPages;
@@ -155,13 +117,16 @@ begin
 
   // status page
   AddPage(TFrameStatus.Create(nil), 'Status');
+
   // chat page
-  AddPage(TFrameChat.Create(nil), 'Chat');
+  frame:=TFrameChat.Create(nil);
+  (frame as TFrameChat).ChatRoom:=TChatRoom.Create();
+  (frame as TFrameChat).ChatRoom.DataObject:=(ServiceDnmpNode.ServMgr.GetService('GRPC','#test') as TDnmpGrpc);
+  AddPage(frame, '#test');
 
   // mail page
   frame:=TFrameMailbox.Create(nil);
-  (frame as TFrameMailbox).MailRoom:=TMailRoom.Create();
-  (frame as TFrameMailbox).MailRoom.DataObject:=ServiceDnmpNode.ServMgr.GetService('MAIL','');
+  (frame as TFrameMailbox).MailRoom:=(ServiceDnmpNode.ServMgr.GetService('MAIL','') as TDnmpMail);
   (frame as TFrameMailbox).Update();
   AddPage(frame, 'Mail');
 end;
@@ -186,159 +151,51 @@ begin
   end;
 end;
 
-{ TMailRoom }
-
-function TMailRoom.MailboxCount(): integer;
-begin
-  Result:=0;
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMail) then
-  begin
-    Result:=(DataObject as TDnmpMail).MailboxCount();
-  end;
-end;
-
-function TMailRoom.GetMailbox(Index: integer): TMailBox;
-var
-  TmpItem: TDnmpMailbox;
-begin
-  Result:=nil;
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMail) then
-  begin
-    TmpItem:=(DataObject as TDnmpMail).GetMailbox(Index);
-    if not Assigned(TmpItem) then Exit;
-    Result:=TMailBox.Create();
-    Result.DataObject:=TmpItem;
-  end;
-end;
-
-{ TMailBox }
-
-function TMailBox.FGetName(): string;
-begin
-  Result:='Mailbox';
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailbox) then Result:=(DataObject as TDnmpMailbox).Name;
-end;
-
-function TMailBox.FGetParent(): TMailBox;
-begin
-  Result:=nil;
-  if not Assigned(DataObject) then Exit;
-
-end;
-
-function TMailBox.MessagesCount(): integer;
-begin
-  Result:=0;
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailbox) then Result:=(DataObject as TDnmpMailbox).Count;
-end;
-
-function TMailBox.UnreadMessagesCount(): integer;
-begin
-  Result:=0;
-  if not Assigned(DataObject) then Exit;
-end;
-
-function TMailBox.GetMessage(Index: integer): TMailMessage;
-var
-  TmpItem: TDnmpMailMessage;
-begin
-  Result:=nil;
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailbox) then
-  begin
-    TmpItem:=(DataObject as TDnmpMailbox).Items[Index];
-    if not Assigned(TmpItem) then Exit;
-    Result:=TMailMessage.Create();
-    Result.DataObject:=TmpItem;
-  end;
-end;
-
-function TMailBox.IsGroup(): boolean;
-begin
-  Result:=False;
-end;
-
-function TMailBox.CreateMessage(): TMailMessage;
-var
-  TmpItem: TDnmpMailMessage;
-begin
-  Result:=nil;
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailbox) then
-  begin
-    TmpItem:=TDnmpMailMessage.Create();
-    if not Assigned(TmpItem) then Exit;
-    (DataObject as TDnmpMailbox).AddItem(TmpItem);
-    //TmpItem.Author:=;
-    Result:=TMailMessage.Create();
-    Result.DataObject:=TmpItem;
-  end;
-
-end;
-
-{ TMailMessage }
-
-function TMailMessage.FGetTopic(): string;
-begin
-  Result:='';
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailMessage) then Result:=(DataObject as TDnmpMailMessage).Topic;
-end;
-
-function TMailMessage.FGetText(): string;
-begin
-  Result:='';
-  if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpMailMessage) then Result:=(DataObject as TDnmpMailMessage).Text;
-end;
-
 { TChatRoom }
 
-constructor TChatRoom.Create();
+function TChatRoom.FGetName(): string;
 begin
-  inherited Create();
-  FContactItemList:=TContactItemList.Create(TContactItem);
+  Result:='#ChatRoom';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).ServiceInfo.Name;
 end;
 
-destructor TChatRoom.Destroy();
+function TChatRoom.FGetContactCount(): integer;
 begin
-  FreeAndNil(FContactItemList);
-  inherited Destroy();
+  Result:=0;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).UsersList.Count;
 end;
 
-{ TContactItemList }
-
-procedure TContactItemList.AddContact(ACaption: string;
-  AParentItem: TContactItem; ADataObject: TObject; AIsGroup: boolean);
-var
-  Item: TContactItem;
+function TChatRoom.GetContact(Index: integer): TContactItem;
 begin
-  Item:=(self.Add() as TContactItem);
-  Item.Caption:=ACaption;
-  Item.IsGroup:=AIsGroup;
-  Item.ParentItem:=AParentItem;
-  Item.DataObject:=ADataObject;
+  Result:=TContactItem.Create();
+  Result.DataObject:=(DataObject as TDnmpGrpc).UsersList.Items[Index];
 end;
 
-procedure TContactItemList.ClearAll();
+{ TContactItem }
+
+function TContactItem.FGetCaption(): string;
 begin
-  Clear();
+  Result:='Contact';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpContact) then Result:=(DataObject as TDnmpContact).Nick;
 end;
 
-function TContactItemList.GetByData(ADataObject: TObject): TContactItem;
-var
-  i: integer;
+function TContactItem.FGetHint(): string;
 begin
-  for i:=0 to self.Count-1 do
+  Result:=Caption;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpContact) then
   begin
-    Result:=(self.Items[i] as TContactItem);
-    if Result.DataObject=ADataObject then Exit;
+    Result:=Result+LineEnding+AddrToStr((DataObject as TDnmpContact).Addr);
+    Result:=Result+LineEnding+(DataObject as TDnmpContact).GUID;
   end;
-  Result:=nil;
+end;
+
+function TContactItem.StateIcon(): integer;
+begin
+  Result:=ciIconUser;
 end;
 
 { TMainFormPages }

@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="15">
+    <Units Count="16">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -141,6 +141,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_mail"/>
       </Unit14>
+      <Unit15>
+        <Filename Value="adapters.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="adapters"/>
+      </Unit15>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls, ExtCtrls,
-  ActnList, Menus, dnmp_unit, dnmp_services, Core;
+  ActnList, Menus, dnmp_unit, dnmp_services, Core, Dialogs;
 
 type
 
@@ -22,12 +22,10 @@ type
     gbOwners: TGroupBox;
     gbServicesTree: TGroupBox;
     gbServiceInfo: TGroupBox;
-    gbAbonents: TGroupBox;
     lbServiceType: TLabel;
     lbTypeLabel: TLabel;
     lbServiceName: TLabel;
     lbNameLabel: TLabel;
-    lvAbonents: TListView;
     lvOwners: TListView;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
@@ -39,6 +37,7 @@ type
     pmServices: TPopupMenu;
     Splitter1: TSplitter;
     tvServices: TTreeView;
+    procedure actAddGrpcExecute(Sender: TObject);
     procedure actRunServiceExecute(Sender: TObject);
     procedure tvServicesSelectionChanged(Sender: TObject);
   private
@@ -73,11 +72,23 @@ end;
 procedure TFrameDnmpServices.actRunServiceExecute(Sender: TObject);
 var
   TmpService: TDnmpService;
-  TmpFrame: TFrame;
 begin
   if not Assigned(CurServiceInfo) then Exit;
   TmpService:=SvcMgr.CreateService(CurServiceInfo);
   if Assigned(TmpService) then Core.AddServicePage(TmpService);
+end;
+
+procedure TFrameDnmpServices.actAddGrpcExecute(Sender: TObject);
+var
+  s: string;
+  TmpService: TDnmpService;
+begin
+  s:=InputBox('Channel name', 'Channel name: ', '');
+  if Trim(s)='' then Exit;
+  s:='#'+s;
+  TmpService:=SvcMgr.GetService('GRPC', s, True);
+  if Assigned(TmpService) then Core.AddServicePage(TmpService);
+  Update();
 end;
 
 procedure TFrameDnmpServices.FSetSvcMgr(Value: TDnmpServiceManager);
@@ -90,7 +101,7 @@ end;
 procedure TFrameDnmpServices.FSetCurServiceInfo(Value: TDnmpServiceInfo);
 var
   i: integer;
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
   li: TListItem;
 begin
   FCurServiceInfo:=Value;
@@ -112,28 +123,11 @@ begin
       li.SubItems.Add(Abon.Nick);
       li.SubItems.Add(Abon.StateStr());
       li.SubItems.Add(Abon.GUID);
-      li.SubItems.Add(Abon.Rights);
-      li.SubItems.Add(Abon.Status);
+      li.SubItems.Add(Abon.SeniorGUID);
+      li.SubItems.Add(Abon.StatusMessage);
     end;
     lvOwners.EndUpdate();
 
-    // abonents
-    lvAbonents.BeginUpdate();
-    lvAbonents.Items.Clear();
-
-    for i:=0 to FCurServiceInfo.Abonents.Count-1 do
-    begin
-      Abon:=FCurServiceInfo.Abonents[i];
-      li:=lvAbonents.Items.Add();
-
-      li.Caption:=AddrToStr(Abon.Addr);
-      li.SubItems.Add(Abon.Nick);
-      li.SubItems.Add(Abon.StateStr());
-      li.SubItems.Add(Abon.GUID);
-      li.SubItems.Add(Abon.Rights);
-      li.SubItems.Add(Abon.Status);
-    end;
-    lvAbonents.EndUpdate();
   end;
 end;
 

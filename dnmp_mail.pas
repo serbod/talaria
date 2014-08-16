@@ -15,12 +15,13 @@ type
   TDnmpMailMessage = class(TInterfacedObject)
   public
     Timestamp: TDateTime;
-    Author: TDnmpAbonent;
+    Author: TDnmpContact;
     AuthorAddr: TAddr;
     AuthorName: string;
     AuthorGUID: string;
     Topic: string;
     Text: string;
+    Unread: boolean;
     procedure FillMsg(Msg: TDnmpMsg);
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
@@ -39,6 +40,7 @@ type
     function GetItem(Index: Integer): TDnmpMailMessage;
     procedure SetItem(Index: Integer; Value: TDnmpMailMessage);
     function FCount(): integer;
+    function FCountUnread(): integer;
   public
     Name: string;
     BoxType: TDnmpMailboxType;
@@ -49,6 +51,7 @@ type
     property Mailer: TDnmpMail read FMailer;
     property Items[Index: Integer]: TDnmpMailMessage read GetItem write SetItem; default;
     property Count: integer read FCount;
+    property CountUnread: integer read FCountUnread;
     function AddItem(Item: TDnmpMailMessage): Integer; overload;
     { Add message to list:
       Timestamp - datetime
@@ -56,7 +59,8 @@ type
       Text - message text
       AuthorGUID
       Abonent - Author record (optional), for name and address }
-    function AddItem(ATimestamp: TDateTime; ATopic: string; AText: string; AAuthorGUID: string; AAbonent: TDnmpAbonent = nil): TDnmpMailMessage; overload;
+    function AddItem(ATimestamp: TDateTime; ATopic: string; AText: string; AAuthorGUID: string; AAbonent: TDnmpContact = nil): TDnmpMailMessage; overload;
+    function DeleteItem(Item: TDnmpMailMessage): boolean;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     function SaveToString(): AnsiString;
@@ -75,7 +79,7 @@ type
     { Send mailbox content to addr }
     function SendData(Addr: TAddr; sBoxName, sData: string): boolean;
   public
-    Author: TDnmpAbonent;
+    Author: TDnmpContact;
     MailboxList: TStringList;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
@@ -106,6 +110,17 @@ begin
   Result:=FMessagesList.Count;
 end;
 
+function TDnmpMailbox.FCountUnread(): integer;
+var
+  i: integer;
+begin
+  Result:=0;
+  for i:=0 to self.Count-1 do
+  begin
+    if self.GetItem(i).Unread then Inc(Result);
+  end;
+end;
+
 constructor TDnmpMailbox.Create(AMailer: TDnmpMail);
 begin
   inherited Create();
@@ -125,7 +140,7 @@ begin
 end;
 
 function TDnmpMailbox.AddItem(ATimestamp: TDateTime; ATopic: string;
-  AText: string; AAuthorGUID: string; AAbonent: TDnmpAbonent): TDnmpMailMessage;
+  AText: string; AAuthorGUID: string; AAbonent: TDnmpContact): TDnmpMailMessage;
 var
   i: Integer;
 begin
@@ -148,6 +163,11 @@ begin
     Result.AuthorName:=AAbonent.Nick;
   end;
   self.AddItem(Result);
+end;
+
+function TDnmpMailbox.DeleteItem(Item: TDnmpMailMessage): boolean;
+begin
+  Result:=(self.FMessagesList.Remove(Item) <> -1);
 end;
 
 function TDnmpMailbox.ToStorage(): TDnmpStorage;
@@ -218,7 +238,7 @@ end;
 function TDnmpMail.CreateMailMsg(AbonGUID, sTopic, sText: string
   ): TDnmpMailMessage;
 var
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
 begin
   Result:=nil;
   Result:=TDnmpMailMessage.Create();

@@ -12,7 +12,7 @@ type
   public
     Timestamp: TDateTime;
     MessageType: Integer;
-    Author: TDnmpAbonent;
+    Author: TDnmpContact;
     AuthorAddr: TAddr;
     AuthorName: string;
     AuthorGUID: string;
@@ -40,7 +40,7 @@ type
       Text - message text
       AuthorGUID
       Abonent - Author record (optional), for name and address }
-    function AddItem(Timestamp: TDateTime; MessageType: Integer; Text: string; AuthorGUID: string; Abonent: TDnmpAbonent = nil): TDnmpChannelMessage; overload;
+    function AddItem(Timestamp: TDateTime; MessageType: Integer; Text: string; AuthorGUID: string; Author: TDnmpContact = nil): TDnmpChannelMessage; overload;
     //function GetAbonentByGUID(sGUID: string): TDnmpChannelMessage;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
@@ -114,11 +114,11 @@ type
     AFK - online, away from keyboard
     BUSY - online, busy (do not disturb)
     There may be another states. }
-    function SetAbonentState(sData: string): TDnmpAbonent;
+    function SetAbonentState(sData: string): TDnmpContact;
   public
     Topic: string;
-    Author: TDnmpAbonent;
-    UsersList: TDnmpAbonentList;
+    Author: TDnmpContact;
+    UsersList: TDnmpContactList;
     BanList: TGrpcBanList;
     MessagesList: TDnmpChannelMessagesList;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
@@ -442,7 +442,9 @@ begin
   Result:=self.Add(Item);
 end;
 
-function TDnmpChannelMessagesList.AddItem(Timestamp: TDateTime; MessageType: Integer; Text: string; AuthorGUID: string; Abonent: TDnmpAbonent): TDnmpChannelMessage;
+function TDnmpChannelMessagesList.AddItem(Timestamp: TDateTime;
+  MessageType: Integer; Text: string; AuthorGUID: string; Author: TDnmpContact
+  ): TDnmpChannelMessage;
 var
   i: Integer;
   TempItem: TDnmpChannelMessage;
@@ -459,11 +461,11 @@ begin
   TempItem.MessageType:=MessageType;
   TempItem.Text:=Text;
   TempItem.AuthorGUID:=AuthorGUID;
-  TempItem.Author:=Abonent;
-  if Assigned(Abonent) then
+  TempItem.Author:=Author;
+  if Assigned(Author) then
   begin
-    TempItem.AuthorAddr:=Abonent.Addr;
-    TempItem.AuthorName:=Abonent.Nick;
+    TempItem.AuthorAddr:=Author.Addr;
+    TempItem.AuthorName:=Author.Nick;
   end;
   self.Add(TempItem);
   Result:=TempItem;
@@ -534,10 +536,8 @@ end;
 constructor TDnmpGrpc.Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo);
 begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
-  Self.UsersList:=TDnmpAbonentList.Create(False);
-  Self.UsersList.ParentList:=Self.ServiceInfo.Abonents.ParentList;
-  //Self.BanList:=TDnmpAbonentList.Create(False);
-  //Self.BanList.ParentList:=Self.ServiceInfo.Abonents.ParentList;
+  Self.UsersList:=TDnmpContactList.Create(False);
+  Self.UsersList.ParentList:=AServiceMgr.AllAbonents;
   Self.BanList:=TGrpcBanList.Create();
   Self.MessagesList:=TDnmpChannelMessagesList.Create(True);
 end;
@@ -552,7 +552,7 @@ end;
 
 function TDnmpGrpc.CreateChannelMsg(AbonGUID, sText: string): TDnmpChannelMessage;
 var
-  Abon: TDnmpAbonent;
+  Abon: TDnmpContact;
 begin
   Result:=nil;
   Result:=TDnmpChannelMessage.Create();
@@ -560,7 +560,7 @@ begin
   Result.MessageType:=0;
   Result.AuthorGUID:=AbonGUID;
   Result.Text:=sText;
-  Abon:=Self.UsersList.GetAbonentByGUID(AbonGUID);
+  Abon:=Self.UsersList.GetByGUID(AbonGUID);
   if not Assigned(Abon) then Abon:=Self.GetAbonentByGUID(AbonGUID);
   Result.Author:=Abon;
   if Assigned(Abon) then
@@ -609,7 +609,7 @@ begin
   Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'cmd='+sCmd, sParams);
 end;
 
-function TDnmpGrpc.SetAbonentState(sData: string): TDnmpAbonent;
+function TDnmpGrpc.SetAbonentState(sData: string): TDnmpContact;
 var
   s, sGUID, sState: string;
 begin
@@ -618,11 +618,11 @@ begin
   sGUID:=ExtractFirstWord(s);
   sState:=ExtractFirstWord(s);
 
-  Result:=self.UsersList.GetAbonentByGUID(sGUID);
-  if not Assigned(Result) then Result:=self.ServiceInfo.Abonents.GetAbonentByGUID(sGUID);
+  Result:=self.UsersList.GetByGUID(sGUID);
+  if not Assigned(Result) then Result:=self.GetAbonentByGUID(sGUID);
   if not Assigned(Result) then Exit;
   Result.StateFromStr(sState);
-  Result.Status:=s;
+  Result.StatusMessage:=s;
 
   if sState='OFF' then
   begin
@@ -684,7 +684,7 @@ end;
 
 function TDnmpGrpc.JoinAbonent(AbonentGUID: string): string;
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
 
@@ -698,7 +698,7 @@ begin
 
   // Exists?
   Abonent:=GetAbonentByGUID(AbonentGUID);
-  if not Assigned(Abonent) then Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(AbonentGUID);
+  //if not Assigned(Abonent) then Abonent:=Self.ServiceInfo.Abonents.AddAbonentByGUID(AbonentGUID);
   if not Assigned(Abonent) then
   begin
     Result:='Cannot JOIN - abonent not exists: '+AbonentGUID;
@@ -707,8 +707,9 @@ begin
   end;
 
   // Add abonent to abonents list
-  Self.ServiceInfo.Abonents.UpdateAbonent(Abonent);
-  Self.UsersList.UpdateAbonent(Abonent);
+  //Self.ServiceInfo.Abonents.UpdateAbonent(Abonent);
+  Self.UsersList.UpdateItem(Abonent);
+  Self.ServiceInfo.AbonentsCount:=Self.UsersList.Count;
 
   if Assigned(OnUsersChange) then OnUsersChange(self);
   if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
@@ -716,12 +717,12 @@ end;
 
 function TDnmpGrpc.LeaveAbonent(AbonentGUID: string): string;
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
 
   // Exists?
-  Abonent:=Self.UsersList.GetAbonentByGUID(AbonentGUID);
+  Abonent:=Self.UsersList.GetByGUID(AbonentGUID);
   if not Assigned(Abonent) then
   begin
     Result:='Cannot LEAVE - abonent not joined: '+AbonentGUID;
@@ -736,12 +737,12 @@ end;
 
 function TDnmpGrpc.KickAbonent(AbonentGUID: string; sReason: string = ''): string;
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
 
   // Joined?
-  Abonent:=UsersList.GetAbonentByGUID(AbonentGUID);
+  Abonent:=UsersList.GetByGUID(AbonentGUID);
   if Abonent=nil then
   begin
     Result:='Cannot KICK - abonent not joined: '+AbonentGUID;
@@ -756,10 +757,10 @@ end;
 
 function TDnmpGrpc.BanUser(AbonentGUID: string; EndDate: TDateTime = 0; sReason: string = ''): string;
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
-  Abonent:=self.UsersList.GetAbonentByGUID(AbonentGUID);
+  Abonent:=self.UsersList.GetByGUID(AbonentGUID);
   if not Assigned(Abonent) then
   begin
     Result:='Cannot BAN - user not exists: '+AbonentGUID;
@@ -817,7 +818,7 @@ begin
     DebugText(Result);
     Exit;
   end;
-  if Self.UsersList.GetAbonentByGUID(AbonentGUID)=nil then
+  if Self.UsersList.GetByGUID(AbonentGUID)=nil then
   begin
     // Not in abonents list
     Result:='Cannot SAY - user not joined: '+AbonentGUID;
@@ -841,7 +842,7 @@ end;
 
 function TDnmpGrpc.ReadData(sDataType, sData: string): string;
 var
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
   if sDataType='TOPIC' then
@@ -862,11 +863,13 @@ begin
     if Assigned(OnEvent) then OnEvent(sDataType, Self.UsersList);
   end
 
+  {
   else if sDataType='ABONENTS' then
   begin
     self.ServiceInfo.Abonents.UpdateFromCSV(sData);
     if Assigned(OnEvent) then OnEvent(sDataType, Self.ServiceInfo.Abonents);
   end
+  }
 
   else if sDataType='BANLIST' then
   begin
@@ -903,7 +906,7 @@ var
   s, sCmd, sParams, sGUID: string;
   Params: TStringArray;
   i: Integer;
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
   sParams:=Text;
@@ -1081,7 +1084,7 @@ end;
 
 function TDnmpGrpcServer.SendAbonList(Addr: TAddr): Boolean;
 begin
-  Result:=SendData(Addr, 'ABONENTS', self.ServiceInfo.Abonents.SaveToCSV());
+  //Result:=SendData(Addr, 'ABONENTS', self.ServiceInfo.Abonents.SaveToCSV());
 end;
 
 function TDnmpGrpcServer.SendUserList(Addr: TAddr): Boolean;
@@ -1213,7 +1216,7 @@ function TDnmpGrpcClient.ParseCmd(Text: string; Addr: TAddr): string;
 var
   s, sCmd, sParams, sGUID: string;
   i, n: Integer;
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
 begin
   Result:='';
   sParams:=Text;
@@ -1261,7 +1264,7 @@ function TDnmpGrpcClient.ParseMsg(AMsg: TDnmpMsg): string;
 var
   s, sChan, sAName, sAGUID: string;
   ChanMsg: TDnmpChannelMessage;
-  MsgAuthor: TDnmpAbonent;
+  MsgAuthor: TDnmpContact;
 begin
   Result:='';
   if not Assigned(AMsg) then Exit;
@@ -1274,7 +1277,7 @@ begin
   if sAGUID <> '' then
   begin
     //if Assigned(OnTextMsg) then OnTextMsg();
-    MsgAuthor:=Self.UsersList.GetAbonentByGUID(sAGUID);
+    MsgAuthor:=Self.UsersList.GetByGUID(sAGUID);
     s:=Trim(AMsg.Info.Values['timestamp']);
     sAName:=Trim(AMsg.Info.Values['author_name']);
 

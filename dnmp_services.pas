@@ -5,57 +5,6 @@ uses SysUtils, Classes, Contnrs, StrUtils, dnmp_unit
   {, uLkJSON}, fpjson, jsonparser;
 
 type
-  TDnmpAbonentState = (asUnknown, asOnline, asOffline, asBusy);
-  { TDnmpAbonent }
-  // Service subscriber
-  TDnmpAbonent = class(TInterfacedObject)
-  public
-    GUID: string;
-    State: TDnmpAbonentState;  // asUnknown, asOnline, asOffline, asBusy
-    Nick: string;
-    Addr: TAddr;
-    Rights: string; //
-    Status: string; // Status message
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): string;
-    function LoadFromString(s: string): boolean;
-    function StateStr(): string;
-    function StateFromStr(s: string): boolean;
-    procedure Assign(ab: TDnmpAbonent);
-  end;
-
-  { TDnmpAbonentList }
-
-  TDnmpAbonentList = class(TObjectList)
-  private
-    function GetItem(Index: Integer): TDnmpAbonent;
-    procedure SetItem(Index: Integer; Value: TDnmpAbonent);
-  public
-    ParentList: TDnmpAbonentList;
-    property Items[Index: Integer]: TDnmpAbonent read GetItem write SetItem; default;
-    function GetAbonentByGUID(sGUID: string): TDnmpAbonent;
-    function AddAbonentByGUID(sGUID: string): TDnmpAbonent;
-    function DelAbonentByGUID(sGUID: string): TDnmpAbonent;
-    function UpdateAbonent(sGUID, sNick, sState, sRights, sStatus: string; Addr: TAddr): TDnmpAbonent; overload;
-    function UpdateAbonent(ab: TDnmpAbonent): TDnmpAbonent; overload;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): string;
-    function LoadFromString(s: string): boolean;
-    { Содержит список активных подписчиков в формате CSV.
-    Каждый элемент списка содержит сведения:
-    [0] guid - GUID абонента
-    [1] state - состояние (подключен или отключен)
-    [2] nick - ник (имя на канале, не зависит от реального имени)
-    [3] addr - адрес
-    [4] rights - полномочия (набор полномочий)
-    [5] status - статус (сообщение абонента) }
-    function SaveToCSV(): string;
-    { Загрузить абонентов из сериализованого списка в формате CSV.
-    Состав сведений как в SaveToCSV() }
-    function UpdateFromCSV(sData: string): boolean;
-  end;
 
   { TDnmpServiceInfo }
 
@@ -67,13 +16,13 @@ type
     Descr: string;
     HostAddr: TAddr;
     Rating: Integer;
-    Abonents: TDnmpAbonentList;
-    Owners: TDnmpAbonentList;
+    //Abonents: TDnmpAbonentList;
+    Owners: TDnmpContactList;
     AbonentsCount: Integer;
     constructor Create();
     destructor Destroy(); override;
     //function AbonentsCount(): Integer;
-    function Owner(): TDnmpAbonent;
+    function Owner(): TDnmpContact;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     function SaveToString(): string;
@@ -114,7 +63,7 @@ type
       Ищет сперва в списке абонентов сервиса, затем в общем списке абонентов
       затем в списках линков и контактов
       Если не находит, то создает нового }
-    function GetAbonentByGUID(sGUID: string): TDnmpAbonent; virtual;
+    function GetAbonentByGUID(sGUID: string): TDnmpContact; virtual;
     // Обработка команды (Thread-safe) с указанного адреса
     function ParseCmd(Text: string; Addr: TAddr): string; virtual;
     // Обработка сообщения
@@ -175,9 +124,9 @@ type
     // Known services
     RemoteServiceInfoList: TDnmpServiceInfoList;
     // All abonents
-    AllAbonents: TDnmpAbonentList;
+    AllAbonents: TDnmpContactList;
     // Default owner
-    DefaultOwner: TDnmpAbonent;
+    DefaultOwner: TDnmpContact;
     constructor Create(AMgr: TDnmpManager);
     destructor Destroy; override;
     { Service type. For example, 'SRVD' }
@@ -197,7 +146,7 @@ type
     { Create service with given ServiceInfo }
     function CreateService(ServiceInfo: TDnmpServiceInfo): TDnmpService;
     { Get service by type and name }
-    function GetService(AServiceType, AServiceName: string): TDnmpService;
+    function GetService(AServiceType, AServiceName: string; DoCreate: boolean = false): TDnmpService;
     // Обработка команды от указанного адреса
     function Cmd(Text: string; Addr: TAddr): string; override;
     // Разбор сообщения и выполнение требуемых действий
@@ -208,7 +157,7 @@ type
   end;
 
 var
-  MyAbonent: TDnmpAbonent;
+  //MyAbonent: TDnmpContact;
   sPrefixAbonent: string = '@abonent:';
 
 const
@@ -218,6 +167,8 @@ const
 
 function StorageToJson(AStorage: TDnmpStorage): string;
 function StorageFromJson(AStorage: TDnmpStorage; s: string): boolean;
+function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
+function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean;
 
 
 implementation
@@ -360,322 +311,36 @@ begin
 
 end;
 
-// === TDnmpAbonent ===
-function TDnmpAbonent.ToStorage(): TDnmpStorage;
+function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
-  Result.Add('guid', Self.GUID);
-  Result.Add('state', Self.StateStr());
-  Result.Add('nick', Self.Nick);
-  Result.Add('addr', AddrToStr(Self.Addr));
-  Result.Add('rights', Self.Rights);
-  Result.Add('status', Self.Status);
+  Result:=StrToFile(AFileName, StorageToJson(AStorage));
 end;
 
-function TDnmpAbonent.FromStorage(Storage: TDnmpStorage): boolean;
+function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean;
 begin
-  Result:=False;
-  if Storage.StorageType <> stDictionary then Exit;
-  Self.GUID:=Storage.GetString('guid');
-  Self.StateFromStr(Storage.GetString('state'));
-  Self.Nick:=Storage.getString('nick');
-  Self.Addr:=StrToAddr(Storage.GetString('addr'));
-  Self.Rights:=Storage.GetString('rights');
-  Self.Status:=Storage.GetString('status');
-  Result:=True;
+  Result:=StorageFromJson(AStorage, FileToStr(AFileName));
 end;
 
-function TDnmpAbonent.SaveToString(): string;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpAbonent.LoadFromString(s: string): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  Result:=StorageFromJson(Storage, s);
-  if Result then Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpAbonent.StateStr: string;
-begin
-  Result:='Unknown';
-  case State of
-    asUnknown: Result:='Unknown';
-    asOnline: Result:='Online';
-    asOffline: Result:='Offline';
-    asBusy: Result:='Busy';
-  end;
-end;
-
-function TDnmpAbonent.StateFromStr(s: string): boolean;
-begin
-  Result:=True;
-  if s='Unknown' then State:=asUnknown;
-  if s='Online' then State:=asOnline;
-  if s='Offline' then State:=asOffline;
-  if s='Busy' then State:=asBusy;
-end;
-
-procedure TDnmpAbonent.Assign(ab: TDnmpAbonent);
-begin
-  if not Assigned(ab) then Exit;
-  Self.GUID:=ab.GUID;
-  Self.State:=ab.State;
-  Self.Nick:=ab.Nick;
-  Self.Addr:=ab.Addr;
-  Self.Rights:=ab.Rights;
-  Self.Status:=ab.Status;
-end;
-
-// === TDnmpAbonentList ===
-function TDnmpAbonentList.GetItem(Index: Integer): TDnmpAbonent;
-begin
-  Result:=TDnmpAbonent(inherited Items[index]);
-end;
-
-procedure TDnmpAbonentList.SetItem(Index: Integer; Value: TDnmpAbonent);
-begin
-  inherited Items[Index]:=Value;
-end;
-
-function TDnmpAbonentList.GetAbonentByGUID(sGUID: string): TDnmpAbonent;
-var
-  i: Integer;
-begin
-  // Search only in this list
-  Result:=nil;
-  for i:=0 to Count-1 do
-  begin
-    if TDnmpAbonent(Items[i]).GUID=sGUID then
-    begin
-      Result:=TDnmpAbonent(Items[i]);
-      Exit;
-    end;
-  end;
-end;
-
-function TDnmpAbonentList.AddAbonentByGUID(sGUID: string): TDnmpAbonent;
-begin
-  Result:=nil;
-  if sGuid='' then Exit;
-  // Search in this list and parent list
-  Result:=GetAbonentByGUID(sGUID);
-  if Assigned(Result) then Exit;
-
-  if Assigned(ParentList) then Result:=ParentList.GetAbonentByGUID(sGUID);
-  if not Assigned(Result) then
-  begin
-    Result:=TDnmpAbonent.Create();
-    Result.GUID:=sGUID;
-    if Assigned(ParentList) then ParentList.Add(Result);
-  end;
-  Self.Add(Result);
-end;
-
-function TDnmpAbonentList.DelAbonentByGUID(sGUID: string): TDnmpAbonent;
-begin
-  Result:=GetAbonentByGUID(sGUID);
-  if Assigned(Result) then
-  begin
-    self.Extract(Result);
-  end;
-end;
-
-function TDnmpAbonentList.UpdateAbonent(sGUID, sNick, sState, sRights, sStatus: string; Addr: TAddr): TDnmpAbonent;
-begin
-  Result:=GetAbonentByGUID(sGUID);
-  if not Assigned(Result) then
-  begin
-    // Not found in this list, look in parent list
-    if Assigned(ParentList) then Result:=ParentList.GetAbonentByGUID(sGUID);
-    if Assigned(Result) then self.Add(Result);
-  end;
-
-  if not Assigned(Result) then
-  begin
-    // Abonent not found anywhere, create new
-    Result:=TDnmpAbonent.Create();
-    Result.GUID:=sGUID;
-    self.Add(Result);
-    if Assigned(ParentList) then ParentList.Add(Result);
-  end;
-  Result.StateFromStr(sState);
-  Result.Nick:=sNick;
-  Result.Addr:=Addr;
-  Result.Rights:=sRights;
-  Result.Status:=sStatus;
-end;
-
-function TDnmpAbonentList.UpdateAbonent(ab: TDnmpAbonent): TDnmpAbonent;
-begin
-  Result:=Self.GetAbonentByGUID(ab.GUID);
-  if not Assigned(Result) then
-  begin
-    // Not found in this list, look in parent list
-    if Assigned(ParentList) then Result:=ParentList.GetAbonentByGUID(ab.GUID);
-    if Assigned(Result) then self.Add(Result);
-  end;
-
-  if not Assigned(Result) then
-  begin
-    // Abonent not found anywhere (fishy!)
-    Result:=ab;
-    self.Add(Result);
-    if Assigned(ParentList) then ParentList.Add(Result);
-    Exit;
-  end;
-  Result.State:=ab.State;
-  Result.Nick:=ab.Nick;
-  Result.Addr:=ab.Addr;
-  Result.Rights:=ab.Rights;
-  Result.Status:=ab.Status;
-end;
-
-function TDnmpAbonentList.ToStorage(): TDnmpStorage;
-var
-  Storage: TDnmpStorage;
-  i: Integer;
-begin
-  Storage:=TDnmpStorage.Create(stDictionary);
-  for i:=0 to Self.Count-1 do
-  begin
-    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
-  end;
-
-  Result:=TDnmpStorage.Create(stDictionary);
-  Result.Add('type', 'DnmpAbonentList');
-  Result.Add('items', Storage);
-end;
-
-function TDnmpAbonentList.FromStorage(Storage: TDnmpStorage): boolean;
-var
-  SubStorage: TDnmpStorage;
-  i: Integer;
-  Item: TDnmpAbonent;
-begin
-  Result:=False;
-  if Storage.StorageType <> stDictionary then Exit;
-  if Storage.GetString('type')<>'DnmpAbonentList' then Exit;
-  SubStorage:=Storage.GetObject('items');
-  if SubStorage.StorageType <> stDictionary then Exit;
-  for i:=0 to SubStorage.Count-1 do
-  begin
-    Item:=TDnmpAbonent.Create();
-    if not Item.FromStorage(SubStorage.GetObject(i)) then
-    begin
-      Item.Free();
-      Continue;
-    end;
-    self.Add(Item);
-  end;
-  Result:=True;
-end;
-
-function TDnmpAbonentList.SaveToString(): string;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpAbonentList.LoadFromString(s: string): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  Result:=StorageFromJson(Storage, s);
-  if Result then Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpAbonentList.SaveToCSV(): string;
-var
-  i: Integer;
-  Abonent: TDnmpAbonent;
-  sl, slData: TStringList;
-begin
-  Result:='';
-  sl:=TStringList.Create();
-  slData:=TStringList.Create();
-  for i:=0 to self.Count-1 do
-  begin
-    Abonent:=self[i];
-
-    sl.Clear();
-    // Send service info
-//    sl.Values['guid']:=Abonent.GUID;
-//    sl.Values['state']:=Abonent.Status;
-//    sl.Values['nick']:=Abonent.Name;
-//    sl.Values['addr']:=AddrToStr(Abonent.Addr);
-//    sl.Values['rights']:='';
-//    sl.Values['status']:=Abonent.StatusMsg;
-
-    sl.Add(Abonent.GUID);
-    sl.Add(Abonent.StateStr());
-    sl.Add(Abonent.Nick);
-    sl.Add(AddrToStr(Abonent.Addr));
-    sl.Add(Abonent.Rights);
-    sl.Add(Abonent.Status);
-    slData.Add(sl.DelimitedText);
-  end;
-  sl.Free();
-
-  if slData.Count>0 then Result:=slData.Text;
-  slData.Free();
-end;
-
-function TDnmpAbonentList.UpdateFromCSV(sData: string): boolean;
-var
-  sl, slData: TStringList;
-  i: Integer;
-begin
-  Result:=False;
-  sl:=TStringList.Create();
-  slData:=TStringList.Create();
-  slData.Text:=sData;
-  for i:=0 to slData.Count-1 do
-  begin
-    sl.Clear();
-    sl.DelimitedText:=slData[i];
-    if sl.Count<6 then Continue;
-    self.UpdateAbonent(sl[0], sl[2], sl[1], sl[4], sl[5], StrToAddr(sl[3]));
-    Result:=True;
-  end;
-  FreeAndNil(slData);
-  FreeAndNil(sl);
-end;
 
 // === TDnmpServiceInfo ===
 constructor TDnmpServiceInfo.Create();
 begin
   inherited Create();
-  Self.Abonents:=TDnmpAbonentList.Create(False);
-  Self.Owners:=TDnmpAbonentList.Create(False);
+  //Self.Abonents:=TDnmpAbonentList.Create(False);
+  Self.Owners:=TDnmpContactList.Create(False);
 end;
 
 destructor TDnmpServiceInfo.Destroy();
 begin
-  FreeAndNil(Self.Abonents);
+  //FreeAndNil(Self.Abonents);
   FreeAndNil(Self.Owners);
   inherited Destroy();
 end;
 
-function TDnmpServiceInfo.Owner(): TDnmpAbonent;
+function TDnmpServiceInfo.Owner: TDnmpContact;
 begin
   Result:=nil;
-  if Owners.Count>0 then Result:=Owners.GetItem(0);
+  if Owners.Count>0 then Result:=Owners.Items[0];
 end;
 
 //function TDnmpServiceInfo.AbonentsCount(): Integer;
@@ -695,7 +360,7 @@ begin
   Result.Add('rating', self.Rating);
 
   // Abonents list
-  Result.Add('abonents', self.Abonents.ToStorage());
+  //Result.Add('abonents', self.Abonents.ToStorage());
   // Owners list
   Result.Add('owners', Self.Owners.ToStorage());
 end;
@@ -713,7 +378,7 @@ begin
   self.Rating:=Storage.GetInteger('rating');
 
   // Abonents list
-  self.Abonents.FromStorage(Storage.GetObject('abonents'));
+  //self.Abonents.FromStorage(Storage.GetObject('abonents'));
   // Owners list
   self.Owners.FromStorage(Storage.GetObject('owners'));
 
@@ -860,9 +525,9 @@ begin
   begin
     if Assigned(FServiceMgr) then
     begin
-      ServiceInfo.Abonents.ParentList:=FServiceMgr.AllAbonents;
-      ServiceInfo.Owners.ParentList:=ServiceInfo.Abonents.ParentList;
-      if ServiceInfo.Abonents.IndexOf(FServiceMgr.DefaultOwner)=-1 then ServiceInfo.Abonents.Add(FServiceMgr.DefaultOwner);
+      ServiceInfo.Owners.ParentList:=FServiceMgr.AllAbonents;
+      //ServiceInfo.Abonents.ParentList:=FServiceMgr.AllAbonents;
+      //if ServiceInfo.Abonents.IndexOf(FServiceMgr.DefaultOwner)=-1 then ServiceInfo.Abonents.Add(FServiceMgr.DefaultOwner);
     end;
   end;  
 end;
@@ -889,21 +554,21 @@ begin
   if Assigned(Mgr) and Assigned(ServiceInfo) then Mgr.DebugText(self.ServiceInfo.ServiceType +': '+s);
 end;
 
-function TDnmpService.GetAbonentByGUID(sGUID: string): TDnmpAbonent;
+function TDnmpService.GetAbonentByGUID(sGUID: string): TDnmpContact;
 var
   li: TLinkInfo;
 begin
   Result:=nil;
   if Assigned(Self.ServiceInfo) then
   begin
-    Result:=Self.ServiceInfo.Abonents.GetAbonentByGUID(sGUID);
+    //Result:=Self.ServiceInfo.Abonents.GetByGUID(sGUID);
   end;
 
   if not Assigned(Result) then
   begin
     if Assigned(Mgr) and Assigned(FServiceMgr) then
     begin
-      Result:=FServiceMgr.AllAbonents.GetAbonentByGUID(sGUID);
+      Result:=FServiceMgr.AllAbonents.GetByGUID(sGUID);
     end;
   end;
 
@@ -912,7 +577,7 @@ begin
     li:=Mgr.GetInfoByGUID(sGUID);
     if Assigned(li) and Assigned(Self.ServiceInfo) then
     begin
-      Result:=Self.ServiceInfo.Abonents.UpdateAbonent(sGUID, li.Name, 'NONE', '', '', li.Addr);
+      //Result:=Self.ServiceInfo.Abonents.UpdateAbonent(sGUID, li.Name, 'NONE', '', '', li.Addr);
     end;
   end;
 end;
@@ -1044,16 +709,15 @@ begin
   ServiceTypes.Add('GRPC');
   ServiceTypes.Add('MAIL');
 
-  Self.AllAbonents:=TDnmpAbonentList.Create(True);
+  Self.AllAbonents:=TDnmpContactList.Create(True);
   self.ServiceInfoList:=TDnmpServiceInfoList.Create(True);
   self.RemoteServiceInfoList:=TDnmpServiceInfoList.Create(True);
   Self.ServiceList:=TDnmpServiceList.Create(True);
 
-  self.DefaultOwner:=self.AllAbonents.GetAbonentByGUID(AMgr.MyInfo.GUID);
+  self.DefaultOwner:=self.AllAbonents.GetByGUID(AMgr.MyInfo.GUID);
   if not Assigned(self.DefaultOwner) then
   begin
-    // sGUID, sNick, sState, sRights, sStatus: string; Addr: TAddr
-    self.DefaultOwner:=self.AllAbonents.UpdateAbonent(AMgr.MyInfo.GUID, AMgr.MyInfo.Name, '', '', '', AMgr.MyInfo.Addr);
+    self.DefaultOwner:=self.AllAbonents.UpdateItem(AMgr.MyInfo.Addr, AMgr.MyInfo.GUID, AMgr.MyInfo.SeniorGUID, AMgr.MyInfo.Name, '', '');
   end;
 end;
 
@@ -1070,16 +734,26 @@ end;
 
 procedure TDnmpServiceManager.SaveToFile();
 begin
-  StrToFile(Self.Mgr.sDataPath+csSRVDAbonFileName, self.AllAbonents.SaveToString());
-  StrToFile(Self.Mgr.sDataPath+csSRVDInfoFileName, self.ServiceInfoList.SaveToString());
-  StrToFile(Self.Mgr.sDataPath+csSRVDKnownFileName, self.RemoteServiceInfoList.SaveToString());
+  StorageToFile(Self.AllAbonents.ToStorage(), Self.Mgr.sDataPath+csSRVDAbonFileName);
+  StorageToFile(Self.ServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDInfoFileName);
+  StorageToFile(Self.RemoteServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDKnownFileName);
 end;
 
 procedure TDnmpServiceManager.LoadFromFile();
+var
+  Storage: TDnmpStorage;
 begin
-  self.AllAbonents.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDAbonFileName));
-  self.ServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDInfoFileName));
-  self.RemoteServiceInfoList.LoadFromString(FileToStr(Self.Mgr.sDataPath+csSRVDKnownFileName));
+  Storage:=TDnmpStorage.Create(stUnknown);
+  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDAbonFileName) then Self.AllAbonents.FromStorage(Storage);
+  Storage.Free();
+
+  Storage:=TDnmpStorage.Create(stUnknown);
+  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDInfoFileName) then Self.ServiceInfoList.FromStorage(Storage);
+  Storage.Free();
+
+  Storage:=TDnmpStorage.Create(stUnknown);
+  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDKnownFileName) then Self.RemoteServiceInfoList.FromStorage(Storage);
+  Storage.Free();
 end;
 
 function TDnmpServiceManager.Start(): boolean;
@@ -1201,17 +875,22 @@ begin
   if Assigned(Result) then Self.ServiceList.Add(Result);
 end;
 
-function TDnmpServiceManager.GetService(AServiceType, AServiceName: string
-  ): TDnmpService;
+function TDnmpServiceManager.GetService(AServiceType, AServiceName: string;
+  DoCreate: boolean): TDnmpService;
 begin
   Result:=self.ServiceList.GetService(AServiceType, AServiceName);
+  if not Assigned(Result) and DoCreate then
+  begin
+    ModService(AServiceType, AServiceName, 'add', '');
+    Result:=Self.CreateService(Self.ServiceInfoList.GetServiceByTypeName(AServiceType, AServiceName));
+  end;
 end;
 
 function TDnmpServiceManager.ModService(sType, sName, sAction, sParams: string): Boolean;
 var
   item: TDnmpServiceInfo;
   srvc: TDnmpService;
-  ab: TDnmpAbonent;
+  ab: TDnmpContact;
   li: TLinkInfo;
 begin
   Result:=False;
@@ -1224,9 +903,9 @@ begin
     item.Name:=sName;
     if sParams='' then
     begin
-      if Assigned(DefaultOwner) then item.Owners.AddAbonentByGUID(DefaultOwner.GUID);
+      if Assigned(DefaultOwner) then item.Owners.AddByGUID(DefaultOwner.GUID);
     end;
-    item.Owners.AddAbonentByGUID(sParams);
+    item.Owners.AddByGUID(sParams);
     item.HostAddr:=Mgr.MyInfo.Addr;
     self.ServiceInfoList.Add(item);
     //self.AddService(Self.CreateService(item));
@@ -1256,22 +935,22 @@ begin
   begin
     if not Assigned(item) then Exit;
     item.Owners.Clear();
-    item.Owners.AddAbonentByGUID(sParams);
+    item.Owners.AddByGUID(sParams);
   end
 
   else if sAction='add_owner' then
   begin
     if not Assigned(item) then Exit;
-    if not Assigned(item.Owners.GetAbonentByGUID(sParams)) then
+    if not Assigned(item.Owners.GetByGUID(sParams)) then
     begin
-      item.Owners.AddAbonentByGUID(sParams);
+      item.Owners.AddByGUID(sParams);
     end;
   end
 
   else if sAction='del_owner' then
   begin
     if not Assigned(item) then Exit;
-    ab:=item.Owners.GetAbonentByGUID(sParams);
+    ab:=item.Owners.GetByGUID(sParams);
     if Assigned(ab) then
     begin
       item.Owners.Remove(ab);
@@ -1299,7 +978,7 @@ begin
     sl.Values['type']:=si.ServiceType;
     sl.Values['name']:=si.Name;
     sl.Values['parent']:=si.ParentName;
-    sl.Values['abonent_count']:=IntToStr(si.Abonents.Count);
+    sl.Values['abonent_count']:=IntToStr(si.AbonentsCount);
     sl.Values['provider']:=AddrToStr(si.HostAddr);
     sl.Values['rating']:=IntToStr(si.Rating);
     //sl.Values['provider']:=si.;
@@ -1337,7 +1016,7 @@ begin
     sl.Add(si.ServiceType);
     sl.Add(si.Name);
     sl.Add(si.ParentName);
-    sl.Add(IntToStr(si.Abonents.Count));
+    sl.Add(IntToStr(si.AbonentsCount));
     sl.Add(AddrToStr(si.HostAddr));
     sl.Add(IntToStr(si.Rating));
     slData.Add(sl.DelimitedText);
@@ -1538,7 +1217,7 @@ function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Bool
 var
   sl, slData: TStringList;
   i: Integer;
-  Abonent: TDnmpAbonent;
+  Abonent: TDnmpContact;
   //si: TDnmpServiceInfo;
 
 procedure UpdateServiceInfoList(siList: TDnmpServiceInfoList; sl: TStrings);
