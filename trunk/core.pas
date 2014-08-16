@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame,
-  Misc, dnmp_mail;
+  Misc, dnmp_mail, Controls;
 
 type
 
@@ -39,6 +39,7 @@ type
     Frame: TFrame;
     Visible: boolean;
     TabSheet: TObject;
+    DataObject: TObject;
   end;
 
   { TMainFormPages }
@@ -84,8 +85,9 @@ var
 
 procedure Init();
 procedure AddPage(AFrame: TFrame; ACaption: string);
+procedure ShowForm(AFrame: TFrame; ACaption: string);
 procedure AddServicePage(AService: TDnmpService);
-
+procedure ShowContactList();
 
 const
   ciIconFolder = 9;
@@ -95,7 +97,7 @@ const
 implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
-  MailboxFrame;
+  MailboxFrame, ContactListFrame;
 
 procedure Init();
 var
@@ -129,6 +131,7 @@ begin
   (frame as TFrameMailbox).MailRoom:=(ServiceDnmpNode.ServMgr.GetService('MAIL','') as TDnmpMail);
   (frame as TFrameMailbox).Update();
   AddPage(frame, 'Mail');
+
 end;
 
 procedure AddPage(AFrame: TFrame; ACaption: string);
@@ -138,17 +141,91 @@ begin
   FormMain.UpdatePages();
 end;
 
+procedure ShowForm(AFrame: TFrame; ACaption: string);
+var
+  Form: TForm;
+begin
+  Form:=TForm.Create(FormMain);
+  Form.Height:=AFrame.Height;
+  Form.Width:=AFrame.Width;
+  Form.Position:=poScreenCenter;
+  Form.Caption:=ACaption;
+  Form.InsertComponent(AFrame);
+  AFrame.Parent:=Form;
+  AFrame.Align:=alClient;
+  Form.ShowModal();
+end;
+
 procedure AddServicePage(AService: TDnmpService);
 var
+  i: integer;
   TmpFrame: TFrame;
+  PageItem: TMainFormPageItem;
 begin
   if not Assigned(AService) then Exit;
   if (AService is TDnmpGrpc) then
   begin
-    TmpFrame:=TFrameGrpcService.Create(nil);
-    (TmpFrame as TFrameGrpcService).Grpc:=(AService as TDnmpGrpc);
-    AddPage(TmpFrame, AService.ServiceInfo.Name);
+    // search for exists
+    for i:=0 to MainFormPages.Count-1 do
+    begin
+      PageItem:=(MainFormPages.Items[i] as TMainFormPageItem);
+      if (PageItem.Frame is TFrameGrpcService) then
+      begin
+        TmpFrame:=PageItem.Frame;
+        if (TmpFrame as TFrameGrpcService).Grpc=AService then Break;
+      end;
+      PageItem:=nil;
+      TmpFrame:=nil;
+    end;
+
+    if not Assigned(TmpFrame) then
+    begin
+      // create new page
+      TmpFrame:=TFrameGrpcService.Create(nil);
+      (TmpFrame as TFrameGrpcService).Grpc:=(AService as TDnmpGrpc);
+      AddPage(TmpFrame, AService.ServiceInfo.Name);
+    end;
   end;
+
+  if (AService is TDnmpMail) then
+  begin
+    // search for exists
+    for i:=0 to MainFormPages.Count-1 do
+    begin
+      PageItem:=(MainFormPages.Items[i] as TMainFormPageItem);
+      if (PageItem.Frame is TFrameMailbox) then
+      begin
+        TmpFrame:=PageItem.Frame;
+        if (TmpFrame as TFrameMailbox).MailRoom=AService then Break;
+      end;
+      PageItem:=nil;
+      TmpFrame:=nil;
+    end;
+
+    if not Assigned(TmpFrame) then
+    begin
+      // create new page
+      TmpFrame:=TFrameMailbox.Create(nil);
+      (TmpFrame as TFrameMailbox).MailRoom:=(AService as TDnmpMail);
+      AddPage(TmpFrame, AService.ServiceInfo.Name);
+    end;
+  end;
+
+  if Assigned(PageItem) then
+  begin
+    // activate page
+    FormMain.ActivatePage(PageItem);
+  end;
+end;
+
+procedure ShowContactList();
+var
+  Frame: TFrameContactList;
+begin
+  Frame:=TFrameContactList.Create(nil);
+  Frame.SvcMgr:=ServiceDnmpNode.ServMgr;
+  Frame.Update();
+  ShowForm(Frame, 'Contact list');
 end;
 
 { TChatRoom }

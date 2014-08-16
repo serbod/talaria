@@ -34,6 +34,7 @@ type
   public
     { public declarations }
     procedure UpdatePages();
+    procedure ActivatePage(PageItem: TMainFormPageItem);
   end;
 
 var
@@ -97,6 +98,12 @@ begin
     end;
     tsheet.Caption:=PageItem.Caption;
   end;
+end;
+
+procedure TFormMain.ActivatePage(PageItem: TMainFormPageItem);
+begin
+  if not Assigned(PageItem) then Exit;
+  pgcMain.ActivePage:=(PageItem.TabSheet as TTabSheet);
 end;
 
 end.

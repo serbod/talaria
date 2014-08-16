@@ -13,11 +13,13 @@ type
   { TFrameDnmpNode }
 
   TFrameDnmpNode = class(TFrame)
+    actContactList: TAction;
     actTest: TAction;
     alNode: TActionList;
     MemoStatus: TMemo;
     PageControlNode: TPageControl;
     ToolButton1: TToolButton;
+    ToolButton2: TToolButton;
     tsPoints: TTabSheet;
     tsNodes: TTabSheet;
     tsLinks: TTabSheet;
@@ -27,6 +29,7 @@ type
     tsContacts: TTabSheet;
     tsStatus: TTabSheet;
     ToolBarNode: TToolBar;
+    procedure actContactListExecute(Sender: TObject);
     procedure actTestExecute(Sender: TObject);
     procedure PageControlNodeChange(Sender: TObject);
   private
@@ -92,6 +95,11 @@ begin
   s:=ServMgr.ServiceInfoList.SaveToString();
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
+end;
+
+procedure TFrameDnmpNode.actContactListExecute(Sender: TObject);
+begin
+  ShowContactList();
 end;
 
 procedure TFrameDnmpNode.PageControlNodeChange(Sender: TObject);

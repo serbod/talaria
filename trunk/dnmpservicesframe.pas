@@ -39,6 +39,7 @@ type
     tvServices: TTreeView;
     procedure actAddGrpcExecute(Sender: TObject);
     procedure actRunServiceExecute(Sender: TObject);
+    procedure tvServicesDblClick(Sender: TObject);
     procedure tvServicesSelectionChanged(Sender: TObject);
   private
     { private declarations }
@@ -75,6 +76,16 @@ var
 begin
   if not Assigned(CurServiceInfo) then Exit;
   TmpService:=SvcMgr.CreateService(CurServiceInfo);
+  if Assigned(TmpService) then Core.AddServicePage(TmpService);
+end;
+
+procedure TFrameDnmpServices.tvServicesDblClick(Sender: TObject);
+var
+  s: string;
+  TmpService: TDnmpService;
+begin
+  if not Assigned(CurServiceInfo) then Exit;
+  TmpService:=SvcMgr.GetService(CurServiceInfo.ServiceType, CurServiceInfo.Name, False);
   if Assigned(TmpService) then Core.AddServicePage(TmpService);
 end;
 
