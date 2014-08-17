@@ -95,7 +95,7 @@ object FramePointList: TFramePointList
     top = 162
     object actConnect: TAction
       Category = 'PointList'
-      Caption = 'Connect'
+      Caption = 'Connect to node'
     end
     object actGetInfo: TAction
       Category = 'PointList'
@@ -116,10 +116,6 @@ object FramePointList: TFramePointList
       Caption = 'Update pointlist'
       OnExecute = actPointListUpdateExecute
     end
-    object actApprove: TAction
-      Category = 'Point'
-      Caption = 'Approve'
-    end
     object actGenerateGUID: TAction
       Category = 'Point'
       Caption = 'Generate GUID'
@@ -128,6 +124,7 @@ object FramePointList: TFramePointList
     object actPointAdd: TAction
       Category = 'Point'
       Caption = 'Add point'
+      OnExecute = actPointAddExecute
     end
     object actPointDel: TAction
       Category = 'Point'
@@ -151,9 +148,6 @@ object FramePointList: TFramePointList
     top = 80
     object MenuItem1: TMenuItem
       Action = actConnect
-    end
-    object MenuItem2: TMenuItem
-      Action = actApprove
     end
     object MenuItem11: TMenuItem
       Action = actGetInfo

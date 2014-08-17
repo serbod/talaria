@@ -2,17 +2,17 @@ object FrameDnmpNode: TFrameDnmpNode
   Left = 0
   Height = 519
   Top = 0
-  Width = 739
+  Width = 813
   ClientHeight = 519
-  ClientWidth = 739
+  ClientWidth = 813
   TabOrder = 0
-  DesignLeft = 584
+  DesignLeft = 553
   DesignTop = 223
   object ToolBarNode: TToolBar
     Left = 0
     Height = 26
     Top = 0
-    Width = 739
+    Width = 813
     Caption = 'ToolBarNode'
     Images = FormMain.ImageList16
     TabOrder = 0
@@ -26,52 +26,79 @@ object FrameDnmpNode: TFrameDnmpNode
       Top = 2
       Action = actContactList
     end
+    object ToolButton3: TToolButton
+      Left = 47
+      Top = 2
+      Action = actServer
+    end
+    object ToolButton4: TToolButton
+      Left = 70
+      Top = 2
+      Action = actClient
+    end
   end
-  object PageControlNode: TPageControl
+  object panNode: TPanel
     Left = 0
     Height = 493
     Top = 26
-    Width = 739
-    ActivePage = tsStatus
+    Width = 813
     Align = alClient
-    TabIndex = 0
+    BevelOuter = bvNone
+    ClientHeight = 493
+    ClientWidth = 813
     TabOrder = 1
-    OnChange = PageControlNodeChange
-    object tsStatus: TTabSheet
-      Caption = 'Node status'
-      ClientHeight = 465
-      ClientWidth = 731
-      object MemoStatus: TMemo
-        Left = 4
-        Height = 457
-        Top = 4
-        Width = 723
-        Align = alClient
-        BorderSpacing.Around = 4
-        ScrollBars = ssBoth
-        TabOrder = 0
+    object PageControlNode: TPageControl
+      Left = 0
+      Height = 493
+      Top = 0
+      Width = 498
+      ActivePage = tsMyInfo
+      Align = alClient
+      TabIndex = 4
+      TabOrder = 0
+      OnChange = PageControlNodeChange
+      object tsLinks: TTabSheet
+        Caption = 'Links'
+      end
+      object tsNodes: TTabSheet
+        Caption = 'Nodes'
+      end
+      object tsPoints: TTabSheet
+        Caption = 'Points'
+      end
+      object tsContacts: TTabSheet
+        Caption = 'Contacts'
+      end
+      object tsMyInfo: TTabSheet
+        Caption = 'My info'
+      end
+      object tsServices: TTabSheet
+        Caption = 'Services'
+      end
+      object tsRouting: TTabSheet
+        Caption = 'Routing'
+      end
+      object tsConfig: TTabSheet
+        Caption = 'Config'
       end
     end
-    object tsLinks: TTabSheet
-      Caption = 'Links'
+    object MemoStatus: TMemo
+      Left = 507
+      Height = 485
+      Top = 4
+      Width = 302
+      Align = alRight
+      BorderSpacing.Around = 4
+      ScrollBars = ssBoth
+      TabOrder = 1
     end
-    object tsNodes: TTabSheet
-      Caption = 'Nodes'
-    end
-    object tsPoints: TTabSheet
-      Caption = 'Points'
-    end
-    object tsContacts: TTabSheet
-      Caption = 'Contacts'
-    end
-    object tsMyInfo: TTabSheet
-      Caption = 'My info'
-    end
-    object tsServices: TTabSheet
-      Caption = 'Services'
-    end
-    object tsRouting: TTabSheet
-      Caption = 'Routing'
+    object Splitter1: TSplitter
+      Left = 498
+      Height = 493
+      Top = 0
+      Width = 5
+      Align = alRight
+      ResizeAnchor = akRight
     end
   end
   object alNode: TActionList
@@ -88,6 +115,18 @@ object FrameDnmpNode: TFrameDnmpNode
       Hint = 'Contact list'
       ImageIndex = 37
       OnExecute = actContactListExecute
+    end
+    object actServer: TAction
+      Caption = 'Server'
+      Hint = 'Start/stop server'
+      ImageIndex = 39
+      OnExecute = actServerExecute
+    end
+    object actClient: TAction
+      Caption = 'Client'
+      Hint = 'Start/stop client (uplink connection)'
+      ImageIndex = 40
+      OnExecute = actClientExecute
     end
   end
 end

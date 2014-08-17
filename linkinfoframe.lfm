@@ -1,0 +1,237 @@
+object FrameLinkInfo: TFrameLinkInfo
+  Left = 0
+  Height = 465
+  Top = 0
+  Width = 615
+  ClientHeight = 465
+  ClientWidth = 615
+  PopupMenu = pmLinkInfo
+  TabOrder = 0
+  DesignLeft = 902
+  DesignTop = 297
+  object gbContact: TGroupBox
+    Left = 8
+    Height = 176
+    Top = 8
+    Width = 264
+    Caption = 'Contact'
+    ClientHeight = 158
+    ClientWidth = 260
+    TabOrder = 0
+    object lbAddr: TLabel
+      Left = 9
+      Height = 23
+      Top = 9
+      Width = 55
+      AutoSize = False
+      Caption = 'Address:'
+      ParentColor = False
+    end
+    object edAddr: TEdit
+      Left = 72
+      Height = 23
+      Top = 9
+      Width = 112
+      TabOrder = 0
+      Text = 'edAddr'
+    end
+    object lbAddr1: TLabel
+      Left = 9
+      Height = 23
+      Top = 37
+      Width = 55
+      AutoSize = False
+      Caption = 'Nickname:'
+      ParentColor = False
+    end
+    object edNick: TEdit
+      Left = 72
+      Height = 23
+      Top = 37
+      Width = 112
+      TabOrder = 1
+      Text = 'edNick'
+    end
+    object lbGUID: TLabel
+      Left = 9
+      Height = 23
+      Top = 65
+      Width = 79
+      AutoSize = False
+      Caption = 'GUID:'
+      ParentColor = False
+    end
+    object edGUID: TEdit
+      Left = 96
+      Height = 23
+      Top = 65
+      Width = 152
+      ReadOnly = True
+      TabOrder = 2
+      Text = 'edGUID'
+    end
+    object lbSGUID: TLabel
+      Left = 9
+      Height = 23
+      Top = 93
+      Width = 79
+      AutoSize = False
+      Caption = 'Senior GUID:'
+      ParentColor = False
+    end
+    object edSGUID: TEdit
+      Left = 96
+      Height = 23
+      Top = 93
+      Width = 152
+      ReadOnly = True
+      TabOrder = 3
+      Text = 'edSGUID'
+    end
+    object edStatusMessage: TEdit
+      Left = 96
+      Height = 23
+      Top = 121
+      Width = 152
+      TabOrder = 4
+      Text = 'edStatusMessage'
+    end
+    object lbStatusMessage: TLabel
+      Left = 9
+      Height = 23
+      Top = 121
+      Width = 79
+      AutoSize = False
+      Caption = 'Status msg:'
+      ParentColor = False
+    end
+    object imgPicture: TImage
+      Left = 196
+      Height = 48
+      Top = 9
+      Width = 48
+      Center = True
+      Proportional = True
+      Stretch = True
+    end
+  end
+  object gbLinkInfo: TGroupBox
+    Left = 280
+    Height = 176
+    Top = 8
+    Width = 304
+    Caption = 'Link info'
+    ClientHeight = 158
+    ClientWidth = 300
+    TabOrder = 1
+    object lbOwner: TLabel
+      Left = 8
+      Height = 23
+      Top = 9
+      Width = 79
+      AutoSize = False
+      Caption = 'Owner:'
+      ParentColor = False
+    end
+    object edOwner: TEdit
+      Left = 88
+      Height = 23
+      Top = 9
+      Width = 208
+      TabOrder = 0
+      Text = 'edOwner'
+    end
+    object lbLocation: TLabel
+      Left = 8
+      Height = 23
+      Top = 37
+      Width = 79
+      AutoSize = False
+      Caption = 'Location:'
+      ParentColor = False
+    end
+    object edLocation: TEdit
+      Left = 88
+      Height = 23
+      Top = 37
+      Width = 208
+      TabOrder = 1
+      Text = 'edLocation'
+    end
+    object lbIPAddr: TLabel
+      Left = 8
+      Height = 23
+      Top = 65
+      Width = 79
+      AutoSize = False
+      Caption = 'IP address:'
+      ParentColor = False
+    end
+    object edIPAddr: TEdit
+      Left = 88
+      Height = 23
+      Top = 65
+      Width = 208
+      TabOrder = 2
+      Text = 'edIPAddr'
+    end
+    object lbPhoneNo: TLabel
+      Left = 8
+      Height = 23
+      Top = 93
+      Width = 79
+      AutoSize = False
+      Caption = 'Phone num:'
+      ParentColor = False
+    end
+    object edPhoneNo: TEdit
+      Left = 88
+      Height = 23
+      Top = 93
+      Width = 208
+      TabOrder = 3
+      Text = 'edPhoneNo'
+    end
+    object lbOtherInfo: TLabel
+      Left = 8
+      Height = 23
+      Top = 121
+      Width = 79
+      AutoSize = False
+      Caption = 'Other info:'
+      ParentColor = False
+    end
+    object edOtherInfo: TEdit
+      Left = 88
+      Height = 23
+      Top = 121
+      Width = 208
+      TabOrder = 4
+      Text = 'edOtherInfo'
+    end
+  end
+  object alLinkInfo: TActionList
+    left = 146
+    top = 202
+    object actUpdateInfo: TAction
+      Caption = 'Update info'
+      Hint = 'Read and show info'
+      OnExecute = actUpdateInfoExecute
+    end
+    object actSaveInfo: TAction
+      Caption = 'Save info'
+      Hint = 'Save info'
+      OnExecute = actSaveInfoExecute
+    end
+  end
+  object pmLinkInfo: TPopupMenu
+    left = 146
+    top = 266
+    object MenuItem1: TMenuItem
+      Action = actUpdateInfo
+    end
+    object MenuItem2: TMenuItem
+      Action = actSaveInfo
+    end
+  end
+end

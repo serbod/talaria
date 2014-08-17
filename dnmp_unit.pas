@@ -195,7 +195,7 @@ type
     function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
     function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
     { Copy all info from another item }
-    procedure Assign(Item: TLinkInfo);
+    procedure Assign(Item: TLinkInfo); reintroduce;
   end;
 
   { TLinkInfoList }
@@ -372,6 +372,7 @@ type
     FListenerLink: TDnmpLink;
     procedure FSetUplink(Value: TDnmpLink);
     procedure FSetListenerLink(Value: TDnmpLink);
+    function FActive(): boolean;
     { Commands handler:
     AUTH_OK - someone succesfully authorised
     EVENT <sender> <text> - internal event
@@ -396,7 +397,7 @@ type
     NodeList: TNodeList;
     // Owned points (Server only)
     PointList: TPointList;
-    // Known points
+    // Unapproved links
     LinkInfoList: TLinkInfoList;
     // Global contact list (??)
     ContactList: TDnmpContactList;
@@ -404,6 +405,7 @@ type
     LinkList: TDnmpLinkList;
     // Outgoing messages queue
     MsgQueue: TDnmpMsgQueue;
+    // Config
     Conf: TDnmpConf;
     RoutingTable: TDnmpRoutingTable;
     // Incoming messages handlers
@@ -414,6 +416,7 @@ type
     property Uplink: TDnmpLink read FUplink write FSetUplink;
     // Listener (Server only)
     property ListenerLink: TDnmpLink read FListenerLink write FSetListenerLink;
+    property Active: boolean read FActive;
 
     constructor Create(ConfName: string);
     destructor Destroy(); override;
@@ -425,9 +428,9 @@ type
     procedure SendDataMsg(DestAddr: TAddr; MsgType, Info, Text: string);
     // Create and send error reply message
     procedure SendErrorMsg(DestAddr: TAddr; ErrCode, ErrText: string);
-    procedure RunServer();
+    procedure StartServer();
     procedure StopServer();
-    procedure RunClient();
+    procedure StartClient();
     procedure StopClient();
     procedure StartNodeConnection(NodeInfo: TLinkInfo);
     procedure StopNodeConnection(NodeInfo: TLinkInfo);
@@ -2009,11 +2012,13 @@ begin
   inherited Destroy();
 end;
 
-procedure TDnmpManager.RunServer();
+procedure TDnmpManager.StartServer();
 var
   tmpLink: TDnmpLink;
   sTcpPort: string;
 begin
+  if not Self.FServerMode and Self.Active then StopClient();
+
   self.FServerMode:=True;
 
   // Create server listener link
@@ -2034,14 +2039,15 @@ begin
   else FreeAndNil(tmpLink);
 end;
 
-procedure TDnmpManager.RunClient();
+procedure TDnmpManager.StartClient();
 var
   tmpLink: TDnmpLink;
   sUplinkAddr, sTcpPort: string;
 begin
+  if Self.FServerMode and Self.Active then StopServer();
   self.FServerMode:=false;
 
-  // Create connection to server
+  // Create connection to uplink server
   sUplinkAddr:=Conf.ReadString('Options', 'UplinkAddr', 'localhost');
   sTcpPort:=Conf.ReadString('Options', 'TcpPort', '4044');
   tmpLink:=TIpLink.Create(Self, sUplinkAddr, sTcpPort, 'TCP');
@@ -2063,9 +2069,9 @@ end;
 procedure TDnmpManager.StopServer();
 begin
   if not Assigned(ListenerLink) then Exit;
+  ListenerLink.OnIncomingMsg:=nil;
   LinkList.Remove(ListenerLink);
   //FreeAndNil(ListenerLink);
-  ListenerLink.OnIncomingMsg:=nil;
   ListenerLink:=nil;
   DebugText('Server stopped.');
 end;
@@ -2073,9 +2079,9 @@ end;
 procedure TDnmpManager.StopClient();
 begin
   if not Assigned(Uplink) then Exit;
+  UpLink.OnIncomingMsg:=nil;
   if Uplink.Disconnect() then LinkList.Remove(Uplink);
   //FreeAndNil(Uplink);
-  UpLink.OnIncomingMsg:=nil;
   Uplink:=nil;
   DebugText('Client stopped.');
 end;
@@ -2271,7 +2277,17 @@ begin
     PointList[i].FromConf(Conf, Sect);
   end;
 
-  // Contacts !!!
+  // LinkInfoList
+  n:=Conf.ReadInteger(MainSect, 'link_info_count', 0);
+  for i:=0 to n-1 do
+  begin
+    Sect:='LinkInfo_'+IntToStr(i);
+    LinkInfoList.Add(TLinkInfo.Create());
+    LinkInfoList[i].FromConf(Conf, Sect);
+  end;
+
+  // Contacts
+  {
   n:=Conf.ReadInteger(MainSect, 'contacts_count', 0);
   for i:=0 to n-1 do
   begin
@@ -2279,6 +2295,7 @@ begin
     LinkInfoList.Add(TLinkInfo.Create());
     LinkInfoList[i].FromConf(Conf, Sect);
   end;
+  }
 end;
 
 procedure TDnmpManager.WriteConfig();
@@ -2291,7 +2308,7 @@ begin
   Conf.WriteString(Sect, 'tcp_port', '4044');
   Conf.WriteInteger(Sect, 'nodelist_count', NodeList.Count);
   Conf.WriteInteger(Sect, 'pointlist_count', PointList.Count);
-  Conf.WriteInteger(Sect, 'contacts_count', ContactList.Count);
+  Conf.WriteInteger(Sect, 'link_info_count', LinkInfoList.Count);
 
   // MyInfo
   MyInfo.ToConf(Conf, 'MyInfo');
@@ -2310,10 +2327,10 @@ begin
     PointList[i].ToConf(Conf, Sect);
   end;
 
-  // Contacts !!!
-  for i:=0 to ContactList.Count-1 do
+  // LinkInfoList
+  for i:=0 to LinkInfoList.Count-1 do
   begin
-    Sect:='Contact_'+IntToStr(i);
+    Sect:='LinkInfo_'+IntToStr(i);
     LinkInfoList[i].ToConf(Conf, Sect);
   end;
   Conf.UpdateFile();
@@ -2465,6 +2482,12 @@ begin
   if Assigned(FListenerLink) then FListenerLink.OnIncomingMsg:=nil;
   FListenerLink:=Value;
   if Assigned(FListenerLink) then FListenerLink.OnIncomingMsg:=@IncomingMsgHandler;
+end;
+
+function TDnmpManager.FActive(): boolean;
+begin
+  if Self.ServerMode then Result:=Assigned(ListenerLink);
+  if not Self.ServerMode then Result:=Assigned(Uplink);
 end;
 
 function TDnmpManager.CmdHandler(CmdText: string): string;

@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="18">
+    <Units Count="19">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -158,9 +158,17 @@
         <Filename Value="linklistframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameLinkList"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="LinkListFrame"/>
       </Unit17>
+      <Unit18>
+        <Filename Value="linkinfoframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameLinkInfo"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="LinkInfoFrame"/>
+      </Unit18>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

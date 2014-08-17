@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
-  dnmp_unit, dnmp_services, PointListFrame, DnmpServicesFrame, ConfigFrame,
-  LinkListFrame;
+  ExtCtrls, dnmp_unit, dnmp_services, PointListFrame, DnmpServicesFrame,
+  ConfigFrame, LinkListFrame, LinkInfoFrame;
 
 type
 
@@ -15,12 +15,19 @@ type
 
   TFrameDnmpNode = class(TFrame)
     actContactList: TAction;
+    actClient: TAction;
+    actServer: TAction;
     actTest: TAction;
     alNode: TActionList;
     MemoStatus: TMemo;
     PageControlNode: TPageControl;
+    panNode: TPanel;
+    Splitter1: TSplitter;
+    tsConfig: TTabSheet;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
+    ToolButton3: TToolButton;
+    ToolButton4: TToolButton;
     tsPoints: TTabSheet;
     tsNodes: TTabSheet;
     tsLinks: TTabSheet;
@@ -28,9 +35,10 @@ type
     tsServices: TTabSheet;
     tsMyInfo: TTabSheet;
     tsContacts: TTabSheet;
-    tsStatus: TTabSheet;
     ToolBarNode: TToolBar;
+    procedure actClientExecute(Sender: TObject);
     procedure actContactListExecute(Sender: TObject);
+    procedure actServerExecute(Sender: TObject);
     procedure actTestExecute(Sender: TObject);
     procedure PageControlNodeChange(Sender: TObject);
   private
@@ -42,6 +50,7 @@ type
     FramePointsList: TFramePointList;
     FrameContactsList: TFramePointList;
     FrameServices: TFrameDnmpServices;
+    FrameMyInfo: TFrameLinkInfo;
     FrameConfig: TFrameConfig;
     ConfigModels: TDnmpConf;
     //FrameMyInfo: TFrameMyInfo;
@@ -103,6 +112,20 @@ begin
   ShowContactList();
 end;
 
+procedure TFrameDnmpNode.actClientExecute(Sender: TObject);
+begin
+  if not Assigned(Mgr) then Exit;
+  if Mgr.Active then Mgr.StopClient() else Mgr.StartClient();
+  Update();
+end;
+
+procedure TFrameDnmpNode.actServerExecute(Sender: TObject);
+begin
+  if not Assigned(Mgr) then Exit;
+  if Mgr.Active then Mgr.StopServer() else Mgr.StartServer();
+  Update();
+end;
+
 procedure TFrameDnmpNode.PageControlNodeChange(Sender: TObject);
 begin
   if Assigned(PageControlNode.ActivePage) then
@@ -140,6 +163,7 @@ begin
     if Assigned(FrameNodesList) then FrameNodesList.PointList:=Mgr.NodeList;
     if Assigned(FramePointsList) then FramePointsList.PointList:=Mgr.PointList;
     if Assigned(FrameContactsList) then FrameContactsList.PointList:=Mgr.LinkInfoList;
+    if Assigned(FrameMyInfo) then FrameMyInfo.LinkInfo:=Mgr.MyInfo;
     if Assigned(FrameConfig) then
     begin
       FrameConfig.Config:=Mgr.Conf;
@@ -228,6 +252,9 @@ begin
   if Assigned(Mgr) then
   begin
     AppName:=Mgr.MyInfo.AddrStr();
+    actServer.Checked:=(Mgr.ServerMode and Mgr.Active);
+    actClient.Checked:=(not Mgr.ServerMode and Mgr.Active);
+
     if Assigned(FrameLinks) then FrameLinks.Update();
     if Assigned(FrameNodesList) then FrameNodesList.Update();
     if Assigned(FramePointsList) then FramePointsList.Update();
@@ -259,9 +286,13 @@ begin
   FrameServices:=TFrameDnmpServices.Create(tsServices);
   FrameServices.Parent:=tsServices;
   FrameServices.Align:=alClient;
-  // Config (My Info)
-  FrameConfig:=TFrameConfig.Create(tsMyInfo);
-  FrameConfig.Parent:=tsMyInfo;
+  // My Info
+  FrameMyInfo:=TFrameLinkInfo.Create(tsMyInfo);
+  FrameMyInfo.Parent:=tsMyInfo;
+  FrameMyInfo.Align:=alClient;
+  // Config
+  FrameConfig:=TFrameConfig.Create(tsConfig);
+  FrameConfig.Parent:=tsConfig;
   FrameConfig.Align:=alClient;
 end;
 
