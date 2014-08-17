@@ -1,0 +1,99 @@
+object FrameLinkList: TFrameLinkList
+  Left = 0
+  Height = 373
+  Top = 0
+  Width = 635
+  Align = alLeft
+  ClientHeight = 373
+  ClientWidth = 635
+  TabOrder = 0
+  DesignLeft = 740
+  DesignTop = 316
+  object pgcLinks: TPageControl
+    Left = 4
+    Height = 365
+    Top = 4
+    Width = 324
+    ActivePage = tsLinkInfoList
+    Align = alLeft
+    BorderSpacing.Around = 4
+    TabIndex = 0
+    TabOrder = 0
+    OnChange = pgcLinksChange
+    object tsLinkInfoList: TTabSheet
+      Caption = 'Link info list'
+      ClientHeight = 337
+      ClientWidth = 316
+      object lvLinkInfoList: TListView
+        Left = 0
+        Height = 337
+        Top = 0
+        Width = 316
+        Align = alClient
+        Columns = <        
+          item
+            Caption = 'Address'
+          end        
+          item
+            Caption = 'Name'
+          end        
+          item
+            Caption = 'State'
+          end        
+          item
+            Caption = 'Info'
+          end>
+        GridLines = True
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 0
+        ViewStyle = vsReport
+      end
+    end
+    object tsActiveLinks: TTabSheet
+      Caption = 'Active links'
+      ClientHeight = 337
+      ClientWidth = 316
+      object lvLinkList: TListView
+        Left = 0
+        Height = 337
+        Top = 0
+        Width = 316
+        Align = alClient
+        Columns = <        
+          item
+            Caption = 'Addr'
+          end        
+          item
+            Caption = 'Name'
+          end        
+          item
+            Caption = 'State'
+          end        
+          item
+            Caption = 'Info'
+          end>
+        GridLines = True
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 0
+        ViewStyle = vsReport
+      end
+    end
+  end
+  object Splitter1: TSplitter
+    Left = 332
+    Height = 373
+    Top = 0
+    Width = 5
+  end
+  object gbLinkInfo: TGroupBox
+    Left = 337
+    Height = 373
+    Top = 0
+    Width = 298
+    Align = alClient
+    Caption = 'Link info'
+    TabOrder = 2
+  end
+end

@@ -26,7 +26,7 @@ type
   { TDnmpStorage }
   TDnmpStorage = class(TInterfacedObject)
   private
-    { name:object items storage }
+    { [name:object] items storage }
     FItems: TStringList;
   public
     { stUnknown, stString, stInteger, stNumber, stList, stDictionary }
@@ -270,12 +270,13 @@ type
 
   TIncomingLinkEvent = procedure(Sender: TObject; Link: TDnmpLink) of object;
 
-  TDnmpPassport = class(TObject)
+  TDnmpPassport = class(TInterfacedObject)
   public
     LinkInfo: TLinkInfo;
-    ContactsList: TLinkInfoList;
+    ContactsList: TDnmpContactList;
     ServicesList: TObjectList;
-    DelayedMsgList: TDnmpMsgQueue;
+    MsgInbox: TDnmpMsgQueue;
+    MsgOutbox: TDnmpMsgQueue;
   end;
 
   // Запись таблицы маршрутизации
@@ -396,7 +397,9 @@ type
     // Owned points (Server only)
     PointList: TPointList;
     // Known points
-    ContactList: TLinkInfoList;
+    LinkInfoList: TLinkInfoList;
+    // Global contact list (??)
+    ContactList: TDnmpContactList;
     // Active links
     LinkList: TDnmpLinkList;
     // Outgoing messages queue
@@ -1960,7 +1963,8 @@ begin
 
   NodeList:=TNodeList.Create();
   PointList:=TPointList.Create();
-  ContactList:=TLinkInfoList.Create();
+  LinkInfoList:=TLinkInfoList.Create();
+  ContactList:=TDnmpContactList.Create();
 
   LinkList:=TDnmpLinkList.Create();
   RoutingTable:=TDnmpRoutingTable.Create(LinkList);
@@ -1996,6 +2000,7 @@ begin
   FreeAndNil(LinkList);
 
   FreeAndNil(ContactList);
+  FreeAndNil(LinkInfoList);
   FreeAndNil(PointList);
   FreeAndNil(NodeList);
 
@@ -2266,13 +2271,13 @@ begin
     PointList[i].FromConf(Conf, Sect);
   end;
 
-  // Contacts
+  // Contacts !!!
   n:=Conf.ReadInteger(MainSect, 'contacts_count', 0);
   for i:=0 to n-1 do
   begin
     Sect:='Contact_'+IntToStr(i);
-    ContactList.Add(TLinkInfo.Create());
-    ContactList[i].FromConf(Conf, Sect);
+    LinkInfoList.Add(TLinkInfo.Create());
+    LinkInfoList[i].FromConf(Conf, Sect);
   end;
 end;
 
@@ -2305,11 +2310,11 @@ begin
     PointList[i].ToConf(Conf, Sect);
   end;
 
-  // Contacts
+  // Contacts !!!
   for i:=0 to ContactList.Count-1 do
   begin
     Sect:='Contact_'+IntToStr(i);
-    ContactList[i].ToConf(Conf, Sect);
+    LinkInfoList[i].ToConf(Conf, Sect);
   end;
   Conf.UpdateFile();
 end;
@@ -2556,7 +2561,7 @@ begin
   if Addr.Point=0 then Result:=NodeList.GetLinkInfoByAddr(Addr)
   else Result:=PointList.GetLinkInfoByAddr(Addr);
 
-  if not Assigned(Result) then Result:=ContactList.GetLinkInfoByAddr(Addr);
+  if not Assigned(Result) then Result:=LinkInfoList.GetLinkInfoByAddr(Addr);
   if not Assigned(Result) then
   begin
     if SameAddr(Addr, MyInfo.Addr) then Result:=MyInfo;
@@ -2565,7 +2570,7 @@ end;
 
 function TDnmpManager.GetInfoByGUID(SomeGUID: string): TLinkInfo;
 begin
-  Result:=ContactList.GetLinkInfoByGUID(SomeGUID);
+  Result:=LinkInfoList.GetLinkInfoByGUID(SomeGUID);
   if not Assigned(Result) then Result:=PointList.GetLinkInfoByGUID(SomeGUID);
   if not Assigned(Result) then Result:=NodeList.GetLinkInfoByGUID(SomeGUID);
 end;
@@ -2685,7 +2690,7 @@ begin
   end
   else
   begin
-    li:=ContactList.GetLinkInfoByAddr(SomeAddr);
+    li:=LinkInfoList.GetLinkInfoByAddr(SomeAddr);   // !!!
     s:='CONTACTS';
     ReadAllInfo:=True;
   end;
@@ -2700,7 +2705,7 @@ begin
     end
     else
     begin
-      ContactList.Add(li);
+      LinkInfoList.Add(li);
       s:='CONTACTS';
     end;
     ReadAllInfo:=True;

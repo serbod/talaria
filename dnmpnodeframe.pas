@@ -6,7 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
-  dnmp_unit, dnmp_services, PointListFrame, DnmpServicesFrame, ConfigFrame;
+  dnmp_unit, dnmp_services, PointListFrame, DnmpServicesFrame, ConfigFrame,
+  LinkListFrame;
 
 type
 
@@ -36,7 +37,7 @@ type
     { private declarations }
     FMgr: TDnmpManager;
     FServMgr: TDnmpServiceManager;
-    //FrameLinks: TFrameList;
+    FrameLinks: TFrameLinkList;
     FrameNodesList: TFramePointList;
     FramePointsList: TFramePointList;
     FrameContactsList: TFramePointList;
@@ -135,9 +136,10 @@ begin
     Mgr.OnEvent:=@MgrEventHandler;
     Mgr.OnIncomingMsg:=@MgrMsgHandler;
     Mgr.OnLog:=@MgrLogHandler;
+    if Assigned(FrameLinks) then FrameLinks.Mgr:=Mgr;
     if Assigned(FrameNodesList) then FrameNodesList.PointList:=Mgr.NodeList;
     if Assigned(FramePointsList) then FramePointsList.PointList:=Mgr.PointList;
-    if Assigned(FrameContactsList) then FrameContactsList.PointList:=Mgr.ContactList;
+    if Assigned(FrameContactsList) then FrameContactsList.PointList:=Mgr.LinkInfoList;
     if Assigned(FrameConfig) then
     begin
       FrameConfig.Config:=Mgr.Conf;
@@ -179,7 +181,7 @@ begin
       end
       else if sParam='LINKS' then
       begin
-        //FrameLinks.UpdateView();
+        FrameLinks.Update();
       end
       else if sParam='CONTACTS' then
       begin
@@ -226,6 +228,7 @@ begin
   if Assigned(Mgr) then
   begin
     AppName:=Mgr.MyInfo.AddrStr();
+    if Assigned(FrameLinks) then FrameLinks.Update();
     if Assigned(FrameNodesList) then FrameNodesList.Update();
     if Assigned(FramePointsList) then FramePointsList.Update();
     if Assigned(FrameContactsList) then FrameContactsList.Update();
@@ -236,6 +239,10 @@ end;
 procedure TFrameDnmpNode.AfterConstruction();
 begin
   inherited AfterConstruction();
+  // Links
+  FrameLinks:=TFrameLinkList.Create(tsLinks);
+  FrameLinks.Parent:=tsLinks;
+  FrameLinks.Align:=alClient;
   // Nodes
   FrameNodesList:=TFramePointList.Create(tsNodes);
   FrameNodesList.Parent:=tsNodes;

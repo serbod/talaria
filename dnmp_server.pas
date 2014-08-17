@@ -426,7 +426,7 @@ begin
   else
   begin
     // Ищем в списке неавторизованных контактов
-    li:=Mgr.ContactList.GetLinkInfoByGUID(LinkInfo.GUID);
+    li:=Mgr.LinkInfoList.GetLinkInfoByGUID(LinkInfo.GUID);
     if Assigned(li) then Found:=CheckKey(li.Key, sRemoteKey, TempKey);
   end;
 
@@ -437,7 +437,7 @@ begin
     for i:=0 to Mgr.ContactList.Count-1 do
     begin
       if Found then Break;
-      li:=Mgr.ContactList[i];
+      li:=Mgr.LinkInfoList[i];
       Found:=CheckKey(li.Key, sRemoteKey, TempKey);
     end;
 
