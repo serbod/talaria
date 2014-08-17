@@ -96,4 +96,11 @@ object FrameLinkList: TFrameLinkList
     Caption = 'Link info'
     TabOrder = 2
   end
+  object alLinkList: TActionList
+    left = 102
+    top = 110
+    object actApproveLink: TAction
+      Caption = 'Approve link'
+    end
+  end
 end

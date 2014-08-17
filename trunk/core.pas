@@ -83,7 +83,7 @@ var
   MainFormPages: TMainFormPages;
   ServiceDnmpNode: TServiceDnmpNode;
 
-procedure Init();
+procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 procedure AddServicePage(AService: TDnmpService);
@@ -99,7 +99,7 @@ implementation
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
   MailboxFrame, ContactListFrame;
 
-procedure Init();
+procedure Init(ConfigName: string);
 var
   frame: TFrame;
 begin
@@ -110,7 +110,7 @@ begin
   // node
   // TODO: clearing
   if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
-  ServiceDnmpNode:=TServiceDnmpNode.Create('1.0');
+  ServiceDnmpNode:=TServiceDnmpNode.Create(ConfigName);
   frame:=TFrameDnmpNode.Create(nil);
   ServiceDnmpNode.Frame:=frame;
   (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;

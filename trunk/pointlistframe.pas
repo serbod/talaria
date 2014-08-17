@@ -15,7 +15,6 @@ type
   TFramePointList = class(TFrame)
     actConnect: TAction;
     actGetInfo: TAction;
-    actApprove: TAction;
     actGenerateGUID: TAction;
     actPointSave: TAction;
     actPointUpdate: TAction;
@@ -35,7 +34,6 @@ type
     MenuItem14: TMenuItem;
     MenuItem15: TMenuItem;
     MenuItem16: TMenuItem;
-    MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
@@ -49,6 +47,7 @@ type
     Splitter1: TSplitter;
     StringGridInfo: TStringGrid;
     procedure actGenerateGUIDExecute(Sender: TObject);
+    procedure actPointAddExecute(Sender: TObject);
     procedure actPointDelExecute(Sender: TObject);
     procedure actPointListSaveExecute(Sender: TObject);
     procedure actPointListUpdateExecute(Sender: TObject);
@@ -100,26 +99,36 @@ end;
 
 procedure TFramePointList.actGenerateGUIDExecute(Sender: TObject);
 var
-  LinkInfo: TLinkInfo;
+  Item: TLinkInfo;
 begin
-  LinkInfo:=GetSelectedPointInfo();
-  if not Assigned(LinkInfo) then Exit;
-  LinkInfo.GUID:=GenerateGUID();
+  Item:=GetSelectedPointInfo();
+  if not Assigned(Item) then Exit;
+  Item.GUID:=GenerateGUID();
   UpdatePointInfo();
+end;
+
+procedure TFramePointList.actPointAddExecute(Sender: TObject);
+var
+  Item: TLinkInfo;
+begin
+  if not Assigned(PointList) then Exit;
+  Item:=TLinkInfo.Create();
+  PointList.Add(Item);
+  UpdatePointList();
 end;
 
 procedure TFramePointList.actPointDelExecute(Sender: TObject);
 var
-  LinkInfo: TLinkInfo;
+  Item: TLinkInfo;
 begin
   if not Assigned(PointList) then Exit;
-  LinkInfo:=GetSelectedPointInfo();
-  if not Assigned(LinkInfo) then Exit;
+  Item:=GetSelectedPointInfo();
+  if not Assigned(Item) then Exit;
 
   //Application.MessageBox('Delete selected point?', 'Attention', MB_);
   if MessageDlg('Attention', 'Delete selected point?', mtConfirmation, [mbYes, mbNo], 0) = mrNo then Exit;
 
-  PointList.Extract(LinkInfo);
+  PointList.Extract(Item);
   Update();
 end;
 

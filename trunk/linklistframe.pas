@@ -6,13 +6,15 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, StdCtrls, ComCtrls, ExtCtrls,
-  dnmp_unit;
+  ActnList, dnmp_unit;
 
 type
 
   { TFrameLinkList }
 
   TFrameLinkList = class(TFrame)
+    actApproveLink: TAction;
+    alLinkList: TActionList;
     gbLinkInfo: TGroupBox;
     lvLinkList: TListView;
     lvLinkInfoList: TListView;

@@ -29,6 +29,7 @@ type
     tbOptions: TToolButton;
     procedure actAboutExecute(Sender: TObject);
     procedure actExitExecute(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { private declarations }
   public
@@ -48,13 +49,23 @@ implementation
 
 procedure TFormMain.actAboutExecute(Sender: TObject);
 begin
-  Core.Init();
-  UpdatePages();
+  //Core.Init();
+  //UpdatePages();
 end;
 
 procedure TFormMain.actExitExecute(Sender: TObject);
 begin
   Close();
+end;
+
+procedure TFormMain.FormCreate(Sender: TObject);
+var
+  s: string;
+begin
+  s:='1.0';
+  if Paramcount>0 then s:=ParamStr(1);
+  Core.Init(s);
+  UpdatePages();
 end;
 
 procedure TFormMain.UpdatePages();

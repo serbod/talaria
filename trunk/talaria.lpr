@@ -10,7 +10,7 @@ uses
   Forms, MainForm, StatusFrame, ChatFrame, PointListFrame, dnmp_unit,
   dnmp_services, Core, DnmpNodeFrame, Misc, DnmpServicesFrame, laz_synapse,
   ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters, 
-ContactListFrame, LinkListFrame;
+ContactListFrame, LinkListFrame, LinkInfoFrame;
 
 {$R *.res}
 
