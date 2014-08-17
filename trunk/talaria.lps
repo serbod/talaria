@@ -4,11 +4,11 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="57">
+    <Units Count="58">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="131"/>
+        <UsageCount Value="135"/>
       </Unit0>
       <Unit1>
         <Filename Value="mainform.pas"/>
@@ -21,7 +21,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="75"/>
         <CursorPos X="1" Y="107"/>
-        <UsageCount Value="131"/>
+        <UsageCount Value="135"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -35,7 +35,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="17"/>
         <CursorPos X="1" Y="45"/>
-        <UsageCount Value="131"/>
+        <UsageCount Value="135"/>
       </Unit2>
       <Unit3>
         <Filename Value="chatframe.pas"/>
@@ -44,11 +44,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="ChatFrame"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="38"/>
         <CursorPos X="7" Y="102"/>
-        <UsageCount Value="131"/>
+        <UsageCount Value="135"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit3>
@@ -62,7 +62,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="157"/>
         <CursorPos X="110" Y="152"/>
-        <UsageCount Value="126"/>
+        <UsageCount Value="130"/>
       </Unit4>
       <Unit5>
         <Filename Value="dnmp_unit.pas"/>
@@ -70,31 +70,31 @@
         <UnitName Value="dnmp_unit"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="467"/>
-        <CursorPos X="24" Y="492"/>
-        <UsageCount Value="121"/>
+        <TopLine Value="2677"/>
+        <CursorPos X="19" Y="2708"/>
+        <UsageCount Value="125"/>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="dnmp_services.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_services"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="131"/>
+        <TopLine Value="1121"/>
         <CursorPos X="14" Y="149"/>
-        <UsageCount Value="121"/>
+        <UsageCount Value="125"/>
         <Loaded Value="True"/>
       </Unit6>
       <Unit7>
         <Filename Value="core.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Core"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="0"/>
         <TopLine Value="189"/>
         <CursorPos X="119" Y="198"/>
-        <UsageCount Value="121"/>
+        <UsageCount Value="125"/>
         <Loaded Value="True"/>
       </Unit7>
       <Unit8>
@@ -104,11 +104,12 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpNodeFrame"/>
-        <EditorIndex Value="2"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="88"/>
-        <CursorPos X="1" Y="101"/>
-        <UsageCount Value="121"/>
+        <TopLine Value="125"/>
+        <CursorPos X="86" Y="142"/>
+        <UsageCount Value="125"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit8>
@@ -119,7 +120,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="229"/>
         <CursorPos X="19" Y="242"/>
-        <UsageCount Value="121"/>
+        <UsageCount Value="125"/>
       </Unit9>
       <Unit10>
         <Filename Value="dnmpservicesframe.pas"/>
@@ -128,12 +129,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpServicesFrame"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="82"/>
+        <TopLine Value="106"/>
         <CursorPos X="1" Y="89"/>
-        <UsageCount Value="97"/>
+        <UsageCount Value="101"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit10>
@@ -147,7 +147,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="83"/>
         <CursorPos X="45" Y="107"/>
-        <UsageCount Value="92"/>
+        <UsageCount Value="96"/>
       </Unit11>
       <Unit12>
         <Filename Value="grpcserviceframe.pas"/>
@@ -156,11 +156,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="GrpcServiceFrame"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="0"/>
         <TopLine Value="191"/>
         <CursorPos X="52" Y="213"/>
-        <UsageCount Value="86"/>
+        <UsageCount Value="90"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit12>
@@ -171,11 +171,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="MailboxFrame"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="15"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="128"/>
-        <CursorPos X="28" Y="151"/>
-        <UsageCount Value="47"/>
+        <TopLine Value="98"/>
+        <CursorPos X="1" Y="118"/>
+        <UsageCount Value="51"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit13>
@@ -183,167 +183,184 @@
         <Filename Value="dnmp_mail.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_mail"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="0"/>
         <TopLine Value="47"/>
         <CursorPos X="18" Y="62"/>
-        <UsageCount Value="47"/>
+        <UsageCount Value="51"/>
         <Loaded Value="True"/>
       </Unit14>
       <Unit15>
         <Filename Value="adapters.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="adapters"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="0"/>
         <TopLine Value="4"/>
         <CursorPos X="49" Y="25"/>
-        <UsageCount Value="33"/>
+        <UsageCount Value="37"/>
         <Loaded Value="True"/>
       </Unit15>
       <Unit16>
+        <Filename Value="contactlistframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameContactList"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ContactListFrame"/>
+        <EditorIndex Value="13"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="49"/>
+        <CursorPos X="3" Y="66"/>
+        <UsageCount Value="28"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit16>
+      <Unit17>
         <Filename Value="..\MealOrder\mainform.pas"/>
         <WindowIndex Value="1"/>
         <TopLine Value="220"/>
         <CursorPos Y="220"/>
         <UsageCount Value="25"/>
-      </Unit16>
-      <Unit17>
-        <Filename Value="dnmp_server.pas"/>
-        <UnitName Value="dnmp_server"/>
-        <WindowIndex Value="1"/>
-        <TopLine Value="394"/>
-        <CursorPos X="43" Y="338"/>
-        <UsageCount Value="13"/>
       </Unit17>
       <Unit18>
+        <Filename Value="dnmp_server.pas"/>
+        <UnitName Value="dnmp_server"/>
+        <EditorIndex Value="4"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="423"/>
+        <CursorPos X="27" Y="440"/>
+        <UsageCount Value="13"/>
+        <Loaded Value="True"/>
+      </Unit18>
+      <Unit19>
         <Filename Value="C:\development\lazarus\lcl\controls.pp"/>
         <TopLine Value="2217"/>
         <CursorPos X="3" Y="2226"/>
         <UsageCount Value="2"/>
-      </Unit18>
-      <Unit19>
+      </Unit19>
+      <Unit20>
         <Filename Value="C:\development\lazarus\lcl\include\wincontrol.inc"/>
         <TopLine Value="4363"/>
         <CursorPos X="3" Y="4365"/>
         <UsageCount Value="2"/>
-      </Unit19>
-      <Unit20>
+      </Unit20>
+      <Unit21>
         <Filename Value="C:\development\lazarus\lcl\include\winapih.inc"/>
         <TopLine Value="265"/>
         <CursorPos X="10" Y="281"/>
         <UsageCount Value="2"/>
-      </Unit20>
-      <Unit21>
+      </Unit21>
+      <Unit22>
         <Filename Value="C:\development\lazarus\lcl\forms.pp"/>
         <TopLine Value="1776"/>
         <CursorPos Y="1791"/>
         <UsageCount Value="14"/>
-      </Unit21>
-      <Unit22>
+      </Unit22>
+      <Unit23>
         <Filename Value="..\MealOrder\sclassframe.pas"/>
         <WindowIndex Value="1"/>
         <TopLine Value="104"/>
         <UsageCount Value="22"/>
-      </Unit22>
-      <Unit23>
+      </Unit23>
+      <Unit24>
         <Filename Value="..\KassaLite\datamodule.pas"/>
         <TopLine Value="1458"/>
         <CursorPos X="3" Y="1459"/>
         <UsageCount Value="2"/>
-      </Unit23>
-      <Unit24>
+      </Unit24>
+      <Unit25>
         <Filename Value="..\KassaLite\db_oracle.pas"/>
         <TopLine Value="301"/>
         <CursorPos X="3" Y="285"/>
         <UsageCount Value="2"/>
-      </Unit24>
-      <Unit25>
+      </Unit25>
+      <Unit26>
         <Filename Value="C:\development\fpc\rtl\inc\objpash.inc"/>
         <TopLine Value="225"/>
         <CursorPos X="20" Y="241"/>
         <UsageCount Value="3"/>
-      </Unit25>
-      <Unit26>
+      </Unit26>
+      <Unit27>
         <Filename Value="dnmp_client.pas"/>
         <UnitName Value="dnmp_client"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="14"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="5" Y="10"/>
-        <UsageCount Value="16"/>
+        <UsageCount Value="18"/>
         <Loaded Value="True"/>
-      </Unit26>
-      <Unit27>
+      </Unit27>
+      <Unit28>
         <Filename Value="RC4.pas"/>
         <WindowIndex Value="1"/>
         <TopLine Value="19"/>
         <CursorPos X="11" Y="29"/>
         <UsageCount Value="6"/>
-      </Unit27>
-      <Unit28>
+      </Unit28>
+      <Unit29>
         <Filename Value="uLkJSON.pas"/>
         <TopLine Value="479"/>
         <CursorPos X="24" Y="495"/>
         <UsageCount Value="4"/>
-      </Unit28>
-      <Unit29>
+      </Unit29>
+      <Unit30>
         <Filename Value="C:\development\fpc\packages\fcl-json\src\jsonparser.pp"/>
         <TopLine Value="24"/>
         <CursorPos X="17" Y="47"/>
         <UsageCount Value="11"/>
-      </Unit29>
-      <Unit30>
+      </Unit30>
+      <Unit31>
         <Filename Value="C:\development\fpc\packages\fcl-json\src\fpjson.pp"/>
         <TopLine Value="116"/>
         <CursorPos X="17" Y="93"/>
         <UsageCount Value="11"/>
-      </Unit30>
-      <Unit31>
+      </Unit31>
+      <Unit32>
         <Filename Value="dnmp_grpc.pas"/>
         <UnitName Value="dnmp_grpc"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1202"/>
         <CursorPos X="24" Y="1219"/>
-        <UsageCount Value="52"/>
+        <UsageCount Value="54"/>
         <Loaded Value="True"/>
-      </Unit31>
-      <Unit32>
+      </Unit32>
+      <Unit33>
         <Filename Value="C:\development\fpc\rtl\inc\systemh.inc"/>
         <TopLine Value="291"/>
         <CursorPos X="3" Y="307"/>
         <UsageCount Value="3"/>
-      </Unit32>
-      <Unit33>
+      </Unit33>
+      <Unit34>
         <Filename Value="dnmp_ip.pas"/>
         <UnitName Value="dnmp_ip"/>
         <WindowIndex Value="1"/>
         <TopLine Value="347"/>
         <CursorPos X="44" Y="366"/>
         <UsageCount Value="16"/>
-      </Unit33>
-      <Unit34>
+      </Unit34>
+      <Unit35>
         <Filename Value="C:\development\lazarus\components\synedit\synedit.pp"/>
         <TopLine Value="9198"/>
         <CursorPos Y="9230"/>
         <UsageCount Value="4"/>
-      </Unit34>
-      <Unit35>
+      </Unit35>
+      <Unit36>
         <Filename Value="C:\development\lazarus\components\synedit\synmemo.pas"/>
         <TopLine Value="28"/>
         <UsageCount Value="3"/>
-      </Unit35>
-      <Unit36>
+      </Unit36>
+      <Unit37>
         <Filename Value="C:\development\lazarus\components\turbopower_ipro\iphtml.pas"/>
         <CursorPos X="3" Y="3366"/>
         <UsageCount Value="3"/>
-      </Unit36>
-      <Unit37>
-        <Filename Value="..\RichMemo\richmemoregister.pas"/>
-        <UsageCount Value="3"/>
       </Unit37>
       <Unit38>
+        <Filename Value="..\RichMemo\richmemoregister.pas"/>
+        <UsageCount Value="3"/>
+      </Unit38>
+      <Unit39>
         <Filename Value="..\CarddexLib\configform.pas"/>
         <ComponentName Value="frmOptions"/>
         <HasResources Value="True"/>
@@ -351,120 +368,106 @@
         <TopLine Value="46"/>
         <CursorPos Y="75"/>
         <UsageCount Value="5"/>
-      </Unit38>
-      <Unit39>
+      </Unit39>
+      <Unit40>
         <Filename Value="C:\development\fpc\packages\fcl-base\src\inifiles.pp"/>
         <TopLine Value="150"/>
         <CursorPos X="3" Y="121"/>
         <UsageCount Value="4"/>
-      </Unit39>
-      <Unit40>
+      </Unit40>
+      <Unit41>
         <Filename Value="C:\development\lazarus\components\synedit\synguttercodefolding.pp"/>
         <TopLine Value="724"/>
         <CursorPos Y="755"/>
         <UsageCount Value="4"/>
-      </Unit40>
-      <Unit41>
+      </Unit41>
+      <Unit42>
         <Filename Value="C:\development\lazarus\components\synedit\synhighlighterpas.pp"/>
         <TopLine Value="4345"/>
         <CursorPos Y="4375"/>
         <UsageCount Value="4"/>
-      </Unit41>
-      <Unit42>
+      </Unit42>
+      <Unit43>
         <Filename Value="C:\development\lazarus\components\synedit\synedithighlighterfoldbase.pas"/>
         <TopLine Value="1455"/>
         <CursorPos Y="1484"/>
         <UsageCount Value="4"/>
-      </Unit42>
-      <Unit43>
+      </Unit43>
+      <Unit44>
         <Filename Value="C:\development\lazarus\components\synedit\syneditmousecmds.pp"/>
         <TopLine Value="900"/>
         <CursorPos Y="931"/>
         <UsageCount Value="4"/>
-      </Unit43>
-      <Unit44>
+      </Unit44>
+      <Unit45>
         <Filename Value="C:\development\lazarus\components\synedit\synregexpr.pas"/>
         <TopLine Value="4066"/>
         <CursorPos Y="4097"/>
         <UsageCount Value="4"/>
-      </Unit44>
-      <Unit45>
+      </Unit45>
+      <Unit46>
         <Filename Value="C:\development\lazarus\components\synedit\syntextdrawer.pp"/>
         <TopLine Value="1509"/>
         <CursorPos Y="1535"/>
         <UsageCount Value="4"/>
-      </Unit45>
-      <Unit46>
+      </Unit46>
+      <Unit47>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\inc\objpash.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="266"/>
         <CursorPos X="8" Y="282"/>
         <UsageCount Value="10"/>
-      </Unit46>
-      <Unit47>
+      </Unit47>
+      <Unit48>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\objpas\classes\classesh.inc"/>
         <WindowIndex Value="1"/>
         <TopLine Value="632"/>
         <CursorPos X="20" Y="644"/>
         <UsageCount Value="6"/>
-      </Unit47>
-      <Unit48>
+      </Unit48>
+      <Unit49>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\objpas\classes\stringl.inc"/>
         <WindowIndex Value="1"/>
         <TopLine Value="153"/>
         <CursorPos X="3" Y="147"/>
         <UsageCount Value="6"/>
-      </Unit48>
-      <Unit49>
+      </Unit49>
+      <Unit50>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\rtl\inc\systemh.inc"/>
         <WindowIndex Value="1"/>
         <TopLine Value="937"/>
         <CursorPos X="11" Y="955"/>
         <UsageCount Value="8"/>
-      </Unit49>
-      <Unit50>
+      </Unit50>
+      <Unit51>
         <Filename Value="C:\lazarus\fpc\2.6.4\source\packages\fcl-base\src\contnrs.pp"/>
         <WindowIndex Value="1"/>
         <TopLine Value="840"/>
         <CursorPos X="27" Y="840"/>
         <UsageCount Value="8"/>
-      </Unit50>
-      <Unit51>
+      </Unit51>
+      <Unit52>
         <Filename Value="C:\lazarus\lcl\include\control.inc"/>
         <WindowIndex Value="0"/>
         <TopLine Value="3624"/>
         <CursorPos X="1" Y="3636"/>
         <UsageCount Value="9"/>
-      </Unit51>
-      <Unit52>
+      </Unit52>
+      <Unit53>
         <Filename Value="C:\lazarus\components\turbopower_ipro\iphtml.pas"/>
         <UnitName Value="IpHtml"/>
         <WindowIndex Value="0"/>
         <TopLine Value="15895"/>
         <CursorPos X="44" Y="15912"/>
         <UsageCount Value="9"/>
-      </Unit52>
-      <Unit53>
+      </Unit53>
+      <Unit54>
         <Filename Value="C:\lazarus\debugger\processdebugger.pp"/>
         <UnitName Value="ProcessDebugger"/>
         <WindowIndex Value="0"/>
         <TopLine Value="102"/>
         <CursorPos X="14" Y="121"/>
         <UsageCount Value="9"/>
-      </Unit53>
-      <Unit54>
-        <Filename Value="contactlistframe.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameContactList"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="ContactListFrame"/>
-        <EditorIndex Value="11"/>
-        <WindowIndex Value="0"/>
-        <TopLine Value="49"/>
-        <CursorPos X="3" Y="66"/>
-        <UsageCount Value="24"/>
-        <Loaded Value="True"/>
-        <LoadedDesigner Value="True"/>
       </Unit54>
       <Unit55>
         <Filename Value="C:\lazarus\lcl\forms.pp"/>
@@ -482,130 +485,144 @@
         <CursorPos X="3" Y="157"/>
         <UsageCount Value="10"/>
       </Unit56>
+      <Unit57>
+        <Filename Value="linklistframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameLinkList"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="LinkListFrame"/>
+        <EditorIndex Value="2"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="14"/>
+        <CursorPos X="3" Y="106"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
+      </Unit57>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="0"/>
     </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="mainform.pas"/>
-        <Caret Line="37" Column="25" TopLine="28"/>
+        <Filename Value="core.pas"/>
+        <Caret Line="201" Column="1" TopLine="174"/>
       </Position1>
       <Position2>
-        <Filename Value="dnmpservicesframe.pas"/>
-        <Caret Line="90" Column="1" TopLine="75"/>
+        <Filename Value="core.pas"/>
+        <Caret Line="202" Column="1" TopLine="174"/>
       </Position2>
       <Position3>
-        <Filename Value="dnmpservicesframe.pas"/>
-        <Caret Line="87" Column="3" TopLine="82"/>
+        <Filename Value="core.pas"/>
+        <Caret Line="195" Column="1" TopLine="174"/>
       </Position3>
       <Position4>
-        <Filename Value="dnmpservicesframe.pas"/>
-        <Caret Line="89" Column="1" TopLine="82"/>
+        <Filename Value="core.pas"/>
+        <Caret Line="196" Column="1" TopLine="174"/>
       </Position4>
       <Position5>
         <Filename Value="core.pas"/>
-        <Caret Line="164" Column="1" TopLine="146"/>
+        <Caret Line="201" Column="1" TopLine="174"/>
       </Position5>
       <Position6>
         <Filename Value="core.pas"/>
-        <Caret Line="165" Column="1" TopLine="158"/>
+        <Caret Line="202" Column="1" TopLine="174"/>
       </Position6>
       <Position7>
         <Filename Value="core.pas"/>
-        <Caret Line="43" Column="3" TopLine="196"/>
+        <Caret Line="195" Column="1" TopLine="174"/>
       </Position7>
       <Position8>
-        <Filename Value="dnmpservicesframe.pas"/>
-        <Caret Line="89" Column="1" TopLine="82"/>
+        <Filename Value="core.pas"/>
+        <Caret Line="196" Column="1" TopLine="174"/>
       </Position8>
       <Position9>
         <Filename Value="core.pas"/>
-        <Caret Line="165" Column="1" TopLine="154"/>
+        <Caret Line="201" Column="1" TopLine="174"/>
       </Position9>
       <Position10>
         <Filename Value="core.pas"/>
-        <Caret Line="166" Column="1" TopLine="154"/>
+        <Caret Line="202" Column="1" TopLine="174"/>
       </Position10>
       <Position11>
         <Filename Value="core.pas"/>
-        <Caret Line="190" Column="1" TopLine="174"/>
+        <Caret Line="195" Column="1" TopLine="174"/>
       </Position11>
       <Position12>
         <Filename Value="core.pas"/>
-        <Caret Line="193" Column="1" TopLine="174"/>
+        <Caret Line="196" Column="1" TopLine="174"/>
       </Position12>
       <Position13>
         <Filename Value="core.pas"/>
-        <Caret Line="195" Column="1" TopLine="174"/>
+        <Caret Line="198" Column="1" TopLine="174"/>
       </Position13>
       <Position14>
         <Filename Value="core.pas"/>
-        <Caret Line="196" Column="1" TopLine="174"/>
+        <Caret Line="199" Column="1" TopLine="174"/>
       </Position14>
       <Position15>
         <Filename Value="core.pas"/>
-        <Caret Line="201" Column="1" TopLine="174"/>
+        <Caret Line="205" Column="1" TopLine="183"/>
       </Position15>
       <Position16>
         <Filename Value="core.pas"/>
-        <Caret Line="202" Column="1" TopLine="174"/>
+        <Caret Line="214" Column="1" TopLine="186"/>
       </Position16>
       <Position17>
-        <Filename Value="core.pas"/>
-        <Caret Line="195" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="492" Column="24" TopLine="383"/>
       </Position17>
       <Position18>
-        <Filename Value="core.pas"/>
-        <Caret Line="196" Column="1" TopLine="174"/>
+        <Filename Value="linklistframe.pas"/>
+        <Caret Line="30" Column="19" TopLine="2"/>
       </Position18>
       <Position19>
-        <Filename Value="core.pas"/>
-        <Caret Line="201" Column="1" TopLine="174"/>
+        <Filename Value="linklistframe.pas"/>
+        <Caret Line="29" Column="27" TopLine="7"/>
       </Position19>
       <Position20>
-        <Filename Value="core.pas"/>
-        <Caret Line="202" Column="1" TopLine="174"/>
+        <Filename Value="linklistframe.pas"/>
+        <Caret Line="30" Column="32" TopLine="23"/>
       </Position20>
       <Position21>
-        <Filename Value="core.pas"/>
-        <Caret Line="195" Column="1" TopLine="174"/>
+        <Filename Value="linklistframe.pas"/>
+        <Caret Line="31" Column="18" TopLine="18"/>
       </Position21>
       <Position22>
-        <Filename Value="core.pas"/>
-        <Caret Line="196" Column="1" TopLine="174"/>
+        <Filename Value="dnmpnodeframe.pas"/>
+        <Caret Line="240" Column="3" TopLine="234"/>
       </Position22>
       <Position23>
-        <Filename Value="core.pas"/>
-        <Caret Line="201" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_server.pas"/>
+        <Caret Line="338" Column="43" TopLine="393"/>
       </Position23>
       <Position24>
-        <Filename Value="core.pas"/>
-        <Caret Line="202" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_server.pas"/>
+        <Caret Line="429" Column="25" TopLine="412"/>
       </Position24>
       <Position25>
-        <Filename Value="core.pas"/>
-        <Caret Line="195" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="2003" Column="26" TopLine="1976"/>
       </Position25>
       <Position26>
-        <Filename Value="core.pas"/>
-        <Caret Line="196" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="2274" Column="18" TopLine="2258"/>
       </Position26>
       <Position27>
-        <Filename Value="core.pas"/>
-        <Caret Line="198" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="2317" Column="17" TopLine="2301"/>
       </Position27>
       <Position28>
-        <Filename Value="core.pas"/>
-        <Caret Line="199" Column="1" TopLine="174"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="2564" Column="52" TopLine="2547"/>
       </Position28>
       <Position29>
-        <Filename Value="core.pas"/>
-        <Caret Line="205" Column="1" TopLine="183"/>
+        <Filename Value="dnmp_unit.pas"/>
+        <Caret Line="2573" Column="23" TopLine="2556"/>
       </Position29>
       <Position30>
-        <Filename Value="core.pas"/>
-        <Caret Line="214" Column="1" TopLine="186"/>
+        <Filename Value="dnmpnodeframe.pas"/>
+        <Caret Line="231" Column="44" TopLine="237"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
