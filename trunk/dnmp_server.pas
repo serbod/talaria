@@ -12,8 +12,8 @@ type
 
   TDnmpParserServer = class(TDnmpMsgHandler)
   private
-    MyInfo: TLinkInfo;
-    LinkInfo: TLinkInfo;
+    MyInfo: TDnmpLinkInfo;
+    LinkInfo: TDnmpLinkInfo;
     TempKey: string;
 
     //=====================================
@@ -304,7 +304,7 @@ procedure TDnmpParserServer.OnAuthRequest(Msg: TDnmpMsg);
 var
   RC4Data: TRC4Data;
   sRemoteKey, sLocalKey, sNewKey: AnsiString;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   sRemoteKey:=StreamToStr(Msg.Data);
   // Если нет своего ключа, то делаем своим ключом кодовое слово сервера
@@ -375,7 +375,7 @@ var
   sLocalKey, sNewKey: string;
   i: Integer;
   Found: Boolean;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 
 function CheckKey(Key, Secret1, Secret2: string): boolean;
 var

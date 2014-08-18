@@ -53,6 +53,31 @@ type
     function GetReal(AName: string): Real;
   end;
 
+  {
+  TDnmpSerializableObject = class(TInterfacedObject)
+  public
+    function ToStorage(): TDnmpStorage; virtual;
+    function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+    // Читает из цифрового потока AStream
+    function FromStream(AStream: TStream): boolean; virtual;
+    // Пишет в цифровой поток AStream
+    function ToStream(AStream: TStream): boolean; virtual;
+    // Читает из строки Str. Формат строки - цифровой поток
+    function FromString(Str: AnsiString): boolean; virtual;
+    // Возвращает в виде строки. Формат строки - цифровой поток
+    function ToString(): AnsiString; reintroduce;
+  end;
+  }
+
+  { TDnmpSerializer }
+
+  TDnmpSerializer = class(TInterfacedObject)
+    function StorageToString(AStorage: TDnmpStorage): AnsiString; virtual;
+    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString): boolean; virtual;
+    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
+    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
+  end;
+
   { TDnmpMsg Single message. Refcounted. }
 
   TDnmpMsg = class(TInterfacedObject)
@@ -162,9 +187,9 @@ type
 
   TDnmpLinkType = (ltPoint, ltNode, ltTemporary);
 
-  { TLinkInfo }
+  { TDnmpLinkInfo }
   { Link information. Refcounted. }
-  TLinkInfo = class(TDnmpContact)
+  TDnmpLinkInfo = class(TDnmpContact)
   public
     Name: string;
     { Owner info (name, organization, etc) }
@@ -178,7 +203,7 @@ type
     { Any other info}
     OtherInfo: string;
     { Private key }
-    Key: string;
+    Key: AnsiString;
     { Rating }
     Rating: integer;
     { indicate, that link active }
@@ -195,20 +220,20 @@ type
     function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
     function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
     { Copy all info from another item }
-    procedure Assign(Item: TLinkInfo); reintroduce;
+    procedure Assign(Item: TDnmpLinkInfo); reintroduce;
   end;
 
   { TLinkInfoList }
 
   TLinkInfoList = class(TObjectList)
   private
-    function GetLinkInfo(Index: Integer): TLinkInfo;
-    procedure SetLinkInfo(Index: Integer; Value: TLinkInfo);
+    function GetLinkInfo(Index: Integer): TDnmpLinkInfo;
+    procedure SetLinkInfo(Index: Integer; Value: TDnmpLinkInfo);
   public
     Filename: string;
-    property Items[Index: Integer]: TLinkInfo read GetLinkInfo write SetLinkInfo; default;
-    function GetLinkInfoByAddr(FAddr: TAddr): TLinkInfo;
-    function GetLinkInfoByGUID(SomeGUID: string): TLinkInfo;
+    property Items[Index: Integer]: TDnmpLinkInfo read GetLinkInfo write SetLinkInfo; default;
+    function GetLinkInfoByAddr(FAddr: TAddr): TDnmpLinkInfo;
+    function GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     procedure SaveToFile();
@@ -232,9 +257,9 @@ type
   public
     Mgr: TDnmpManager;
 
-    MyInfo: TLinkInfo;
+    MyInfo: TDnmpLinkInfo;
     LinkType: TDnmpLinkType;
-    LinkInfo: TLinkInfo;
+    LinkInfo: TDnmpLinkInfo;
     Speed: Integer;
 
     MsgHandler: TDnmpMsgHandler;
@@ -270,13 +295,17 @@ type
 
   TIncomingLinkEvent = procedure(Sender: TObject; Link: TDnmpLink) of object;
 
+  { TDnmpPassport }
+
   TDnmpPassport = class(TInterfacedObject)
   public
-    LinkInfo: TLinkInfo;
+    LinkInfo: TDnmpLinkInfo;
     ContactsList: TDnmpContactList;
     ServicesList: TObjectList;
     MsgInbox: TDnmpMsgQueue;
     MsgOutbox: TDnmpMsgQueue;
+    constructor Create();
+    destructor Destroy; override;
   end;
 
   // Запись таблицы маршрутизации
@@ -392,12 +421,14 @@ type
     procedure ReadConfig();
     procedure WriteConfig();
   public
-    MyInfo: TLinkInfo;
+    Serializer: TDnmpSerializer;
+    MyPassport: TDnmpPassport;
+    MyInfo: TDnmpLinkInfo;
     // Known linkable nodes
     NodeList: TNodeList;
     // Owned points (Server only)
     PointList: TPointList;
-    // Unapproved links
+    // Unapproved links (Server only)
     LinkInfoList: TLinkInfoList;
     // Global contact list (??)
     ContactList: TDnmpContactList;
@@ -432,8 +463,8 @@ type
     procedure StopServer();
     procedure StartClient();
     procedure StopClient();
-    procedure StartNodeConnection(NodeInfo: TLinkInfo);
-    procedure StopNodeConnection(NodeInfo: TLinkInfo);
+    procedure StartNodeConnection(NodeInfo: TDnmpLinkInfo);
+    procedure StopNodeConnection(NodeInfo: TDnmpLinkInfo);
     property OnLog: TLogEvent read FOnLog write FOnLog;
     property OnCmd: TLogEvent read FOnCmd write FOnCmd;
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
@@ -453,25 +484,27 @@ type
     procedure Tick();
     function AddLink(Link: TDnmpLink): integer;
     function DelLink(Link: TDnmpLink): Boolean;
-    function GetInfoByAddr(Addr: TAddr): TLinkInfo;
-    function GetInfoByGUID(SomeGUID: string): TLinkInfo;
-    function Approve(ALinkInfo: TLinkInfo): boolean;
+    function GetInfoByAddr(Addr: TAddr): TDnmpLinkInfo;
+    function GetInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
+    function Approve(ALinkInfo: TDnmpLinkInfo): boolean;
     // ==== Сервисные функции
     procedure SendChatMsg(DestAddr: TAddr; Text: string);
     procedure RequestInfoByAddr(Addr: TAddr);
     procedure RequestPointlist(Addr: TAddr);
-    procedure SendLinkInfo(ALinkInfo: TLinkInfo; TargetAddr: TAddr); // [S]
+    procedure SendLinkInfo(ALinkInfo: TDnmpLinkInfo; TargetAddr: TAddr); // [S]
     // !! not used
     procedure ReadLinkInfo(Msg: TDnmpMsg); // [SC]
   end;
 
-  /// Return addr 0.0
+  // Return addr 0.0
   function EmptyAddr(): TAddr;
+  // Return node addr from given addr: 1.2 -> 1.0
+  function NodeAddr(Addr: TAddr): TAddr;
   function AddrToStr(Addr: TAddr): string;
   function StrToAddr(StrAddr: string): TAddr;
-  /// Return True, if given addresses equal
+  // Return True, if given addresses equal
   function SameAddr(Addr1, Addr2: TAddr): boolean;
-  /// Return True, if given addresses have equal nodes
+  // Return True, if given addresses have equal nodes
   function SameNode(Addr1, Addr2: TAddr): boolean;
   // Return link type as string
   function LinkTypeToStr(lt: TDnmpLinkType): string;
@@ -494,17 +527,20 @@ type
   /// Return empty string "" on failure
   function FileToStr(FileName: string): AnsiString;
 
-  function GenerateKey(): string;
+  // simple key generator
+  // {TODO: full random long key}
+  function GenerateKey(): AnsiString;
   function GenerateGUID(): string;
   // Extract and return first word from string
   function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
+
 const
   csConfigFileName = 'settings.ini';
-  csPointlistFileName = 'PointList.lst';
-  csNodelistFileName = 'NodeList.lst';
-  csMsgQueueFileName = 'MsgQueue.dta';
-  ciKeyLength = 64;
+  csPointlistFileName = 'PointList';
+  csNodelistFileName = 'NodeList';
+  csMsgQueueFileName = 'MsgQueue';
+  ciKeyLength = 8;
   CRLF = #13#10;
 
 var
@@ -525,6 +561,12 @@ end;
 function EmptyAddr(): TAddr;
 begin
   Result.Node:=0;
+  Result.Point:=0;
+end;
+
+function NodeAddr(Addr: TAddr): TAddr;
+begin
+  Result.Node:=Addr.Node;
   Result.Point:=0;
 end;
 
@@ -628,16 +670,16 @@ begin
   fs.Free();
 end;
 
-function GenerateKey(): string;
+function GenerateKey(): AnsiString;
 var
   sDict: string;
   i, l: Integer;
 begin
   sDict:='qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890';
-  l:=Length(sDict)-1;
+  l:=Length(sDict);
   Result:='';
   Randomize();
-  for i:=1 to ciKeyLength do Result:=Result+sDict[Random(l)+1];
+  for i:=1 to ciKeyLength do Result:=Result+Copy(sDict, Random(l)+1, 1);
 end;
 
 function GenerateGUID(): string;
@@ -664,6 +706,53 @@ begin
     Result:=s;
     s:='';
   end;
+end;
+
+{ TDnmpSerializer }
+
+function TDnmpSerializer.StorageToString(AStorage: TDnmpStorage): AnsiString;
+begin
+  Result:='';
+end;
+
+function TDnmpSerializer.StorageFromString(AStorage: TDnmpStorage;
+  AString: AnsiString): boolean;
+begin
+  Result:=False;
+end;
+
+function TDnmpSerializer.StorageToFile(AStorage: TDnmpStorage; AFileName: string
+  ): boolean;
+begin
+  Result:=False;
+end;
+
+function TDnmpSerializer.StorageFromFile(AStorage: TDnmpStorage;
+  AFileName: string): boolean;
+begin
+  Result:=False;
+end;
+
+{ TDnmpPassport }
+
+constructor TDnmpPassport.Create();
+begin
+  inherited Create();
+  LinkInfo:=TDnmpLinkInfo.Create();
+  ContactsList:=TDnmpContactList.Create();
+  ServicesList:=TObjectList.Create();
+  MsgInbox:=TDnmpMsgQueue.Create();
+  MsgOutbox:=TDnmpMsgQueue.Create();
+end;
+
+destructor TDnmpPassport.Destroy();
+begin
+  FreeAndNil(MsgOutbox);
+  FreeAndNil(MsgInbox);
+  FreeAndNil(ServicesList);
+  FreeAndNil(ContactsList);
+  FreeAndNil(LinkInfo);
+  inherited Destroy;
 end;
 
 { TDnmpContactList }
@@ -1385,23 +1474,23 @@ begin
   Result:=True;
 end;
 
-// === TLinkInfo ===
-function TLinkInfo.AddrStr(): string;
+// === TDnmpLinkInfo ===
+function TDnmpLinkInfo.AddrStr(): string;
 begin
   Result:=AddrToStr(Addr);
 end;
 
-function TLinkInfo.SameAddr(FAddr: TAddr): Boolean;
+function TDnmpLinkInfo.SameAddr(FAddr: TAddr): Boolean;
 begin
   Result := ((Addr.Node=FAddr.Node) and (Addr.Point=FAddr.Point));
 end;
 
-function TLinkInfo.SameNode(FAddr: TAddr): Boolean;
+function TDnmpLinkInfo.SameNode(FAddr: TAddr): Boolean;
 begin
   Result := (Addr.Node=FAddr.Node);
 end;
 
-function TLinkInfo.ToStorage(): TDnmpStorage;
+function TDnmpLinkInfo.ToStorage(): TDnmpStorage;
 begin
   Result:=TDnmpStorage.Create(stDictionary);
   Result.Add('addr', Self.AddrStr);
@@ -1417,7 +1506,7 @@ begin
   Result.Add('key', Self.Key);
 end;
 
-function TLinkInfo.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpLinkInfo.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
   if Storage.StorageType <> stDictionary then Exit;
@@ -1435,7 +1524,7 @@ begin
   Result:=True;
 end;
 
-function TLinkInfo.SaveToCSV(): string;
+function TDnmpLinkInfo.SaveToCSV(): string;
 var
   sl: TStringList;
 begin
@@ -1452,7 +1541,7 @@ begin
   sl.Free();
 end;
 
-function TLinkInfo.LoadFromCSV(sData: string): boolean;
+function TDnmpLinkInfo.LoadFromCSV(sData: string): boolean;
 var
   sl: TStringList;
 begin
@@ -1470,7 +1559,7 @@ begin
   Result:=True;
 end;
 
-function TLinkInfo.FromConf(Conf: TDnmpConf; SectName: string): Boolean;
+function TDnmpLinkInfo.FromConf(Conf: TDnmpConf; SectName: string): Boolean;
 begin
   // TODO: from Storage
   Result:=False;
@@ -1489,7 +1578,7 @@ begin
   Result:=True;
 end;
 
-function TLinkInfo.ToConf(Conf: TDnmpConf; SectName: string): Boolean;
+function TDnmpLinkInfo.ToConf(Conf: TDnmpConf; SectName: string): Boolean;
 begin
   // TODO: from Storage
   Result:=False;
@@ -1508,7 +1597,7 @@ begin
   Result:=True;
 end;
 
-procedure TLinkInfo.Assign(Item: TLinkInfo);
+procedure TDnmpLinkInfo.Assign(Item: TDnmpLinkInfo);
 begin
   inherited Assign(Item);
   if not Assigned(Item) then Exit;
@@ -1526,41 +1615,41 @@ begin
 end;
 
 // === TLinkInfoList ===
-function TLinkInfoList.GetLinkInfo(Index: Integer): TLinkInfo;
+function TLinkInfoList.GetLinkInfo(Index: Integer): TDnmpLinkInfo;
 begin
-  Result:=TLinkInfo(inherited Items[index]);
+  Result:=TDnmpLinkInfo(inherited Items[index]);
 end;
 
-procedure TLinkInfoList.SetLinkInfo(Index: Integer; Value: TLinkInfo);
+procedure TLinkInfoList.SetLinkInfo(Index: Integer; Value: TDnmpLinkInfo);
 begin
   inherited Items[Index]:=Value;
 end;
 
-function TLinkInfoList.GetLinkInfoByAddr(FAddr: TAddr): TLinkInfo;
+function TLinkInfoList.GetLinkInfoByAddr(FAddr: TAddr): TDnmpLinkInfo;
 var
   i: Integer;
 begin
   Result:=nil;
   for i:=0 to Count-1 do
   begin
-    if TLinkInfo(Items[i]).SameAddr(FAddr) then
+    if TDnmpLinkInfo(Items[i]).SameAddr(FAddr) then
     begin
-      Result:=TLinkInfo(Items[i]);
+      Result:=TDnmpLinkInfo(Items[i]);
       Exit;
     end;
   end;
 end;
 
-function TLinkInfoList.GetLinkInfoByGUID(SomeGUID: string): TLinkInfo;
+function TLinkInfoList.GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
 var
   i: Integer;
 begin
   Result:=nil;
   for i:=0 to Count-1 do
   begin
-    if TLinkInfo(Items[i]).GUID = SomeGUID then
+    if TDnmpLinkInfo(Items[i]).GUID = SomeGUID then
     begin
-      Result:=TLinkInfo(Items[i]);
+      Result:=TDnmpLinkInfo(Items[i]);
       Exit;
     end;
   end;
@@ -1586,7 +1675,7 @@ function TLinkInfoList.FromStorage(Storage: TDnmpStorage): boolean;
 var
   SubStorage: TDnmpStorage;
   i: Integer;
-  Item: TLinkInfo;
+  Item: TDnmpLinkInfo;
 begin
   Result:=False;
   if Storage.StorageType <> stDictionary then Exit;
@@ -1595,7 +1684,7 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    Item:=TLinkInfo.Create();
+    Item:=TDnmpLinkInfo.Create();
     if not Item.FromStorage(SubStorage.GetObject(i)) then
     begin
       Item.Free();
@@ -1625,7 +1714,7 @@ function TLinkInfoList.LoadFromFile(): Boolean;
 var
   sl: TStringList;
   i: Integer;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   Result:=false;
   Self.Clear();
@@ -1640,7 +1729,7 @@ begin
 
   for i:=0 to sl.Count-1 do
   begin
-    li:=TLinkInfo.Create();
+    li:=TDnmpLinkInfo.Create();
     if li.LoadFromCSV(sl[i]) then self.Add(li);
   end;
   sl.Free();
@@ -1876,7 +1965,7 @@ begin
   Mgr:=AMgr;
   MyInfo:=Mgr.MyInfo;
   LinkType:=ltPoint;
-  LinkInfo:=TLinkInfo.Create();
+  LinkInfo:=TDnmpLinkInfo.Create();
 end;
 
 destructor TDnmpLink.Destroy();
@@ -1962,10 +2051,14 @@ begin
 
   DebugText('Config file='+sDataPath+csConfigFileName);
   Conf:=TDnmpConf.Create(sDataPath+csConfigFileName);
-  MyInfo:=TLinkInfo.Create();
+  MyInfo:=TDnmpLinkInfo.Create();
 
   NodeList:=TNodeList.Create();
+  NodeList.Filename:=sDataPath+csNodelistFileName;
+
   PointList:=TPointList.Create();
+  PointList.Filename:=sDataPath+csPointlistFileName;
+
   LinkInfoList:=TLinkInfoList.Create();
   ContactList:=TDnmpContactList.Create();
 
@@ -2021,8 +2114,13 @@ begin
 
   self.FServerMode:=True;
 
+  //sTcpPort:=Conf.ReadString('Options', 'ListenTcpPort', '4044');
+  // get port from my info
+  sTcpPort:='';
+  if Pos(':', MyInfo.IpAddr)>0 then sTcpPort:=Trim(Copy(MyInfo.IpAddr, Pos(':', MyInfo.IpAddr)+1, MaxInt));
+  if sTcpPort='' then sTcpPort:='4044';
+
   // Create server listener link
-  sTcpPort:=Conf.ReadString('Options', 'ListenTcpPort', '4044');
   tmpLink:=TIpLink.Create(self, '', sTcpPort, 'TCP');
   tmpLink.LinkType:=ltTemporary;
   tmpLink.Mgr:=Self;
@@ -2041,15 +2139,37 @@ end;
 
 procedure TDnmpManager.StartClient();
 var
+  tmpLinkInfo: TDnmpLinkInfo;
   tmpLink: TDnmpLink;
+  n: integer;
   sUplinkAddr, sTcpPort: string;
 begin
   if Self.FServerMode and Self.Active then StopServer();
   self.FServerMode:=false;
 
+  // get uplink addr from nodelist
+  //sUplinkAddr:=Conf.ReadString('Options', 'UplinkAddr', 'localhost');
+  //sTcpPort:=Conf.ReadString('Options', 'TcpPort', '4044');
+  tmpLinkInfo:=NodeList.GetLinkInfoByAddr(NodeAddr(MyInfo.Addr));
+  if not Assigned(tmpLinkInfo) then
+  begin
+    DebugText('Uplink node not found. Add it to nodelist.');
+    Exit;
+  end;
+
+  n:=Pos(':', tmpLinkInfo.IpAddr);
+  if n=0 then
+  begin
+    sUplinkAddr:=Trim(Copy(tmpLinkInfo.IpAddr, 1, MaxInt));
+    sTcpPort:='4044';
+  end
+  else
+  begin
+    sUplinkAddr:=Trim(Copy(tmpLinkInfo.IpAddr, 1, n-1));
+    sTcpPort:=Trim(Copy(tmpLinkInfo.IpAddr, n+1, MaxInt));
+  end;
+
   // Create connection to uplink server
-  sUplinkAddr:=Conf.ReadString('Options', 'UplinkAddr', 'localhost');
-  sTcpPort:=Conf.ReadString('Options', 'TcpPort', '4044');
   tmpLink:=TIpLink.Create(Self, sUplinkAddr, sTcpPort, 'TCP');
   tmpLink.LinkType:=ltPoint;
   tmpLink.Mgr:=Self;
@@ -2086,7 +2206,7 @@ begin
   DebugText('Client stopped.');
 end;
 
-procedure TDnmpManager.StartNodeConnection(NodeInfo: TLinkInfo);
+procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpLinkInfo);
 var
   tmpLink: TIpLink;
   sIpHost, sIpPort: string;
@@ -2116,7 +2236,7 @@ begin
 
 end;
 
-procedure TDnmpManager.StopNodeConnection(NodeInfo: TLinkInfo);
+procedure TDnmpManager.StopNodeConnection(NodeInfo: TDnmpLinkInfo);
 var
   i: Integer;
   tmpLink: TDnmpLink;
@@ -2264,7 +2384,7 @@ begin
   for i:=0 to n-1 do
   begin
     Sect:='Node_'+IntToStr(i);
-    NodeList.Add(TLinkInfo.Create());
+    NodeList.Add(TDnmpLinkInfo.Create());
     NodeList[i].FromConf(Conf, Sect);
   end;
 
@@ -2273,7 +2393,7 @@ begin
   for i:=0 to n-1 do
   begin
     Sect:='Point_'+IntToStr(i);
-    PointList.Add(TLinkInfo.Create());
+    PointList.Add(TDnmpLinkInfo.Create());
     PointList[i].FromConf(Conf, Sect);
   end;
 
@@ -2282,7 +2402,7 @@ begin
   for i:=0 to n-1 do
   begin
     Sect:='LinkInfo_'+IntToStr(i);
-    LinkInfoList.Add(TLinkInfo.Create());
+    LinkInfoList.Add(TDnmpLinkInfo.Create());
     LinkInfoList[i].FromConf(Conf, Sect);
   end;
 
@@ -2292,7 +2412,7 @@ begin
   for i:=0 to n-1 do
   begin
     Sect:='Contact_'+IntToStr(i);
-    LinkInfoList.Add(TLinkInfo.Create());
+    LinkInfoList.Add(TDnmpLinkInfo.Create());
     LinkInfoList[i].FromConf(Conf, Sect);
   end;
   }
@@ -2314,18 +2434,24 @@ begin
   MyInfo.ToConf(Conf, 'MyInfo');
 
   // Nodelist
+  NodeList.SaveToFile();
+  {
   for i:=0 to NodeList.Count-1 do
   begin
     Sect:='Node_'+IntToStr(i);
     NodeList[i].ToConf(Conf, Sect);
   end;
+  }
 
   // Pointlist
+  PointList.SaveToFile();
+  {
   for i:=0 to PointList.Count-1 do
   begin
     Sect:='Point_'+IntToStr(i);
     PointList[i].ToConf(Conf, Sect);
   end;
+  }
 
   // LinkInfoList
   for i:=0 to LinkInfoList.Count-1 do
@@ -2497,7 +2623,7 @@ var
   i: Integer;
   TraceID: Cardinal;
   Msg: TDnmpMsg;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   Result:='';
   sCmd:='';
@@ -2578,7 +2704,7 @@ begin
   end;
 end;
 
-function TDnmpManager.GetInfoByAddr(Addr: TAddr): TLinkInfo;
+function TDnmpManager.GetInfoByAddr(Addr: TAddr): TDnmpLinkInfo;
 begin
   Result:=nil;
   if Addr.Point=0 then Result:=NodeList.GetLinkInfoByAddr(Addr)
@@ -2591,14 +2717,14 @@ begin
   end;
 end;
 
-function TDnmpManager.GetInfoByGUID(SomeGUID: string): TLinkInfo;
+function TDnmpManager.GetInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
 begin
   Result:=LinkInfoList.GetLinkInfoByGUID(SomeGUID);
   if not Assigned(Result) then Result:=PointList.GetLinkInfoByGUID(SomeGUID);
   if not Assigned(Result) then Result:=NodeList.GetLinkInfoByGUID(SomeGUID);
 end;
 
-function TDnmpManager.Approve(ALinkInfo: TLinkInfo): boolean;
+function TDnmpManager.Approve(ALinkInfo: TDnmpLinkInfo): boolean;
 begin
   Result:=false;
   if ServerMode then Exit;
@@ -2660,7 +2786,7 @@ begin
   SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr=points', '');
 end;
 
-procedure TDnmpManager.SendLinkInfo(ALinkInfo: TLinkInfo; TargetAddr: TAddr);
+procedure TDnmpManager.SendLinkInfo(ALinkInfo: TDnmpLinkInfo; TargetAddr: TAddr);
 var
   MsgOut: TDnmpMsg;
 begin
@@ -2690,7 +2816,7 @@ procedure TDnmpManager.ReadLinkInfo(Msg: TDnmpMsg);
 var
   //i: integer;
   SomeAddr: TAddr;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
   ReadAllInfo: Boolean;
   s, s2: string;
 begin
@@ -2720,7 +2846,7 @@ begin
 
   if not Assigned(li) then
   begin
-    li:=TLinkInfo.Create();
+    li:=TDnmpLinkInfo.Create();
     if SomeAddr.Point=0 then
     begin
       NodeList.Add(li);

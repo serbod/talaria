@@ -1,14 +1,14 @@
 object FrameLinkInfo: TFrameLinkInfo
   Left = 0
-  Height = 465
+  Height = 256
   Top = 0
   Width = 615
-  ClientHeight = 465
+  ClientHeight = 256
   ClientWidth = 615
   PopupMenu = pmLinkInfo
   TabOrder = 0
-  DesignLeft = 902
-  DesignTop = 297
+  DesignLeft = 659
+  DesignTop = 314
   object gbContact: TGroupBox
     Left = 8
     Height = 176
@@ -210,9 +210,17 @@ object FrameLinkInfo: TFrameLinkInfo
       Text = 'edOtherInfo'
     end
   end
+  object btnSaveInfo: TButton
+    Left = 509
+    Height = 25
+    Top = 200
+    Width = 75
+    Action = actSaveInfo
+    TabOrder = 2
+  end
   object alLinkInfo: TActionList
-    left = 146
-    top = 202
+    left = 104
+    top = 192
     object actUpdateInfo: TAction
       Caption = 'Update info'
       Hint = 'Read and show info'
@@ -225,8 +233,8 @@ object FrameLinkInfo: TFrameLinkInfo
     end
   end
   object pmLinkInfo: TPopupMenu
-    left = 146
-    top = 266
+    left = 200
+    top = 192
     object MenuItem1: TMenuItem
       Action = actUpdateInfo
     end

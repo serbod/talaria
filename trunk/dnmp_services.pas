@@ -25,8 +25,6 @@ type
     function Owner(): TDnmpContact;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): string;
-    function LoadFromString(s: string): boolean;
   end;
 
   { TDnmpServiceInfoList }
@@ -41,8 +39,6 @@ type
     function UpdateServiceInfo(sType, sName, sParent, sProvider, sRating, sAbonCount, sDescr: string): TDnmpServiceInfo;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): string;
-    function LoadFromString(s: string): boolean;
   end;
 
   TDnmpServiceManager = class;
@@ -74,8 +70,6 @@ type
     procedure DebugText(s: string);
     function ToStorage(): TDnmpStorage; virtual;
     function FromStorage(Storage: TDnmpStorage): boolean; virtual;
-    function SaveToString(): string; virtual;
-    function LoadFromString(s: string): boolean; virtual;
   end;
 
   { TDnmpServiceList }
@@ -90,8 +84,6 @@ type
     function GetService(sType, sName: string): TDnmpService;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): string;
-    function LoadFromString(s: string): boolean;
   end;
 
   { TDnmpServiceManager }
@@ -165,161 +157,9 @@ const
   csSRVDAbonFileName = 'SRVD_abon_list.json';
   csSRVDKnownFileName = 'SRVD_known_list.json';
 
-function StorageToJson(AStorage: TDnmpStorage): string;
-function StorageFromJson(AStorage: TDnmpStorage; s: string): boolean;
-function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
-function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean;
-
 
 implementation
 uses Misc, dnmp_grpc, dnmp_mail;
-
-function StorageToJson(AStorage: TDnmpStorage): string;
-var
-  jj: TJSONData;
-
-  function StorageAsJsonData(Storage: TDnmpStorage): TJSONData;
-  var
-    i: integer;
-    TmpItem: TDnmpStorage;
-  begin
-    Result:=nil;
-    if not Assigned(Storage) then Exit;
-
-    if Storage.StorageType=stUnknown then Exit
-
-    else if Storage.StorageType=stString then
-    begin
-      Result:=TJSONString.Create(Storage.Value);
-    end
-
-    else if Storage.StorageType=stInteger then
-    begin
-      Result:=TJSONIntegerNumber.Create(StrToIntDef(Storage.Value, 0));
-    end
-
-    else if Storage.StorageType=stNumber then
-    begin
-      if (Pos('.', Storage.Value)>0) or (Pos(',', Storage.Value)>0) then
-      begin
-        Result:=TJSONFloatNumber.Create(StrToFloatDef(Storage.Value, 0));
-      end
-
-      else // integer
-      begin
-        Result:=TJSONIntegerNumber.Create(StrToIntDef(Storage.Value, 0));
-      end
-    end
-
-    else if Storage.StorageType=stList then
-    begin
-      Result:=TJSONArray.Create();
-      for i:=0 to Storage.Count-1 do
-      begin
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
-        (Result as TJSONArray).Add(StorageAsJsonData(TmpItem));
-      end;
-    end
-
-    else if Storage.StorageType=stDictionary then
-    begin
-      Result:=TJSONObject.Create();
-      for i:=0 to Storage.Count-1 do
-      begin
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
-        (Result as TJSONObject).Add(Storage.GetObjectName(i), StorageAsJsonData(TmpItem));
-      end;
-    end;
-  end;
-
-begin
-  Result:='';
-  jj:=StorageAsJsonData(AStorage);
-  if not Assigned(jj) then Exit;
-  Result:=jj.AsJSON;
-  jj.Free();
-end;
-
-function StorageFromJson(AStorage: TDnmpStorage; s: string): boolean;
-var
-  parser: TJSONParser;
-  jj: TJSONData;
-
-  function JsonDataToStorage(j: TJSONData; Storage: TDnmpStorage): boolean;
-  var
-    SubStorage: TDnmpStorage;
-    i: integer;
-  begin
-    Result:=False;
-    if not Assigned(j) then Exit;
-    if not Assigned(Storage) then Exit;
-
-    if j.JSONType=TJSONtype.jtString then
-    begin
-      Storage.StorageType:=stString;
-      Storage.Value:=j.AsString;
-      Result:=True;
-    end;
-
-    if j.JSONType=TJSONtype.jtNumber then
-    begin
-      Storage.StorageType:=stNumber;
-      Storage.Value:=j.AsString;
-      Result:=True;
-    end;
-
-    if j.JSONType=TJSONtype.jtArray then
-    begin
-      Storage.StorageType:=stDictionary;
-      for i:=0 to j.Count-1 do
-      begin
-        SubStorage:=TDnmpStorage.Create(stUnknown);
-        if JsonDataToStorage(j.Items[i], SubStorage) then Storage.Add(IntToStr(i), SubStorage)
-        else SubStorage.Free();
-      end;
-      Result:=True;
-    end;
-
-    if j.JSONType=TJSONtype.jtObject then
-    begin
-      Storage.StorageType:=stDictionary;
-      for i:=0 to j.Count-1 do
-      begin
-        SubStorage:=TDnmpStorage.Create(stUnknown);
-        if JsonDataToStorage(j.Items[i], SubStorage) then Storage.Add((j as TJSONObject).Names[i], SubStorage)
-        else SubStorage.Free();
-      end;
-      Result:=True;
-    end;
-  end;
-
-begin
-  Result:=False;
-  parser:=TJSONParser.Create(s);
-  try
-    jj:=parser.Parse();
-  finally
-    parser.Free();
-  end;
-  if not Assigned(jj) then Exit;
-
-  try
-    Result:=JsonDataToStorage(jj, AStorage);
-  finally
-    jj.Free();
-  end;
-
-end;
-
-function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
-begin
-  Result:=StrToFile(AFileName, StorageToJson(AStorage));
-end;
-
-function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean;
-begin
-  Result:=StorageFromJson(AStorage, FileToStr(AFileName));
-end;
 
 
 // === TDnmpServiceInfo ===
@@ -385,25 +225,6 @@ begin
   Result:=True;
 end;
 
-function TDnmpServiceInfo.SaveToString(): string;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpServiceInfo.LoadFromString(s: string): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  Result:=StorageFromJson(Storage, s);
-  if Result then Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
 
 // === TDnmpServiceInfoList ===
 function TDnmpServiceInfoList.GetItem(Index: Integer): TDnmpServiceInfo;
@@ -495,26 +316,6 @@ begin
   Result:=True;
 end;
 
-function TDnmpServiceInfoList.SaveToString(): string;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpServiceInfoList.LoadFromString(s: string): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  Result:=StorageFromJson(Storage, s);
-  if Result then Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
-
 
 // === TDnmpService ===
 constructor TDnmpService.Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo);
@@ -557,7 +358,7 @@ end;
 
 function TDnmpService.GetAbonentByGUID(sGUID: string): TDnmpContact;
 var
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   Result:=nil;
   if Assigned(Self.ServiceInfo) then
@@ -592,16 +393,6 @@ end;
 function TDnmpService.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=self.ServiceInfo.FromStorage(Storage);
-end;
-
-function TDnmpService.SaveToString(): string;
-begin
-  Result:=Self.ServiceInfo.SaveToString();
-end;
-
-function TDnmpService.LoadFromString(s: string): boolean;
-begin
-  Result:=Self.ServiceInfo.LoadFromString(s);
 end;
 
 
@@ -679,26 +470,6 @@ begin
   Result:=True;
 end;
 
-function TDnmpServiceList.SaveToString(): string;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpServiceList.LoadFromString(s: string): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  Result:=StorageFromJson(Storage, s);
-  if Result then Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
-end;
-
 
 // === TDnmpServiceManager ===
 constructor TDnmpServiceManager.Create(AMgr: TDnmpManager);
@@ -735,25 +506,28 @@ end;
 
 procedure TDnmpServiceManager.SaveToFile();
 begin
-  StorageToFile(Self.AllAbonents.ToStorage(), Self.Mgr.sDataPath+csSRVDAbonFileName);
-  StorageToFile(Self.ServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDInfoFileName);
-  StorageToFile(Self.RemoteServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDKnownFileName);
+  if not Assigned(Mgr.Serializer) then Exit;
+  Mgr.Serializer.StorageToFile(Self.AllAbonents.ToStorage(), Self.Mgr.sDataPath+csSRVDAbonFileName);
+  Mgr.Serializer.StorageToFile(Self.ServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDInfoFileName);
+  Mgr.Serializer.StorageToFile(Self.RemoteServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDKnownFileName);
 end;
 
 procedure TDnmpServiceManager.LoadFromFile();
 var
   Storage: TDnmpStorage;
 begin
+  if not Assigned(Mgr.Serializer) then Exit;
+
   Storage:=TDnmpStorage.Create(stUnknown);
-  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDAbonFileName) then Self.AllAbonents.FromStorage(Storage);
+  if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDAbonFileName) then Self.AllAbonents.FromStorage(Storage);
   Storage.Free();
 
   Storage:=TDnmpStorage.Create(stUnknown);
-  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDInfoFileName) then Self.ServiceInfoList.FromStorage(Storage);
+  if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDInfoFileName) then Self.ServiceInfoList.FromStorage(Storage);
   Storage.Free();
 
   Storage:=TDnmpStorage.Create(stUnknown);
-  if StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDKnownFileName) then Self.RemoteServiceInfoList.FromStorage(Storage);
+  if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDKnownFileName) then Self.RemoteServiceInfoList.FromStorage(Storage);
   Storage.Free();
 end;
 
@@ -892,7 +666,7 @@ var
   item: TDnmpServiceInfo;
   srvc: TDnmpService;
   ab: TDnmpContact;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   Result:=False;
   item:=self.ServiceInfoList.GetServiceByTypeName(sType, sName);
@@ -1034,7 +808,7 @@ var
   sCmd, s: string;
   Params: TStringArray;
   i, n: Integer;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
 begin
   Result:='';
   Params:=ParseStr(Text);
