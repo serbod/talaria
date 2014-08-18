@@ -44,8 +44,6 @@ type
     //function GetAbonentByGUID(sGUID: string): TDnmpChannelMessage;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): AnsiString;
-    function LoadFromString(s: AnsiString): boolean;
   end;
 
   { TGrpcBanItem }
@@ -509,26 +507,6 @@ begin
     self.Add(Item);
   end;
   Result:=True;
-end;
-
-function TDnmpChannelMessagesList.SaveToString: AnsiString;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpChannelMessagesList.LoadFromString(s: AnsiString): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  if not StorageFromJson(Storage, s) then Exit;
-  Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
 end;
 
 

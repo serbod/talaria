@@ -6,8 +6,8 @@ uses SysUtils, Classes, dnmp_unit;
 type
   TDnmpParserClient = class(TDnmpMsgHandler)
   private
-    MyInfo: TLinkInfo;
-    LinkInfo: TLinkInfo;
+    MyInfo: TDnmpLinkInfo;
+    LinkInfo: TDnmpLinkInfo;
 
     // Сервер -> Клинт
     // ИД, инфо о себе, рандомный хеш (ключ опознания)

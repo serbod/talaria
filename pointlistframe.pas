@@ -60,7 +60,7 @@ type
     procedure UpdatePointList();
     procedure UpdatePointInfo();
     procedure FormToPointInfo();
-    function GetSelectedPointInfo(): TLinkInfo;
+    function GetSelectedPointInfo(): TDnmpLinkInfo;
   public
     { public declarations }
     DnmpMgr: TDnmpManager;
@@ -99,7 +99,7 @@ end;
 
 procedure TFramePointList.actGenerateGUIDExecute(Sender: TObject);
 var
-  Item: TLinkInfo;
+  Item: TDnmpLinkInfo;
 begin
   Item:=GetSelectedPointInfo();
   if not Assigned(Item) then Exit;
@@ -109,17 +109,17 @@ end;
 
 procedure TFramePointList.actPointAddExecute(Sender: TObject);
 var
-  Item: TLinkInfo;
+  Item: TDnmpLinkInfo;
 begin
   if not Assigned(PointList) then Exit;
-  Item:=TLinkInfo.Create();
+  Item:=TDnmpLinkInfo.Create();
   PointList.Add(Item);
   UpdatePointList();
 end;
 
 procedure TFramePointList.actPointDelExecute(Sender: TObject);
 var
-  Item: TLinkInfo;
+  Item: TDnmpLinkInfo;
 begin
   if not Assigned(PointList) then Exit;
   Item:=GetSelectedPointInfo();
@@ -141,7 +141,7 @@ procedure TFramePointList.UpdatePointList();
 var
   i, si, ic: Integer;
   lv: TListView;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
   lil: TLinkInfoList;
   lvi: TListItem;
 begin
@@ -174,7 +174,7 @@ end;
 procedure TFramePointList.UpdatePointInfo();
 var
   n: integer;
-  LinkInfo: TLinkInfo;
+  LinkInfo: TDnmpLinkInfo;
   sg: TStringGrid;
 
   procedure SetRow(RowNum: integer; Name, Value: string);
@@ -212,7 +212,7 @@ end;
 
 procedure TFramePointList.FormToPointInfo();
 var
-  LinkInfo: TLinkInfo;
+  LinkInfo: TDnmpLinkInfo;
   sg: TStringGrid;
 
 function GetValue(Name: string): string;
@@ -247,12 +247,12 @@ begin
 
 end;
 
-function TFramePointList.GetSelectedPointInfo(): TLinkInfo;
+function TFramePointList.GetSelectedPointInfo(): TDnmpLinkInfo;
 begin
   Result:=nil;
   if not Assigned(lvPointList.Selected) then Exit;
   if not Assigned(lvPointList.Selected.Data) then Exit;
-  Result:=TLinkInfo(lvPointList.Selected.Data);
+  Result:=TDnmpLinkInfo(lvPointList.Selected.Data);
 end;
 
 procedure TFramePointList.Update();

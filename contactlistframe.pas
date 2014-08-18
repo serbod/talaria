@@ -27,7 +27,8 @@ type
     procedure AddTestContacts();
   public
     { public declarations }
-    SvcMgr: TDnmpServiceManager;
+    //SvcMgr: TDnmpServiceManager;
+    ContactList: TDnmpContactList;
     procedure UpdateList();
     procedure Update(); override;
   end;
@@ -62,7 +63,7 @@ begin
     Item.GUID:=GenerateGUID();
     Item.Nick:='Point '+AddrToStr(Item.Addr);
 
-    SvcMgr.AllAbonents.Add(Item);
+    ContactList.Add(Item);
   end;
 end;
 
@@ -75,16 +76,16 @@ var
   lb: TLabel;
   ss: TStringStream;
 begin
-  if not Assigned(SvcMgr) then Exit;
+  if not Assigned(ContactList) then Exit;
 
   // clear list
   for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
 
   y:=0;
   h:=24;
-  for i:=0 to SvcMgr.AllAbonents.Count-1 do
+  for i:=0 to ContactList.Count-1 do
   begin
-    Item:=SvcMgr.AllAbonents.Items[i];
+    Item:=ContactList.Items[i];
     // add item
     x:=0;
     // image

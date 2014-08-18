@@ -63,8 +63,6 @@ type
     function DeleteItem(Item: TDnmpMailMessage): boolean;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    function SaveToString(): AnsiString;
-    function LoadFromString(s: AnsiString): boolean;
   end;
 
   { TDnmpMail }
@@ -210,26 +208,6 @@ begin
     self.AddItem(Item);
   end;
   Result:=True;
-end;
-
-function TDnmpMailbox.SaveToString: AnsiString;
-var
-  Storage: TDnmpStorage;
-begin
-  Storage:=self.ToStorage();
-  Result:=StorageToJson(Storage);
-  FreeAndNil(Storage);
-end;
-
-function TDnmpMailbox.LoadFromString(s: AnsiString): boolean;
-var
-  Storage: TDnmpStorage;
-begin
-  Result:=False;
-  Storage:=TDnmpStorage.Create(stDictionary);
-  if not StorageFromJson(Storage, s) then Exit;
-  Result:=self.FromStorage(Storage);
-  FreeAndNil(Storage);
 end;
 
 

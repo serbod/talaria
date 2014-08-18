@@ -6,13 +6,13 @@ interface
 
 uses
   Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame,
-  Misc, dnmp_mail, Controls;
+  Misc, dnmp_mail, Controls, dnmp_serializers;
 
 type
 
-  { TServiceDnmpNode }
+  { TServiceDnmp }
 
-  TServiceDnmpNode = class(TObject)
+  TServiceDnmp = class(TObject)
   private
     FOnLog: TGetStrProc;
     FOnEvent: TMgrEvent;
@@ -81,13 +81,14 @@ type
 
 var
   MainFormPages: TMainFormPages;
-  ServiceDnmpNode: TServiceDnmpNode;
+  ServiceDnmpNode: TServiceDnmp;
+  ServiceDnmpPoint: TServiceDnmp;
 
 procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 procedure AddServicePage(AService: TDnmpService);
-procedure ShowContactList();
+procedure ShowContactList(AContactList: TDnmpContactList);
 
 const
   ciIconFolder = 9;
@@ -110,12 +111,12 @@ begin
   // node
   // TODO: clearing
   if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
-  ServiceDnmpNode:=TServiceDnmpNode.Create(ConfigName);
+  ServiceDnmpNode:=TServiceDnmp.Create(ConfigName);
   frame:=TFrameDnmpNode.Create(nil);
   ServiceDnmpNode.Frame:=frame;
   (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;
   (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpNode.ServMgr;
-  Core.AddPage(frame, 'Node');
+  Core.AddPage(frame, 'Node '+ConfigName);
 
   // status page
   AddPage(TFrameStatus.Create(nil), 'Status');
@@ -132,6 +133,15 @@ begin
   (frame as TFrameMailbox).Update();
   AddPage(frame, 'Mail');
 
+
+  // point
+  if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
+  ServiceDnmpPoint:=TServiceDnmp.Create('1.2');
+  frame:=TFrameDnmpNode.Create(nil);
+  ServiceDnmpPoint.Frame:=frame;
+  (frame as TFrameDnmpNode).Mgr:=ServiceDnmpPoint.Mgr;
+  (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpPoint.ServMgr;
+  Core.AddPage(frame, 'Point 1.2');
 end;
 
 procedure AddPage(AFrame: TFrame; ACaption: string);
@@ -218,12 +228,12 @@ begin
   end;
 end;
 
-procedure ShowContactList();
+procedure ShowContactList(AContactList: TDnmpContactList);
 var
   Frame: TFrameContactList;
 begin
   Frame:=TFrameContactList.Create(nil);
-  Frame.SvcMgr:=ServiceDnmpNode.ServMgr;
+  Frame.ContactList:=AContactList;
   Frame.Update();
   ShowForm(Frame, 'Contact list');
 end;
@@ -300,21 +310,21 @@ begin
   self.Clear();
 end;
 
-{ TServiceDnmpNode }
+{ TServiceDnmp }
 
-procedure TServiceDnmpNode.UpdateInfo();
+procedure TServiceDnmp.UpdateInfo();
 begin
   if not Assigned(Mgr) then Exit;
   AppName:=Mgr.MyInfo.AddrStr();
   if Assigned(Frame) then Frame.Update();
 end;
 
-procedure TServiceDnmpNode.LogHandler(Sender: TObject; LogMsg: string);
+procedure TServiceDnmp.LogHandler(Sender: TObject; LogMsg: string);
 begin
   if Assigned(OnLog) then OnLog(LogMsg);
 end;
 
-procedure TServiceDnmpNode.EventHandler(Sender, Text: string);
+procedure TServiceDnmp.EventHandler(Sender, Text: string);
 var
   sCmd, sParam: string;
 begin
@@ -371,12 +381,12 @@ begin
   if Assigned(OnEvent) then OnEvent(Sender, Text);
 end;
 
-procedure TServiceDnmpNode.MsgHandler(Sender: TObject; Msg: TDnmpMsg);
+procedure TServiceDnmp.MsgHandler(Sender: TObject; Msg: TDnmpMsg);
 begin
   if Assigned(OnIncomingMsg) then OnIncomingMsg(Sender, Msg);
 end;
 
-constructor TServiceDnmpNode.Create(ConfigName: string);
+constructor TServiceDnmp.Create(ConfigName: string);
 var
   s: string;
 begin
@@ -389,13 +399,14 @@ begin
   Mgr.OnLog:=@LogHandler;
   Mgr.OnEvent:=@EventHandler;
   Mgr.OnIncomingMsg:=@MsgHandler;
+  Mgr.Serializer:=TDnmpSerializerJson.Create();
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   ServMgr.LoadFromFile();
   ServMgr.Start();
 end;
 
-destructor TServiceDnmpNode.Destroy();
+destructor TServiceDnmp.Destroy();
 begin
   ServMgr.SaveToFile();
   FreeAndNil(ServMgr);

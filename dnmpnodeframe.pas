@@ -16,6 +16,7 @@ type
   TFrameDnmpNode = class(TFrame)
     actContactList: TAction;
     actClient: TAction;
+    actShowLog: TAction;
     actServer: TAction;
     actTest: TAction;
     alNode: TActionList;
@@ -23,6 +24,7 @@ type
     PageControlNode: TPageControl;
     panNode: TPanel;
     Splitter1: TSplitter;
+    ToolButton5: TToolButton;
     tsConfig: TTabSheet;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
@@ -39,8 +41,11 @@ type
     procedure actClientExecute(Sender: TObject);
     procedure actContactListExecute(Sender: TObject);
     procedure actServerExecute(Sender: TObject);
+    procedure actShowLogExecute(Sender: TObject);
     procedure actTestExecute(Sender: TObject);
     procedure PageControlNodeChange(Sender: TObject);
+    procedure Splitter1CanOffset(Sender: TObject; var NewOffset: Integer;
+      var Accept: Boolean);
   private
     { private declarations }
     FMgr: TDnmpManager;
@@ -93,23 +98,23 @@ begin
   ServMgr.ModService('GRPC','#test2', 'set_parent', '#test');
 
   ServMgr.ModService('GRPC','#test3', 'add', '');
-  s:=ServMgr.ServiceInfoList.SaveToString();
+  s:=Mgr.Serializer.StorageToString(ServMgr.ServiceInfoList.ToStorage());
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
   ServMgr.ModService('GRPC','#test', 'del', '');
   ServMgr.ModService('GRPC','#test2', 'del', '');
   ServMgr.ModService('GRPC','#test3', 'del', '');
-  MemoStatus.Append(ServMgr.ServiceInfoList.SaveToString());
+  MemoStatus.Append(Mgr.Serializer.StorageToString(ServMgr.ServiceInfoList.ToStorage()));
   MemoStatus.Append('--------------------------------------------');
-  ServMgr.ServiceInfoList.LoadFromString(s);
-  s:=ServMgr.ServiceInfoList.SaveToString();
+  //ServMgr.ServiceInfoList.LoadFromString(s);
+  s:=Mgr.Serializer.StorageToString(ServMgr.ServiceInfoList.ToStorage());
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
 end;
 
 procedure TFrameDnmpNode.actContactListExecute(Sender: TObject);
 begin
-  ShowContactList();
+  ShowContactList(ServMgr.AllAbonents);
 end;
 
 procedure TFrameDnmpNode.actClientExecute(Sender: TObject);
@@ -126,6 +131,13 @@ begin
   Update();
 end;
 
+procedure TFrameDnmpNode.actShowLogExecute(Sender: TObject);
+begin
+  //Splitter1.Visible:=actShowLog.Checked;
+  //MemoStatus.Visible:=actShowLog.Checked;
+  if not actShowLog.Checked then MemoStatus.Width:=0 else MemoStatus.Width:=300;
+end;
+
 procedure TFrameDnmpNode.PageControlNodeChange(Sender: TObject);
 begin
   if Assigned(PageControlNode.ActivePage) then
@@ -138,6 +150,12 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TFrameDnmpNode.Splitter1CanOffset(Sender: TObject;
+  var NewOffset: Integer; var Accept: Boolean);
+begin
+
 end;
 
 procedure TFrameDnmpNode.FSetServMgr(Value: TDnmpServiceManager);

@@ -17,24 +17,30 @@ object FrameDnmpNode: TFrameDnmpNode
     Images = FormMain.ImageList16
     TabOrder = 0
     object ToolButton1: TToolButton
-      Left = 1
+      Left = 24
       Top = 2
       Action = actTest
     end
     object ToolButton2: TToolButton
-      Left = 24
+      Left = 47
       Top = 2
       Action = actContactList
     end
     object ToolButton3: TToolButton
-      Left = 47
+      Left = 70
       Top = 2
       Action = actServer
     end
     object ToolButton4: TToolButton
-      Left = 70
+      Left = 93
       Top = 2
       Action = actClient
+    end
+    object ToolButton5: TToolButton
+      Left = 1
+      Top = 2
+      Action = actShowLog
+      Style = tbsCheck
     end
   end
   object panNode: TPanel
@@ -51,10 +57,10 @@ object FrameDnmpNode: TFrameDnmpNode
       Left = 0
       Height = 493
       Top = 0
-      Width = 498
-      ActivePage = tsMyInfo
+      Width = 800
+      ActivePage = tsContacts
       Align = alClient
-      TabIndex = 4
+      TabIndex = 3
       TabOrder = 0
       OnChange = PageControlNodeChange
       object tsLinks: TTabSheet
@@ -83,21 +89,25 @@ object FrameDnmpNode: TFrameDnmpNode
       end
     end
     object MemoStatus: TMemo
-      Left = 507
+      Left = 809
       Height = 485
       Top = 4
-      Width = 302
+      Width = 0
       Align = alRight
       BorderSpacing.Around = 4
       ScrollBars = ssBoth
       TabOrder = 1
     end
     object Splitter1: TSplitter
-      Left = 498
+      AnchorSideLeft.Control = PageControlNode
+      AnchorSideLeft.Side = asrBottom
+      AnchorSideRight.Control = MemoStatus
+      Left = 800
       Height = 493
       Top = 0
       Width = 5
       Align = alRight
+      OnCanOffset = Splitter1CanOffset
       ResizeAnchor = akRight
     end
   end
@@ -127,6 +137,13 @@ object FrameDnmpNode: TFrameDnmpNode
       Hint = 'Start/stop client (uplink connection)'
       ImageIndex = 40
       OnExecute = actClientExecute
+    end
+    object actShowLog: TAction
+      AutoCheck = True
+      Caption = 'Show log'
+      Hint = 'Show/hide log window'
+      ImageIndex = 15
+      OnExecute = actShowLogExecute
     end
   end
 end

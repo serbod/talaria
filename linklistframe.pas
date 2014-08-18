@@ -49,7 +49,7 @@ procedure TFrameLinkList.UpdateLinkInfoList();
 var
   lv: TListView;
   i: integer;
-  Item: TLinkInfo;
+  Item: TDnmpLinkInfo;
   lvItem: TListItem;
 begin
   if not Assigned(Mgr) then Exit;

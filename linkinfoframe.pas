@@ -16,6 +16,7 @@ type
     actSaveInfo: TAction;
     actUpdateInfo: TAction;
     alLinkInfo: TActionList;
+    btnSaveInfo: TButton;
     edAddr: TEdit;
     edIPAddr: TEdit;
     edPhoneNo: TEdit;
@@ -46,11 +47,11 @@ type
     procedure actUpdateInfoExecute(Sender: TObject);
   private
     { private declarations }
-    FLinkInfo: TLinkInfo;
-    procedure FSetLinkInfo(Value: TLinkInfo);
+    FLinkInfo: TDnmpLinkInfo;
+    procedure FSetLinkInfo(Value: TDnmpLinkInfo);
   public
     { public declarations }
-    property LinkInfo: TLinkInfo read FLinkInfo write FSetLinkInfo;
+    property LinkInfo: TDnmpLinkInfo read FLinkInfo write FSetLinkInfo;
     procedure LinkInfoToForm();
     procedure LinkInfoFromForm();
   end;
@@ -71,7 +72,7 @@ begin
   LinkInfoFromForm();
 end;
 
-procedure TFrameLinkInfo.FSetLinkInfo(Value: TLinkInfo);
+procedure TFrameLinkInfo.FSetLinkInfo(Value: TDnmpLinkInfo);
 begin
   FLinkInfo:=Value;
   LinkInfoToForm();

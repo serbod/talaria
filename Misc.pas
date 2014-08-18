@@ -3,8 +3,8 @@ unit Misc;
 interface
 uses SysUtils, ComCtrls, ValEdit, dnmp_unit, IniFiles, Classes, Windows;
 
-procedure LinkInfoToVLE(LinkInfo: TLinkInfo; vle: TValueListEditor);
-procedure LinkInfoFromVLE(LinkInfo: TLinkInfo; vle: TValueListEditor);
+procedure LinkInfoToVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
+procedure LinkInfoFromVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
 
 procedure ShowLinkInfoList(lv: TListView; lil: TLinkInfoList);
 procedure ShowLinksList(lv: TListView; ll: TDnmpLinkList);
@@ -44,7 +44,7 @@ function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
 implementation
 
-procedure LinkInfoToVLE(LinkInfo: TLinkInfo; vle: TValueListEditor);
+procedure LinkInfoToVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
 begin
   if not Assigned(vle) then Exit;
   if not Assigned(LinkInfo) then Exit;
@@ -64,7 +64,7 @@ begin
   vle.Strings.EndUpdate();
 end;
 
-procedure LinkInfoFromVLE(LinkInfo: TLinkInfo; vle: TValueListEditor);
+procedure LinkInfoFromVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
 begin
   if not Assigned(vle) then Exit;
   if not Assigned(LinkInfo) then Exit;
@@ -84,7 +84,7 @@ end;
 procedure ShowLinkInfoList(lv: TListView; lil: TLinkInfoList);
 var
   i, si, ic: Integer;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
   lvi: TListItem;
 begin
   lv.Items.BeginUpdate();
@@ -113,7 +113,7 @@ end;
 procedure ShowLinksList(lv: TListView; ll: TDnmpLinkList);
 var
   i, si, ic: Integer;
-  li: TLinkInfo;
+  li: TDnmpLinkInfo;
   lvi: TListItem;
   s: string;
 begin
