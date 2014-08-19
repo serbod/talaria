@@ -46,10 +46,6 @@
 		<param name="Local" value="srvd.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Users Directory">
-		<param name="Local" value="usrd.htm">
-		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="&Otilde;&eth;&agrave;&iacute;&egrave;&euml;&egrave;&ugrave;&aring; &ocirc;&agrave;&eacute;&euml;&icirc;&acirc;">
 		<param name="Local" value="flst.htm">
 		</OBJECT>
