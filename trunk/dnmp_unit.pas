@@ -47,10 +47,11 @@ type
     function GetObject(Index: integer): TDnmpStorage; overload;
     { Get name by index }
     function GetObjectName(Index: integer): string;
-    function GetString(AName: string): string;
-    function GetInteger(AName: string): Integer;
-    function GetCardinal(AName: string): Cardinal;
-    function GetReal(AName: string): Real;
+    { Get string by name (from dictionary). If name empty, get value }
+    function GetString(AName: string = ''): string;
+    function GetInteger(AName: string = ''): Integer;
+    function GetCardinal(AName: string = ''): Cardinal;
+    function GetReal(AName: string = ''): Real;
   end;
 
   {
@@ -72,9 +73,13 @@ type
   { TDnmpSerializer }
 
   TDnmpSerializer = class(TInterfacedObject)
+    // Serialize storage to string
     function StorageToString(AStorage: TDnmpStorage): AnsiString; virtual;
+    // De-serialize storage from string
     function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString): boolean; virtual;
+    // Save storage to file. Filename must be without extension
     function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
+    // Load storage from file. Filename must be without extension
     function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
   end;
 
@@ -185,7 +190,7 @@ type
 
 
 
-  TDnmpLinkType = (ltPoint, ltNode, ltTemporary);
+  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener);
 
   { TDnmpLinkInfo }
   { Link information. Refcounted. }
@@ -256,15 +261,18 @@ type
     FActive: boolean;
   public
     Mgr: TDnmpManager;
-
+    // my info from Mgr
     MyInfo: TDnmpLinkInfo;
-    LinkType: TDnmpLinkType;
+    // remote side info
     LinkInfo: TDnmpLinkInfo;
+    // link type, default ltTemporary
+    LinkType: TDnmpLinkType;
     Speed: Integer;
 
+    // link-specific incoming message handler
     MsgHandler: TDnmpMsgHandler;
 
-    constructor Create(AMgr: TDnmpManager);
+    constructor Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo = nil); virtual;
     destructor Destroy(); override;
     // Установить соединение
     function Connect(): boolean; virtual;
@@ -418,9 +426,8 @@ type
     }
     function CmdHandler(CmdText: string): string;
     procedure IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
-    procedure ReadConfig();
-    procedure WriteConfig();
   public
+    // Serializer for objects
     Serializer: TDnmpSerializer;
     MyPassport: TDnmpPassport;
     MyInfo: TDnmpLinkInfo;
@@ -452,6 +459,8 @@ type
     constructor Create(ConfName: string);
     destructor Destroy(); override;
     property ServerMode: Boolean read FServerMode;
+    procedure LoadFromFile();
+    procedure WriteToFile();
     // ==== Base functions
     // Send message, autodetect link for sending
     function SendMsg(Msg: TDnmpMsg): boolean;
@@ -537,8 +546,10 @@ type
 
 const
   csConfigFileName = 'settings.ini';
+  csMyInfoFileName = 'MyInfo';
   csPointlistFileName = 'PointList';
   csNodelistFileName = 'NodeList';
+  csLinkInfoFileName = 'LinkInfoList';
   csMsgQueueFileName = 'MsgQueue';
   ciKeyLength = 8;
   CRLF = #13#10;
@@ -601,6 +612,7 @@ begin
     ltPoint: Result:='point';
     ltNode:  Result:='node';
     ltTemporary: Result:='temp';
+    ltListener: Result:='listen';
   end;
 end;
 
@@ -609,7 +621,8 @@ begin
   Result:=ltTemporary;
   if s='point' then Result:=ltPoint
   else if s='node' then Result:=ltNode
-  else if s='temp' then Result:=ltTemporary;
+  else if s='temp' then Result:=ltTemporary
+  else if s='listen' then Result:=ltListener;
 end;
 
 function TimestampToStr(dt: TDateTime): string;
@@ -1105,12 +1118,16 @@ var
   TmpItem: TDnmpStorage;
 begin
   Result:='';
-  n:=FItems.IndexOf(AName);
-  if n>=0 then
+  if AName='' then Result:=Self.Value
+  else
   begin
-    TmpItem:=(FItems.Objects[n] as TDnmpStorage);
-    Result:=TmpItem.Value;
-    //if TmpItem.StorageType=stString then Result:=TmpItem.Value;
+    n:=FItems.IndexOf(AName);
+    if n<>-1 then
+    begin
+      TmpItem:=(FItems.Objects[n] as TDnmpStorage);
+      Result:=TmpItem.Value;
+      //if TmpItem.StorageType=stString then Result:=TmpItem.Value;
+    end;
   end;
 end;
 
@@ -1959,13 +1976,14 @@ end;
 
 
 // === TDnmpLink ===
-constructor TDnmpLink.Create(AMgr: TDnmpManager);
+constructor TDnmpLink.Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo);
 begin
   inherited Create();
   Mgr:=AMgr;
   MyInfo:=Mgr.MyInfo;
-  LinkType:=ltPoint;
-  LinkInfo:=TDnmpLinkInfo.Create();
+  LinkType:=ltTemporary;
+  LinkInfo:=ALinkInfo;
+  if not Assigned(LinkInfo) then LinkInfo:=TDnmpLinkInfo.Create();
 end;
 
 destructor TDnmpLink.Destroy();
@@ -1973,10 +1991,12 @@ begin
   // Инфа о линке может попасть в поинтлист или нодлист
   // Если мы ее убьем здесь, то в другом месте может возникнуть ошибка при попытке
   // убить инфу второй раз
+  { // больше неактуально
   if (Mgr.PointList.IndexOf(LinkInfo)=-1) and (Mgr.NodeList.IndexOf(LinkInfo)=-1) then
   begin
     FreeAndNil(LinkInfo);
   end;
+  }
   inherited Destroy();
 end;
 
@@ -1996,7 +2016,7 @@ end;
 
 function TDnmpLink.Connect(): boolean;
 begin
-  Result:=False;
+  Result:=Assigned(MsgHandler);
 end;
 
 function TDnmpLink.Disconnect(): boolean;
@@ -2007,7 +2027,8 @@ end;
 
 function TDnmpLink.Listen(): boolean;
 begin
-  Result:=False;
+  Self.LinkType:=ltListener;
+  Result:=Assigned(MsgHandler);
 end;
 
 function TDnmpLink.Check(): boolean;
@@ -2060,25 +2081,28 @@ begin
   PointList.Filename:=sDataPath+csPointlistFileName;
 
   LinkInfoList:=TLinkInfoList.Create();
+  LinkInfoList.Filename:=sDataPath+csLinkInfoFileName;
+
   ContactList:=TDnmpContactList.Create();
 
   LinkList:=TDnmpLinkList.Create();
+
   RoutingTable:=TDnmpRoutingTable.Create(LinkList);
 
   CmdQueue:=TStringList.Create;
+
   DebugText('MsgQueue file='+sDataPath+csMsgQueueFileName);
   MsgQueue:=TDnmpMsgQueue.Create(true);
   MsgQueue.LoadFromFile(sDataPath+csMsgQueueFileName);
 
   MsgHandlers:=TObjectList.Create(true);
 
-  ReadConfig();
   //self.Parser:=
 end;
 
 destructor TDnmpManager.Destroy();
 begin
-  WriteConfig();
+  WriteToFile();
   // remove events
   Self.OnLog:=nil;
   Self.OnCmd:=nil;
@@ -2090,6 +2114,7 @@ begin
 
   MsgQueue.SaveToFile(sDataPath+csMsgQueueFileName);
   FreeAndNil(MsgQueue);
+
   FreeAndNil(CmdQueue);
 
   FreeAndNil(RoutingTable);
@@ -2121,12 +2146,12 @@ begin
   if sTcpPort='' then sTcpPort:='4044';
 
   // Create server listener link
-  tmpLink:=TIpLink.Create(self, '', sTcpPort, 'TCP');
+  // {TODO: remove TIpLink, get it from outside}
+  tmpLink:=TIpLink.Create(self, nil);
+  (tmpLink as TIpLink).LinkPort:=sTcpPort;
   tmpLink.LinkType:=ltTemporary;
-  tmpLink.Mgr:=Self;
   tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
-  tmpLink.MyInfo:=Self.MyInfo;
   if tmpLink.Listen() then
   begin
     ListenerLink:=tmpLink;
@@ -2157,42 +2182,19 @@ begin
     Exit;
   end;
 
-  n:=Pos(':', tmpLinkInfo.IpAddr);
-  if n=0 then
-  begin
-    sUplinkAddr:=Trim(Copy(tmpLinkInfo.IpAddr, 1, MaxInt));
-    sTcpPort:='4044';
-  end
-  else
-  begin
-    sUplinkAddr:=Trim(Copy(tmpLinkInfo.IpAddr, 1, n-1));
-    sTcpPort:=Trim(Copy(tmpLinkInfo.IpAddr, n+1, MaxInt));
-  end;
-
   // Create connection to uplink server
-  tmpLink:=TIpLink.Create(Self, sUplinkAddr, sTcpPort, 'TCP');
-  tmpLink.LinkType:=ltPoint;
-  tmpLink.Mgr:=Self;
-  tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
-  tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
-  tmpLink.MyInfo:=Self.MyInfo;
-  if tmpLink.Connect() then
-  begin
-    UpLink:=tmpLink;
-    LinkList.Add(tmpLink);
-    DebugText('Client started. '+TIpLink(tmpLink).LinkHost+':'+TIpLink(tmpLink).LinkPort);
-    Event('MGR','REFRESH');
-  end
-  else FreeAndNil(tmpLink);
+  StartNodeConnection(tmpLinkInfo);
 end;
 
 procedure TDnmpManager.StopServer();
 begin
   if not Assigned(ListenerLink) then Exit;
   ListenerLink.OnIncomingMsg:=nil;
-  LinkList.Remove(ListenerLink);
+  //LinkList.Remove(ListenerLink);
+  LinkList.Clear();
   //FreeAndNil(ListenerLink);
   ListenerLink:=nil;
+  Uplink:=nil;
   DebugText('Server stopped.');
 end;
 
@@ -2211,23 +2213,27 @@ var
   tmpLink: TIpLink;
   sIpHost, sIpPort: string;
 begin
-  if not self.ServerMode then Exit;
-
-  sIpHost:=Misc.GetIpHost(NodeInfo.IpAddr);
-  sIpPort:=Misc.GetIpPort(NodeInfo.IpAddr);
-  if sIpHost='' then sIpHost:='localhost';
-  if sIpPort='' then sIpPort:='4044';
+  if not Assigned(NodeInfo) then Exit;
 
   // Create connection to server
-  tmpLink:=TIpLink.Create(Self, sIpHost, sIpPort, 'TCP');
-  tmpLink.LinkType:=ltNode;
-  tmpLink.Mgr:=Self;
-  tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
+  // {TODO: remove TIpLink, get it from outside}
+  tmpLink:=TIpLink.Create(Self, NodeInfo);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
-  tmpLink.MyInfo:=Self.MyInfo;
+
+  if self.ServerMode then
+  begin
+    tmpLink.LinkType:=ltNode;
+    tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
+  end
+  else
+  begin
+    tmpLink.LinkType:=ltPoint;
+    tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
+  end;
+
   if tmpLink.Connect() then
   begin
-    //UpLink:=tmpLink;
+    if not Assigned(UpLink) then UpLink:=tmpLink;
     LinkList.Add(tmpLink);
     DebugText('Node link started. '+tmpLink.LinkHost+':'+tmpLink.LinkPort);
     Event('MGR','REFRESH');
@@ -2370,15 +2376,39 @@ begin
   end;
 end;
 
-procedure TDnmpManager.ReadConfig();
+procedure TDnmpManager.LoadFromFile();
 var
   Sect, MainSect : string;
   i, n: Integer;
+  Storage: TDnmpStorage;
 begin
   // MyInfo
-  MyInfo.FromConf(Conf, 'MyInfo');
-  MainSect:='Main';
+  //MyInfo.FromConf(Conf, 'MyInfo');
+  //MainSect:='Main';
 
+  if Assigned(Serializer) then
+  begin
+    // MyInfo
+    Storage:=TDnmpStorage.Create(stUnknown);
+    if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
+    Storage.Free();
+
+    // Nodelist
+    Storage:=TDnmpStorage.Create(stUnknown);
+    if Serializer.StorageFromFile(Storage, Nodelist.Filename) then Nodelist.FromStorage(Storage);
+    Storage.Free();
+
+    // Pointlist
+    Storage:=TDnmpStorage.Create(stUnknown);
+    if Serializer.StorageFromFile(Storage, PointList.Filename) then PointList.FromStorage(Storage);
+    Storage.Free();
+
+    // LinkInfoList
+    Storage:=TDnmpStorage.Create(stUnknown);
+    if Serializer.StorageFromFile(Storage, LinkInfoList.Filename) then LinkInfoList.FromStorage(Storage);
+    Storage.Free();
+  end;
+  {
   // Nodelist
   n:=Conf.ReadInteger(MainSect, 'nodelist_count', 0);
   for i:=0 to n-1 do
@@ -2405,7 +2435,7 @@ begin
     LinkInfoList.Add(TDnmpLinkInfo.Create());
     LinkInfoList[i].FromConf(Conf, Sect);
   end;
-
+  }
   // Contacts
   {
   n:=Conf.ReadInteger(MainSect, 'contacts_count', 0);
@@ -2418,48 +2448,29 @@ begin
   }
 end;
 
-procedure TDnmpManager.WriteConfig();
+procedure TDnmpManager.WriteToFile();
 var
   Sect: string;
   i: Integer;
 begin
-  // Main
-  Sect:='Main';
-  Conf.WriteString(Sect, 'tcp_port', '4044');
-  Conf.WriteInteger(Sect, 'nodelist_count', NodeList.Count);
-  Conf.WriteInteger(Sect, 'pointlist_count', PointList.Count);
-  Conf.WriteInteger(Sect, 'link_info_count', LinkInfoList.Count);
-
   // MyInfo
-  MyInfo.ToConf(Conf, 'MyInfo');
+  //MyInfo.ToConf(Conf, 'MyInfo');
+  //Conf.UpdateFile();
 
-  // Nodelist
-  NodeList.SaveToFile();
-  {
-  for i:=0 to NodeList.Count-1 do
+  if Assigned(Serializer) then
   begin
-    Sect:='Node_'+IntToStr(i);
-    NodeList[i].ToConf(Conf, Sect);
-  end;
-  }
+    // MyInfo
+    Serializer.StorageToFile(MyInfo.ToStorage(), Self.sDataPath+csMyInfoFileName);
 
-  // Pointlist
-  PointList.SaveToFile();
-  {
-  for i:=0 to PointList.Count-1 do
-  begin
-    Sect:='Point_'+IntToStr(i);
-    PointList[i].ToConf(Conf, Sect);
-  end;
-  }
+    // Nodelist
+    Serializer.StorageToFile(Nodelist.ToStorage(), Nodelist.Filename);
 
-  // LinkInfoList
-  for i:=0 to LinkInfoList.Count-1 do
-  begin
-    Sect:='LinkInfo_'+IntToStr(i);
-    LinkInfoList[i].ToConf(Conf, Sect);
+    // Pointlist
+    Serializer.StorageToFile(PointList.ToStorage(), PointList.Filename);
+
+    // LinkInfoList
+    Serializer.StorageToFile(LinkInfoList.ToStorage(), LinkInfoList.Filename);
   end;
-  Conf.UpdateFile();
 end;
 
 function TDnmpManager.SendMsg(Msg: TDnmpMsg): boolean;

@@ -1,1 +1,17 @@
-{"type":"DnmpServiceInfoList","items":[]}
+{
+  "type" : "DnmpServiceInfoList",
+  "items" : {
+    "0" : {
+      "type" : "MAIL",
+      "name" : "",
+      "parent_name" : "",
+      "description" : "Mailer",
+      "host_addr" : "0.0",
+      "rating" : 0,
+      "owners" : {
+        "type" : "DnmpContactList",
+        "items" : {}
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "addr" : "1.0",
+  "guid" : "{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}",
+  "senior_guid" : "",
+  "name" : "Node 1.0",
+  "owner" : "Bodrov Sergey",
+  "location" : "Orel",
+  "ip_addr" : "localhost:4044",
+  "phone" : "555-55-55",
+  "other_info" : "Some other info",
+  "rating" : 0,
+  "key" : "CWHbp8zBdNj4B3kFMEF1sjC9nvsc4J3AstfvdFcW7ncBG9CccajhFRcf99CoGcX"
+}

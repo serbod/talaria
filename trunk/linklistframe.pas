@@ -80,7 +80,7 @@ var
   lvItem: TListItem;
 begin
   if not Assigned(Mgr) then Exit;
-  lv:=lvLinkInfoList;
+  lv:=lvLinkList;
   lv.BeginUpdate();
 
   lv.Clear();

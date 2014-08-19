@@ -1,0 +1,18 @@
+{
+  "type" : "DnmpLinkInfoList",
+  "items" : {
+    "0" : {
+      "addr" : "2.0",
+      "guid" : "",
+      "senior_guid" : "",
+      "name" : "Node 2",
+      "owner" : "SB",
+      "location" : "Home",
+      "ip_addr" : "localhost:4042",
+      "phone" : "none",
+      "other_info" : "test node 2",
+      "rating" : 0,
+      "key" : "iFBiZ47j6jdA8PFHex1PpDtew2d4eATDZi5ibFEHJs8fNTkzyGCwVlO2Bl1iwHvN"
+    }
+  }
+}

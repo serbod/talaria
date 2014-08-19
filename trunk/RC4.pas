@@ -30,6 +30,10 @@ procedure RC4Crypt(var Data: TRC4Data; InData, OutData: pointer; Len: integer);
 { resets the key information }
 procedure RC4Reset(var Data: TRC4Data);
 
+{ }
+function RC4EncryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
+function RC4DecryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
+
 {******************************************************************************}
 implementation
 
@@ -104,6 +108,28 @@ end;
 procedure RC4Reset(var Data: TRC4Data);
 begin
   Move(Data.OrgKey,Data.Key,256);
+end;
+
+function RC4EncryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
+var
+  RC4Data: TRC4Data;
+begin
+  Result:=AText;
+  if Length(APassword)=0 then Exit;
+  if Length(AText)=0 then Exit;
+  RC4Init(RC4Data, APassword);
+  RC4Crypt(RC4Data, PChar(AText), PChar(Result), Length(AText));
+end;
+
+function RC4DecryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
+var
+  RC4Data: TRC4Data;
+begin
+  Result:=AText;
+  if Length(APassword)=0 then Exit;
+  if Length(AText)=0 then Exit;
+  RC4Init(RC4Data, APassword);
+  RC4Crypt(RC4Data, PChar(AText), PChar(Result), Length(AText));
 end;
 
 end.

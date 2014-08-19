@@ -5,7 +5,7 @@ unit Core;
 interface
 
 uses
-  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, PointListFrame,
+  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, LinkInfoListFrame,
   Misc, dnmp_mail, Controls, dnmp_serializers;
 
 type
@@ -89,6 +89,7 @@ procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 procedure AddServicePage(AService: TDnmpService);
 procedure ShowContactList(AContactList: TDnmpContactList);
+procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
 
 const
   ciIconFolder = 9;
@@ -98,7 +99,7 @@ const
 implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
-  MailboxFrame, ContactListFrame;
+  MailboxFrame, ContactListFrame, LinkInfoFrame;
 
 procedure Init(ConfigName: string);
 var
@@ -112,10 +113,10 @@ begin
   // TODO: clearing
   if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
   ServiceDnmpNode:=TServiceDnmp.Create(ConfigName);
-  frame:=TFrameDnmpNode.Create(nil);
+  frame:=TFrameDnmp.Create(nil);
   ServiceDnmpNode.Frame:=frame;
-  (frame as TFrameDnmpNode).Mgr:=ServiceDnmpNode.Mgr;
-  (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpNode.ServMgr;
+  (frame as TFrameDnmp).Mgr:=ServiceDnmpNode.Mgr;
+  (frame as TFrameDnmp).ServMgr:=ServiceDnmpNode.ServMgr;
   Core.AddPage(frame, 'Node '+ConfigName);
 
   // status page
@@ -137,10 +138,10 @@ begin
   // point
   if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
   ServiceDnmpPoint:=TServiceDnmp.Create('1.2');
-  frame:=TFrameDnmpNode.Create(nil);
+  frame:=TFrameDnmp.Create(nil);
   ServiceDnmpPoint.Frame:=frame;
-  (frame as TFrameDnmpNode).Mgr:=ServiceDnmpPoint.Mgr;
-  (frame as TFrameDnmpNode).ServMgr:=ServiceDnmpPoint.ServMgr;
+  (frame as TFrameDnmp).Mgr:=ServiceDnmpPoint.Mgr;
+  (frame as TFrameDnmp).ServMgr:=ServiceDnmpPoint.ServMgr;
   Core.AddPage(frame, 'Point 1.2');
 end;
 
@@ -236,6 +237,17 @@ begin
   Frame.ContactList:=AContactList;
   Frame.Update();
   ShowForm(Frame, 'Contact list');
+end;
+
+procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
+var
+  Frame: TFrameLinkInfo;
+begin
+  if not Assigned(ALinkInfo) then Exit;
+  Frame:=TFrameLinkInfo.Create(nil);
+  Frame.LinkInfo:=ALinkInfo;
+  Frame.Update();
+  ShowForm(Frame, 'Link info');
 end;
 
 { TChatRoom }
@@ -392,14 +404,14 @@ var
 begin
   inherited Create();
   s:=ConfigName;
-  //sDnmpDataDir:=IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0)))+sDnmpDataDir;
-  //if ParamCount>0 then s:=ParamStr(1);
   AppName:=s;
   Mgr:=TDnmpManager.Create(ConfigName);
   Mgr.OnLog:=@LogHandler;
   Mgr.OnEvent:=@EventHandler;
   Mgr.OnIncomingMsg:=@MsgHandler;
   Mgr.Serializer:=TDnmpSerializerJson.Create();
+  Mgr.LoadFromFile();
+  //Mgr.Serializer:=TDnmpSerializerIni.Create();
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   ServMgr.LoadFromFile();
@@ -424,6 +436,7 @@ finalization
   MainFormPages.ClearAll();
   FreeAndNil(MainFormPages);
   if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
+  if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
 
 end.
 

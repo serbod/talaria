@@ -153,9 +153,9 @@ var
   sPrefixAbonent: string = '@abonent:';
 
 const
-  csSRVDInfoFileName = 'SRVD_info_list.json';
-  csSRVDAbonFileName = 'SRVD_abon_list.json';
-  csSRVDKnownFileName = 'SRVD_known_list.json';
+  csSRVDInfoFileName = 'SRVD_info_list';
+  csSRVDAbonFileName = 'SRVD_abon_list';
+  csSRVDKnownFileName = 'SRVD_known_list';
 
 
 implementation
