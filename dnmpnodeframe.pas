@@ -6,14 +6,14 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
-  ExtCtrls, dnmp_unit, dnmp_services, PointListFrame, DnmpServicesFrame,
+  ExtCtrls, dnmp_unit, dnmp_services, LinkInfoListFrame, DnmpServicesFrame,
   ConfigFrame, LinkListFrame, LinkInfoFrame;
 
 type
 
-  { TFrameDnmpNode }
+  { TFrameDnmp }
 
-  TFrameDnmpNode = class(TFrame)
+  TFrameDnmp = class(TFrame)
     actContactList: TAction;
     actClient: TAction;
     actShowLog: TAction;
@@ -51,9 +51,9 @@ type
     FMgr: TDnmpManager;
     FServMgr: TDnmpServiceManager;
     FrameLinks: TFrameLinkList;
-    FrameNodesList: TFramePointList;
-    FramePointsList: TFramePointList;
-    FrameContactsList: TFramePointList;
+    FrameNodesList: TFrameLinkInfoList;
+    FramePointsList: TFrameLinkInfoList;
+    FrameContactsList: TFrameLinkInfoList;
     FrameServices: TFrameDnmpServices;
     FrameMyInfo: TFrameLinkInfo;
     FrameConfig: TFrameConfig;
@@ -83,9 +83,9 @@ uses Misc, Core;
 
 {$R *.lfm}
 
-{ TFrameDnmpNode }
+{ TFrameDnmp }
 
-procedure TFrameDnmpNode.actTestExecute(Sender: TObject);
+procedure TFrameDnmp.actTestExecute(Sender: TObject);
 var
   s: string;
 begin
@@ -112,33 +112,33 @@ begin
   MemoStatus.Append('--------------------------------------------');
 end;
 
-procedure TFrameDnmpNode.actContactListExecute(Sender: TObject);
+procedure TFrameDnmp.actContactListExecute(Sender: TObject);
 begin
   ShowContactList(ServMgr.AllAbonents);
 end;
 
-procedure TFrameDnmpNode.actClientExecute(Sender: TObject);
+procedure TFrameDnmp.actClientExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
   if Mgr.Active then Mgr.StopClient() else Mgr.StartClient();
   Update();
 end;
 
-procedure TFrameDnmpNode.actServerExecute(Sender: TObject);
+procedure TFrameDnmp.actServerExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
   if Mgr.Active then Mgr.StopServer() else Mgr.StartServer();
   Update();
 end;
 
-procedure TFrameDnmpNode.actShowLogExecute(Sender: TObject);
+procedure TFrameDnmp.actShowLogExecute(Sender: TObject);
 begin
   //Splitter1.Visible:=actShowLog.Checked;
   //MemoStatus.Visible:=actShowLog.Checked;
   if not actShowLog.Checked then MemoStatus.Width:=0 else MemoStatus.Width:=300;
 end;
 
-procedure TFrameDnmpNode.PageControlNodeChange(Sender: TObject);
+procedure TFrameDnmp.PageControlNodeChange(Sender: TObject);
 begin
   if Assigned(PageControlNode.ActivePage) then
   begin
@@ -152,13 +152,13 @@ begin
   end;
 end;
 
-procedure TFrameDnmpNode.Splitter1CanOffset(Sender: TObject;
+procedure TFrameDnmp.Splitter1CanOffset(Sender: TObject;
   var NewOffset: Integer; var Accept: Boolean);
 begin
 
 end;
 
-procedure TFrameDnmpNode.FSetServMgr(Value: TDnmpServiceManager);
+procedure TFrameDnmp.FSetServMgr(Value: TDnmpServiceManager);
 begin
   FServMgr:=Value;
   if Assigned(FrameServices) then FrameServices.SvcMgr:=ServMgr;
@@ -168,7 +168,7 @@ begin
   end;
 end;
 
-procedure TFrameDnmpNode.FSetMgr(Value: TDnmpManager);
+procedure TFrameDnmp.FSetMgr(Value: TDnmpManager);
 begin
   //if Assigned(FMgr) then FMgr.Free();
   FMgr:=Value;
@@ -178,9 +178,11 @@ begin
     Mgr.OnIncomingMsg:=@MgrMsgHandler;
     Mgr.OnLog:=@MgrLogHandler;
     if Assigned(FrameLinks) then FrameLinks.Mgr:=Mgr;
-    if Assigned(FrameNodesList) then FrameNodesList.PointList:=Mgr.NodeList;
-    if Assigned(FramePointsList) then FramePointsList.PointList:=Mgr.PointList;
-    if Assigned(FrameContactsList) then FrameContactsList.PointList:=Mgr.LinkInfoList;
+    if Assigned(FrameNodesList) then FrameNodesList.InfoList:=Mgr.NodeList;
+    if Assigned(FrameNodesList) then FrameNodesList.DnmpMgr:=Mgr;
+    if Assigned(FramePointsList) then FramePointsList.InfoList:=Mgr.PointList;
+    if Assigned(FramePointsList) then FramePointsList.DnmpMgr:=Mgr;
+    if Assigned(FrameContactsList) then FrameContactsList.InfoList:=Mgr.LinkInfoList;
     if Assigned(FrameMyInfo) then FrameMyInfo.LinkInfo:=Mgr.MyInfo;
     if Assigned(FrameConfig) then
     begin
@@ -195,12 +197,12 @@ begin
   Update();
 end;
 
-procedure TFrameDnmpNode.MgrLogHandler(Sender: TObject; LogMsg: string);
+procedure TFrameDnmp.MgrLogHandler(Sender: TObject; LogMsg: string);
 begin
   MemoStatus.Append(LogMsg);
 end;
 
-procedure TFrameDnmpNode.MgrEventHandler(Sender, AText: string);
+procedure TFrameDnmp.MgrEventHandler(Sender, AText: string);
 var
   sCmd, sParam: string;
 begin
@@ -255,17 +257,17 @@ begin
   end;
 end;
 
-procedure TFrameDnmpNode.MgrMsgHandler(Sender: TObject; AMsg: TDnmpMsg);
+procedure TFrameDnmp.MgrMsgHandler(Sender: TObject; AMsg: TDnmpMsg);
 begin
 
 end;
 
-procedure TFrameDnmpNode.SrvMgrEventHandler(ACmd: string; AObject: TObject);
+procedure TFrameDnmp.SrvMgrEventHandler(ACmd: string; AObject: TObject);
 begin
   MemoStatus.Append('SRVD: '+ACmd);
 end;
 
-procedure TFrameDnmpNode.Update();
+procedure TFrameDnmp.Update();
 begin
   if Assigned(Mgr) then
   begin
@@ -281,7 +283,7 @@ begin
   inherited Update();
 end;
 
-procedure TFrameDnmpNode.AfterConstruction();
+procedure TFrameDnmp.AfterConstruction();
 begin
   inherited AfterConstruction();
   // Links
@@ -289,15 +291,15 @@ begin
   FrameLinks.Parent:=tsLinks;
   FrameLinks.Align:=alClient;
   // Nodes
-  FrameNodesList:=TFramePointList.Create(tsNodes);
+  FrameNodesList:=TFrameLinkInfoList.Create(tsNodes);
   FrameNodesList.Parent:=tsNodes;
   FrameNodesList.Align:=alClient;
   // Points
-  FramePointsList:=TFramePointList.Create(tsPoints);
+  FramePointsList:=TFrameLinkInfoList.Create(tsPoints);
   FramePointsList.Parent:=tsPoints;
   FramePointsList.Align:=alClient;
   // Contacts
-  FrameContactsList:=TFramePointList.Create(tsContacts);
+  FrameContactsList:=TFrameLinkInfoList.Create(tsContacts);
   FrameContactsList.Parent:=tsContacts;
   FrameContactsList.Align:=alClient;
   // Services
@@ -314,7 +316,7 @@ begin
   FrameConfig.Align:=alClient;
 end;
 
-procedure TFrameDnmpNode.OpenGrpcChannel(sName: string);
+procedure TFrameDnmp.OpenGrpcChannel(sName: string);
 var
   ServiceInfo: TDnmpServiceInfo;
   SomeService: TDnmpService;

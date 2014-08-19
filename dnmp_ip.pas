@@ -37,6 +37,8 @@ type
     procedure Execute(); override;
   end;
 
+  { TIpLink }
+
   TIpLink = class(TDnmpLink)
   public
     //Socket: TTCPBlockSocket;
@@ -51,7 +53,7 @@ type
     LinkPort: string;
     Incoming: Boolean;
     IdleTimestamp: TDateTime;
-    constructor Create(AMgr: TDnmpManager; sHost, sPort, sProto: string);
+    constructor Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo = nil); override;
     destructor Destroy(); override;
     procedure ReaderEventHandler(LastError: integer; Data: string);
     procedure ListenerEventHandler(Sock: TSocket; LastError: integer; Data: string);
@@ -68,6 +70,25 @@ var
   iTcpTimeout: Integer = 1000;
 
 implementation
+
+function GetIpHost(sIpAddr: string): string;
+var
+  i: Integer;
+begin
+  i:=Pos(':', sIpAddr);
+  if i=0 then Result:=Trim(sIpAddr)
+  else Result:=Trim(Copy(sIpAddr, 1, i-1));
+end;
+
+function GetIpPort(sIpAddr: string): string;
+var
+  i: Integer;
+begin
+  i:=Pos(':', sIpAddr);
+  if i=0 then Result:=''
+  else Result:=Trim(Copy(sIpAddr, i+1, maxint));
+end;
+
 
 // === TSockReader ===
 constructor TSockReader.Create(BSock: TBlockSocket; EventHandler: TSockReaderEvent);
@@ -172,18 +193,26 @@ end;
 // ===================
 // === TIpLink     ===
 // ===================
-constructor TIpLink.Create(AMgr: TDnmpManager; sHost, sPort, sProto: string);
+constructor TIpLink.Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo);
+var
+  sHost, sPort, sProto: string;
 begin
-  inherited Create(AMgr);
+  inherited Create(AMgr, ALinkInfo);
+  sHost:=GetIpHost(LinkInfo.IpAddr);
+  sPort:=GetIpPort(LinkInfo.IpAddr);
+  sProto:='TCP';
+  if sHost='' then sHost:='localhost';
+  if sPort='' then sPort:='4044';
+
   Self.LinkHost:=sHost;
   Self.LinkPort:=sPort;
   Self.IpProto:=sProto;
   if IpProto='' then IpProto:='IP';
 
-  LinkInfo.Addr:=MyInfo.Addr;
-  LinkInfo.Name:=IpProto+' link '+LinkHost+':'+LinkPort;
-  LinkInfo.Owner:=MyInfo.Owner;
-  LinkInfo.IpAddr:='localhost';
+  //LinkInfo.Addr:=MyInfo.Addr;
+  //LinkInfo.Name:=IpProto+' link '+LinkHost+':'+LinkPort;
+  //LinkInfo.Owner:=MyInfo.Owner;
+  //LinkInfo.IpAddr:='localhost';
   IdleTimestamp:=Now();
 end;
 
@@ -232,7 +261,9 @@ end;
 
 function TIpLink.Listen(): boolean;
 begin
-  Result:=false;
+  Result:=inherited Listen();
+  if not Result then Exit;
+  Result:=False;
   if Assigned(Socket) then FreeAndNil(Socket);
   if self.LinkHost='' then self.LinkHost:='0.0.0.0';
 
@@ -393,7 +424,7 @@ begin
     Exit;
   end;
 
-  NewIpLink:=TIpLink.Create(Mgr, '', '', 'TCP');
+  NewIpLink:=TIpLink.Create(Mgr, nil);
   NewIpLink.Socket:=TTCPBlockSocket.Create();
   NewIpLink.Socket.Socket:=Sock;
   //NewIpLink.OnIncomingMsg:=Mgr.OnIncomingMsg;

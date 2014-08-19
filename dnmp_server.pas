@@ -14,7 +14,8 @@ type
   private
     MyInfo: TDnmpLinkInfo;
     LinkInfo: TDnmpLinkInfo;
-    TempKey: string;
+    // some random text
+    TestPhrase: AnsiString;
 
     //=====================================
     // Отправка сообщения получателю по правилам роутинга
@@ -282,8 +283,8 @@ var
   sMsgBody: string;
 begin
   //MyInfo.Key:=GenerateKey();
-  TempKey:=GenerateKey();
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'AUTH', '', TempKey);
+  TestPhrase:=GenerateKey();
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'AUTH', '', TestPhrase);
   MsgOut.Info.Values['cmd']:='AURQ';
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
   MsgOut.Info.Values['name']:=MyInfo.Name;
@@ -302,13 +303,13 @@ end;
 // Нужно отдать инфу о себе и кодовое слово, шифрованное нашим ключом
 procedure TDnmpParserServer.OnAuthRequest(Msg: TDnmpMsg);
 var
-  RC4Data: TRC4Data;
-  sRemoteKey, sLocalKey, sNewKey: AnsiString;
+  //RC4Data: TRC4Data;
+  sRemotePlaintext, sLocalKey, sNewCypher: AnsiString;
   li: TDnmpLinkInfo;
 begin
-  sRemoteKey:=StreamToStr(Msg.Data);
+  sRemotePlaintext:=StreamToStr(Msg.Data);
   // Если нет своего ключа, то делаем своим ключом кодовое слово сервера
-  if self.MyInfo.Key='' then Self.MyInfo.Key:=sRemoteKey;
+  if self.MyInfo.Key='' then Self.MyInfo.Key:=sRemotePlaintext;
   sLocalKey:=self.MyInfo.Key;
 
   li:=Mgr.GetInfoByAddr(Msg.SourceAddr);
@@ -327,15 +328,9 @@ begin
   LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
-  // Готовим место для шифра
-  SetLength(sNewKey, Length(sRemoteKey));
-  // Инициализируем наш ключ
-  RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, sLocalKey);
-  // Шифруем кодовое слово хозяина нашим ключом
-  RC4.RC4Crypt(RC4Data, PChar(sRemoteKey), PChar(sNewKey), Length(sRemoteKey));
 
-  SendAuthReply(sNewKey);
+  sNewCypher:=RC4.RC4EncryptText(sRemotePlaintext, sLocalKey);
+  SendAuthReply(sNewCypher);
 end;
 
 //=====================================
@@ -370,31 +365,24 @@ end;
 // кодовое слово и сравнить результат с отправленным ранее
 procedure TDnmpParserServer.OnAuthReply(Msg: TDnmpMsg);
 var
-  RC4Data: TRC4Data;
-  sRemoteKey: string;
-  sLocalKey, sNewKey: string;
+  sRemoteCypher: AnsiString;
   i: Integer;
   Found: Boolean;
   li: TDnmpLinkInfo;
 
-function CheckKey(Key, Secret1, Secret2: string): boolean;
+// Шифруем PlainText и сравниваем с CypherText
+function CheckKey(Key, CypherText, PlainText: AnsiString): boolean;
 var
-  sKey, sSecret1, SecretNew: string;
+  CypherTextNew: AnsiString;
 begin
   Result:=False;
   if Length(Key)=0 then Exit;
-  sKey:=Copy(Key, 1, maxint);
-  sSecret1:=Copy(Secret1, 1, MaxInt);
-  SetLength(SecretNew, Length(Secret1));
-  RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, Key);
-  RC4.RC4Crypt(RC4Data, PChar(Secret1), PChar(SecretNew), Length(Secret1));
-  if SecretNew = Secret2 then Result:=True;
+  CypherTextNew:=RC4.RC4EncryptText(PlainText, Key);
+  if CypherTextNew = CypherText then Result:=True;
 end;
 
 begin
-  sRemoteKey:=StreamToStr(Msg.Data);
-  SetLength(sNewKey, Length(sRemoteKey));
+  sRemoteCypher:=StreamToStr(Msg.Data);
 
   LinkInfo.Addr:=StrToAddr(Msg.Info.Values['addr']);
   LinkInfo.Name:=Msg.Info.Values['name'];
@@ -415,19 +403,19 @@ begin
     if LinkInfo.Addr.Node = MyInfo.Addr.Node then
     begin
       li:=Mgr.PointList.GetLinkInfoByAddr(LinkInfo.Addr);
-      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end
     else
     begin
       li:=Mgr.NodeList.GetLinkInfoByAddr(LinkInfo.Addr);
-      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end;
   end
   else
   begin
     // Ищем в списке неавторизованных контактов
     li:=Mgr.LinkInfoList.GetLinkInfoByGUID(LinkInfo.GUID);
-    if Assigned(li) then Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+    if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
   end;
 
   // Возможно, этот блок не нужен..
@@ -438,7 +426,7 @@ begin
     begin
       if Found then Break;
       li:=Mgr.LinkInfoList[i];
-      Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end;
 
     // Подбираем ключ из поинтлиста
@@ -446,7 +434,7 @@ begin
     begin
       if Found then Break;
       li:=Mgr.PointList[i];
-      Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end;
 
     // Подбираем ключ из нодлиста
@@ -454,13 +442,13 @@ begin
     begin
       if Found then Break;
       li:=Mgr.NodeList[i];
-      Found:=CheckKey(li.Key, sRemoteKey, TempKey);
+      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end;
   end;
 
   if (not Found) and (Mgr.Conf.ReadBool('Main', 'AutoApprove', False)) then
   begin
-    LinkInfo.Key:=TempKey;
+    LinkInfo.Key:=TestPhrase;
     LinkInfo.Addr:=EmptyAddr();
     Link.Approve();
     li:=LinkInfo;
@@ -489,7 +477,7 @@ begin
   end
   else
   begin
-    LinkInfo.Key:=TempKey;
+    LinkInfo.Key:=TestPhrase;
     LinkInfo.Addr:=EmptyAddr();
 
     // Сохраняем информацию линка в списке контактов

@@ -116,7 +116,7 @@ end;
 // ИД, инфо о себе, рандомный хеш (ключ опознания)
 procedure TDnmpParserClient.OnAuthRequest(Msg: TDnmpMsg);
 var
-  RC4Data: TRC4Data;
+  //RC4Data: TRC4Data;
   sRemoteKey, sLocalKey, sNewKey: AnsiString;
 begin
   // Сервер послал нам инфу о себе и свой рандомный ключ
@@ -134,10 +134,14 @@ begin
   LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
-  SetLength(sNewKey, Length(sLocalKey));
+
+  sNewKey:=RC4.RC4EncryptText(sRemoteKey, sLocalKey);
+  {
+  SetLength(sNewKey, Length(sRemoteKey));
   RC4.RC4Burn(RC4Data);
   RC4.RC4Init(RC4Data, sLocalKey);
   RC4.RC4Crypt(RC4Data, PChar(sRemoteKey), PChar(sNewKey), Length(sRemoteKey));
+  }
 
   SendAuthReply(sNewKey);
 end;

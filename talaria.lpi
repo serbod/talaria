@@ -65,15 +65,14 @@
         <ComponentName Value="FrameChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="ChatFrame"/>
       </Unit3>
       <Unit4>
-        <Filename Value="pointlistframe.pas"/>
+        <Filename Value="linkinfolistframe.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FramePointList"/>
+        <ComponentName Value="FrameLinkInfoList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="PointListFrame"/>
+        <UnitName Value="LinkInfoListFrame"/>
       </Unit4>
       <Unit5>
         <Filename Value="dnmp_unit.pas"/>
@@ -93,7 +92,7 @@
       <Unit8>
         <Filename Value="dnmpnodeframe.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameDnmpNode"/>
+        <ComponentName Value="FrameDnmp"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpNodeFrame"/>
@@ -109,7 +108,6 @@
         <ComponentName Value="FrameDnmpServices"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="DnmpServicesFrame"/>
       </Unit10>
       <Unit11>
         <Filename Value="configframe.pas"/>
@@ -124,7 +122,6 @@
         <ComponentName Value="FrameGrpcService"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="GrpcServiceFrame"/>
       </Unit12>
       <Unit13>
         <Filename Value="mailboxframe.pas"/>
@@ -142,7 +139,6 @@
       <Unit15>
         <Filename Value="adapters.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="adapters"/>
       </Unit15>
       <Unit16>
         <Filename Value="contactlistframe.pas"/>
