@@ -14,7 +14,7 @@
 		</OBJECT>
 	<UL>
 		<LI> <OBJECT type="text/sitemap">
-			<param name="Name" value="DN&Igrave;P - &icirc;&iuml;&egrave;&ntilde;&agrave;&iacute;&egrave;&aring;">
+			<param name="Name" value="DNMP - &icirc;&iuml;&egrave;&ntilde;&agrave;&iacute;&egrave;&aring;">
 			<param name="Local" value="proto_descr.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
@@ -26,7 +26,7 @@
 			<param name="Local" value="routing.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
-			<param name="Name" value="DN&Igrave;P - &iuml;&agrave;&ntilde;&iuml;&icirc;&eth;&ograve;">
+			<param name="Name" value="DNMP - &iuml;&agrave;&ntilde;&iuml;&icirc;&eth;&ograve;">
 			<param name="Local" value="passport.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
@@ -45,10 +45,6 @@
 			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="&Ecirc;&agrave;&ograve;&agrave;&euml;&icirc;&atilde; &ntilde;&aring;&eth;&acirc;&egrave;&ntilde;&icirc;&acirc;">
 				<param name="Local" value="srvd.htm">
-				</OBJECT>
-			<LI> <OBJECT type="text/sitemap">
-				<param name="Name" value="Users Directory">
-				<param name="Local" value="usrd.htm">
 				</OBJECT>
 			<LI> <OBJECT type="text/sitemap">
 				<param name="Name" value="&Ecirc;&agrave;&iacute;&agrave;&euml; (&atilde;&eth;&oacute;&iuml;&iuml;&icirc;&acirc;&icirc;&eacute; &divide;&agrave;&ograve;)">
