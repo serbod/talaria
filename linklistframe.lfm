@@ -14,10 +14,10 @@ object FrameLinkList: TFrameLinkList
     Height = 365
     Top = 4
     Width = 324
-    ActivePage = tsLinkInfoList
+    ActivePage = tsActiveLinks
     Align = alLeft
     BorderSpacing.Around = 4
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     OnChange = pgcLinksChange
     object tsLinkInfoList: TTabSheet
@@ -48,6 +48,7 @@ object FrameLinkList: TFrameLinkList
         RowSelect = True
         TabOrder = 0
         ViewStyle = vsReport
+        OnSelectItem = lvLinkInfoListSelectItem
       end
     end
     object tsActiveLinks: TTabSheet
@@ -76,8 +77,10 @@ object FrameLinkList: TFrameLinkList
         GridLines = True
         ReadOnly = True
         RowSelect = True
+        StateImages = FormMain.ImageList16
         TabOrder = 0
         ViewStyle = vsReport
+        OnSelectItem = lvLinkListSelectItem
       end
     end
   end
@@ -94,13 +97,41 @@ object FrameLinkList: TFrameLinkList
     Width = 298
     Align = alClient
     Caption = 'Link info'
+    ClientHeight = 355
+    ClientWidth = 294
     TabOrder = 2
+    object StringGridInfo: TStringGrid
+      Left = 4
+      Height = 347
+      Top = 4
+      Width = 286
+      Align = alClient
+      BorderSpacing.Around = 4
+      ColCount = 2
+      FixedCols = 0
+      TabOrder = 0
+      TitleStyle = tsNative
+      ColWidths = (
+        121
+        255
+      )
+      Cells = (
+        2
+        0
+        0
+        'Param'
+        1
+        0
+        'Value'
+      )
+    end
   end
   object alLinkList: TActionList
     left = 102
     top = 110
     object actApproveLink: TAction
       Caption = 'Approve link'
+      OnExecute = actApproveLinkExecute
     end
   end
 end

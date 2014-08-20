@@ -1,0 +1,1 @@
+d4:addr3:1.24:guid38:{FB054DD6-C3F1-499F-9A26-7E95DCEDAE57}11:senior_guid38:{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}4:nick0:4:name0:10:status_msg0:7:picture0:5:owner6:Sergey8:location4:Orel7:ip_addr0:5:phone0:10:other_info10:Other info6:ratingi0e3:key64:d5rxFCtHPIBFVU98nUrbyrsfwCtKJGQyvsUE6UponZGLeaUQTC3uZtltrGw5jM5Ye

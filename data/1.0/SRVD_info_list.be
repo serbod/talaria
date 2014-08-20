@@ -1,0 +1,1 @@
+d4:type19:DnmpServiceInfoList5:itemsd1:0d4:type4:MAIL4:name0:11:parent_name0:11:description6:Mailer9:host_addr3:0.06:ratingi0e6:ownersd4:type15:DnmpContactList5:itemsdeeeee

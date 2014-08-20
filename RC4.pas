@@ -113,23 +113,29 @@ end;
 function RC4EncryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
 var
   RC4Data: TRC4Data;
+  Text, Password: AnsiString;
 begin
-  Result:=AText;
+  Result:=Copy(AText, 1, MaxInt);
   if Length(APassword)=0 then Exit;
   if Length(AText)=0 then Exit;
-  RC4Init(RC4Data, APassword);
-  RC4Crypt(RC4Data, PChar(AText), PChar(Result), Length(AText));
+  Text:=Copy(AText, 1, MaxInt);
+  Password:=Copy(APassword, 1, MaxInt);
+  RC4Init(RC4Data, Password);
+  RC4Crypt(RC4Data, PChar(Text), PChar(Result), Length(Text));
 end;
 
 function RC4DecryptText(AText: AnsiString; APassword: AnsiString): AnsiString;
 var
   RC4Data: TRC4Data;
+  Text, Password: AnsiString;
 begin
-  Result:=AText;
+  Result:=Copy(AText, 1, MaxInt);
   if Length(APassword)=0 then Exit;
   if Length(AText)=0 then Exit;
-  RC4Init(RC4Data, APassword);
-  RC4Crypt(RC4Data, PChar(AText), PChar(Result), Length(AText));
+  Text:=Copy(AText, 1, MaxInt);
+  Password:=Copy(APassword, 1, MaxInt);
+  RC4Init(RC4Data, Password);
+  RC4Crypt(RC4Data, PChar(Text), PChar(Result), Length(Text));
 end;
 
 end.

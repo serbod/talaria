@@ -99,7 +99,7 @@ begin
     tvItem:=tv.Items.AddChild(nil, Item.Caption);
     tvItem.StateIndex:=Item.StateIcon();
     //if Item.IsGroup then tvItem.StateIndex:=ciIconFolder
-    //else tvItem.StateIndex:=ciIconUser;
+    //else tvItem.StateIndex:=ciIconUserBlue;
   end;
   tv.EndUpdate();
 end;
