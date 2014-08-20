@@ -94,7 +94,8 @@ procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
 const
   ciIconFolder = 9;
   ciIconNote = 18;
-  ciIconUser = 20;
+  ciIconUserBlue = 20;
+  ciIconUserRed = 21;
 
 implementation
 
@@ -294,7 +295,7 @@ end;
 
 function TContactItem.StateIcon(): integer;
 begin
-  Result:=ciIconUser;
+  Result:=ciIconUserBlue;
 end;
 
 { TMainFormPages }
@@ -409,9 +410,11 @@ begin
   Mgr.OnLog:=@LogHandler;
   Mgr.OnEvent:=@EventHandler;
   Mgr.OnIncomingMsg:=@MsgHandler;
-  Mgr.Serializer:=TDnmpSerializerJson.Create();
+  //Mgr.Serializer:=TDnmpSerializerJson.Create();
+  Mgr.Serializer:=TDnmpSerializerBencode.Create();
   Mgr.LoadFromFile();
   //Mgr.Serializer:=TDnmpSerializerIni.Create();
+  //Mgr.Serializer:=TDnmpSerializerBencode.Create();
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   ServMgr.LoadFromFile();

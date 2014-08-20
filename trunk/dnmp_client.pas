@@ -8,6 +8,8 @@ type
   private
     MyInfo: TDnmpLinkInfo;
     LinkInfo: TDnmpLinkInfo;
+    // some random text
+    TestPhrase: AnsiString;
 
     // Сервер -> Клинт
     // ИД, инфо о себе, рандомный хеш (ключ опознания)
@@ -116,15 +118,12 @@ end;
 // ИД, инфо о себе, рандомный хеш (ключ опознания)
 procedure TDnmpParserClient.OnAuthRequest(Msg: TDnmpMsg);
 var
-  //RC4Data: TRC4Data;
-  sRemoteKey, sLocalKey, sNewKey: AnsiString;
+  sNewCipher: AnsiString;
 begin
   // Сервер послал нам инфу о себе и свой рандомный ключ
   // Нужно отдать инфу о себе и ключ сервера, хешированный нашим ключом
-  if self.MyInfo.Key='' then Self.MyInfo.Key:=GenerateKey();
-  sLocalKey:=self.MyInfo.Key;
-  sRemoteKey:=StreamToStr(Msg.Data);
-  LinkInfo.Key:=sRemoteKey;
+  TestPhrase:=StreamToStr(Msg.Data);
+  if LinkInfo.Key='' then LinkInfo.Key:=TestPhrase;
   LinkInfo.Addr:=Msg.SourceAddr;
   LinkInfo.Name:=Msg.Info.Values['name'];
   LinkInfo.Owner:=Msg.Info.Values['owner'];
@@ -135,15 +134,8 @@ begin
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
 
-  sNewKey:=RC4.RC4EncryptText(sRemoteKey, sLocalKey);
-  {
-  SetLength(sNewKey, Length(sRemoteKey));
-  RC4.RC4Burn(RC4Data);
-  RC4.RC4Init(RC4Data, sLocalKey);
-  RC4.RC4Crypt(RC4Data, PChar(sRemoteKey), PChar(sNewKey), Length(sRemoteKey));
-  }
-
-  SendAuthReply(sNewKey);
+  sNewCipher:=RC4.RC4EncryptText(TestPhrase, LinkInfo.Key);
+  SendAuthReply(sNewCipher);
 end;
 
 // Клиент -> Сервер
@@ -191,9 +183,9 @@ begin
   begin
     // Линк не подтвержден
     // Сохраняем ключ сервера как свой
-    MyInfo.Key:=LinkInfo.Key;
-    MyInfo.GUID:=Msg.Info.Values['guid'];
-    MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+    LinkInfo.Key:=TestPhrase;
+    //MyInfo.GUID:=Msg.Info.Values['guid'];
+    //MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
     Mgr.AddCmd('AUTH FAILED');
   end
   else

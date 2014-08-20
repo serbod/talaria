@@ -231,6 +231,10 @@ object FrameLinkInfo: TFrameLinkInfo
       Hint = 'Save info'
       OnExecute = actSaveInfoExecute
     end
+    object actImageFromClipboard: TAction
+      Caption = 'Image from Clipboard'
+      OnExecute = actImageFromClipboardExecute
+    end
   end
   object pmLinkInfo: TPopupMenu
     left = 200
@@ -240,6 +244,9 @@ object FrameLinkInfo: TFrameLinkInfo
     end
     object MenuItem2: TMenuItem
       Action = actSaveInfo
+    end
+    object MenuItem3: TMenuItem
+      Action = actImageFromClipboard
     end
   end
 end

@@ -678,9 +678,12 @@ var
 begin
   Result:='';
   if not FileExists(FileName) then Exit;
-  fs:=TFileStream.Create(FileName, fmOpenRead);
-  Result:=StreamToStr(fs);
-  fs.Free();
+  try
+    fs:=TFileStream.Create(FileName, fmOpenRead);
+    Result:=StreamToStr(fs);
+  finally
+    fs.Free();
+  end;
 end;
 
 function GenerateKey(): AnsiString;
@@ -1060,27 +1063,39 @@ procedure TDnmpStorage.Add(AName, AValue: string);
 var
   TmpItem: TDnmpStorage;
 begin
-  TmpItem:=TDnmpStorage.Create(stString);
-  TmpItem.Value:=AValue;
-  FItems.AddObject(AName, TmpItem);
+  if (StorageType=stDictionary) or (StorageType=stList) then
+  begin
+    TmpItem:=TDnmpStorage.Create(stString);
+    TmpItem.Value:=AValue;
+    FItems.AddObject(AName, TmpItem)
+  end
+  else Self.Value:=AValue;
 end;
 
 procedure TDnmpStorage.Add(AName: string; AValue: Integer);
 var
   TmpItem: TDnmpStorage;
 begin
-  TmpItem:=TDnmpStorage.Create(stInteger);
-  TmpItem.Value:=IntToStr(AValue);
-  FItems.AddObject(AName, TmpItem);
+  if (StorageType=stDictionary) or (StorageType=stList) then
+  begin
+    TmpItem:=TDnmpStorage.Create(stInteger);
+    TmpItem.Value:=IntToStr(AValue);
+    FItems.AddObject(AName, TmpItem)
+  end
+  else Self.Value:=IntToStr(AValue);
 end;
 
 procedure TDnmpStorage.Add(AName: string; AValue: Real);
 var
   TmpItem: TDnmpStorage;
 begin
-  TmpItem:=TDnmpStorage.Create(stNumber);
-  TmpItem.Value:=FloatToStr(AValue);
-  FItems.AddObject(AName, TmpItem);
+  if (StorageType=stDictionary) or (StorageType=stList) then
+  begin
+    TmpItem:=TDnmpStorage.Create(stNumber);
+    TmpItem.Value:=FloatToStr(AValue);
+    FItems.AddObject(AName, TmpItem);
+  end
+  else Self.Value:=FloatToStr(AValue);
 end;
 
 function TDnmpStorage.GetObject(AName: string): TDnmpStorage;
@@ -1513,7 +1528,10 @@ begin
   Result.Add('addr', Self.AddrStr);
   Result.Add('guid', Self.GUID);
   Result.Add('senior_guid', Self.SeniorGUID);
+  Result.Add('nick', Self.Nick);
   Result.Add('name', Self.Name);
+  Result.Add('status_msg', Self.StatusMessage);
+  Result.Add('picture', Self.Picture);
   Result.Add('owner', Self.Owner);
   Result.Add('location', Self.Location);
   Result.Add('ip_addr', Self.IpAddr);
@@ -1530,7 +1548,10 @@ begin
   Self.Addr:=StrToAddr(Storage.GetString('addr'));
   Self.GUID:=Storage.GetString('guid');
   Self.SeniorGUID:=Storage.GetString('senior_guid');
+  Self.Nick:=Storage.getString('nick');
   Self.Name:=Storage.getString('name');
+  Self.StatusMessage:=Storage.getString('status_msg');
+  Self.Picture:=Storage.getString('picture');
   Self.Owner:=Storage.getString('owner');
   Self.Location:=Storage.getString('location');
   Self.IpAddr:=Storage.getString('ip_addr');
@@ -2740,8 +2761,8 @@ begin
   Result:=false;
   if ServerMode then Exit;
 
-  ALinkInfo.GUID:=GenerateGUID();
-  ALinkInfo.SeniorGUID:=MyInfo.GUID;
+  if ALinkInfo.GUID='' then ALinkInfo.GUID:=GenerateGUID();
+  if ALinkInfo.SeniorGUID='' then ALinkInfo.SeniorGUID:=MyInfo.GUID;
 
   if ALinkInfo.LinkType = ltPoint then
   begin
