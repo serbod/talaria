@@ -11,18 +11,20 @@ type
   TDnmpServiceInfo = class(TObject)
   public
     ServiceType: string; // FourCC
-    Name: string;        //
-    ParentName: string;
-    Descr: string;
-    HostAddr: TAddr;
-    Rating: Integer;
+    Name: string;        // service name
+    ParentName: string;  // parent service name
+    Descr: string;       // multi-line description
+    HostAddr: TAddr;     // address of service provider (?)
+    Donor: TDnmpContact; // uplink
+    Subscribers: TDnmpContactList; // downlinks
+    Rating: Integer;     // service rating
     //Abonents: TDnmpAbonentList;
-    Owners: TDnmpContactList;
-    AbonentsCount: Integer;
+    Owners: TDnmpContactList;  // owners list
+    AbonentsCount: Integer;    // abonents count (approximately)
     constructor Create();
     destructor Destroy(); override;
     //function AbonentsCount(): Integer;
-    function Owner(): TDnmpContact;
+    function Owner(): TDnmpContact; // first owner
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
@@ -167,6 +169,7 @@ constructor TDnmpServiceInfo.Create();
 begin
   inherited Create();
   //Self.Abonents:=TDnmpAbonentList.Create(False);
+  Self.Subscribers:=TDnmpContactList.Create(False);
   Self.Owners:=TDnmpContactList.Create(False);
 end;
 
@@ -174,6 +177,7 @@ destructor TDnmpServiceInfo.Destroy();
 begin
   //FreeAndNil(Self.Abonents);
   FreeAndNil(Self.Owners);
+  FreeAndNil(Self.Subscribers);
   inherited Destroy();
 end;
 
@@ -203,6 +207,13 @@ begin
   //Result.Add('abonents', self.Abonents.ToStorage());
   // Owners list
   Result.Add('owners', Self.Owners.ToStorage());
+  // Donor
+  if Assigned(Self.Donor) then
+  begin
+    Result.Add('donor', Self.Donor.ToStorage());
+  end;
+  // Subscribers
+  Result.Add('subscribers', Self.Subscribers.ToStorage());
 end;
 
 function TDnmpServiceInfo.FromStorage(Storage: TDnmpStorage): boolean;
@@ -221,7 +232,11 @@ begin
   //self.Abonents.FromStorage(Storage.GetObject('abonents'));
   // Owners list
   self.Owners.FromStorage(Storage.GetObject('owners'));
-
+  // Donor
+  {TODO: read donor from contacts}
+  //self.Donor.FromStorage(Storage.GetObject('subscribers'));
+  // Subscribers
+  self.Subscribers.FromStorage(Storage.GetObject('subscribers'));
   Result:=True;
 end;
 

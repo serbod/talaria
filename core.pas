@@ -31,6 +31,7 @@ type
     property OnLog: TGetStrProc read FOnLog write FOnLog;
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
+    procedure OpenChatRoom(AChatRoomName: string);
   end;
 
   TMainFormPageItem = class(TCollectionItem)
@@ -45,7 +46,8 @@ type
   { TMainFormPages }
 
   TMainFormPages = class(TCollection)
-    procedure AddPage(AFrame: TFrame; ACaption: string);
+    procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject = nil);
+    procedure ActivatePage(APageItem: TMainFormPageItem);
     procedure ClearAll;
   end;
 
@@ -64,17 +66,32 @@ type
     function StateIcon(): integer; virtual;
   end;
 
-  { TChatRoom }
+  TChatText = record
+    Timestamp: TDateTime;
+    AuthorName: string;
+    Text: string;
+  end;
 
+  { TChatRoom }
+  { адаптер между фреймом чата и объектом чата }
   TChatRoom = class(TInterfacedObject)
   protected
+    FDataObject: TObject;
+    procedure FSetDataObject(Value: TObject);
     function FGetName(): string; virtual;
     function FGetContactCount(): integer; virtual;
+    function FGetTextCount(): integer; virtual;
+    procedure OnSayHandler(Sender: TObject); virtual;
+    procedure OnContactsChangeHandler(Sender: TObject); virtual;
   public
-    DataObject: TObject;
+    Frame: TFrame;
+    property DataObject: TObject read FDataObject write FSetDataObject;
     property Name: string read FGetName;
     property ContactCount: integer read FGetContactCount;
-    function GetContact(Index: integer): TContactItem;
+    property TextCount: integer read FGetTextCount;
+    function GetContact(Index: integer): TContactItem; virtual;
+    function GetText(Index: integer): TChatText; virtual;
+    procedure SendText(AText: string); virtual;
   end;
 
 
@@ -87,6 +104,7 @@ var
 procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
+// DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
 procedure ShowContactList(AContactList: TDnmpContactList);
 procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
@@ -124,10 +142,7 @@ begin
   AddPage(TFrameStatus.Create(nil), 'Status');
 
   // chat page
-  frame:=TFrameChat.Create(nil);
-  (frame as TFrameChat).ChatRoom:=TChatRoom.Create();
-  (frame as TFrameChat).ChatRoom.DataObject:=(ServiceDnmpNode.ServMgr.GetService('GRPC','#test') as TDnmpGrpc);
-  AddPage(frame, '#test');
+  ServiceDnmpNode.OpenChatRoom('#test');
 
   // mail page
   frame:=TFrameMailbox.Create(nil);
@@ -253,6 +268,24 @@ end;
 
 { TChatRoom }
 
+procedure TChatRoom.FSetDataObject(Value: TObject);
+begin
+  if Assigned(FDataObject) and (FDataObject is TDnmpGrpc) then
+  begin
+    (DataObject as TDnmpGrpc).OnSay:=nil;
+    (DataObject as TDnmpGrpc).OnUsersChange:=nil;
+  end;
+
+  FDataObject:=Value;
+
+  if not Assigned(FDataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then
+  begin
+    (DataObject as TDnmpGrpc).OnSay:=@OnSayHandler;
+    (DataObject as TDnmpGrpc).OnUsersChange:=@OnContactsChangeHandler;
+  end;
+end;
+
 function TChatRoom.FGetName(): string;
 begin
   Result:='#ChatRoom';
@@ -267,10 +300,52 @@ begin
   if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).UsersList.Count;
 end;
 
+function TChatRoom.FGetTextCount(): integer;
+begin
+  Result:=0;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).MessagesList.Count;
+end;
+
+procedure TChatRoom.OnSayHandler(Sender: TObject);
+begin
+  if not Assigned(Frame) then Exit;
+  if (Frame is TFrameChat) then (Frame as TFrameChat).UpdateText();
+end;
+
+procedure TChatRoom.OnContactsChangeHandler(Sender: TObject);
+begin
+  if not Assigned(Frame) then Exit;
+  if (Frame is TFrameChat) then (Frame as TFrameChat).UpdateContactList();
+end;
+
 function TChatRoom.GetContact(Index: integer): TContactItem;
 begin
   Result:=TContactItem.Create();
   Result.DataObject:=(DataObject as TDnmpGrpc).UsersList.Items[Index];
+end;
+
+function TChatRoom.GetText(Index: integer): TChatText;
+begin
+  Result.Text:='';
+  Result.AuthorName:='';
+  Result.Timestamp:=0;
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then
+  begin
+    Result.Timestamp :=(DataObject as TDnmpGrpc).MessagesList.Items[Index].Timestamp;
+    Result.AuthorName :=(DataObject as TDnmpGrpc).MessagesList.Items[Index].AuthorName;
+    Result.Text :=(DataObject as TDnmpGrpc).MessagesList.Items[Index].Text;
+  end;
+end;
+
+procedure TChatRoom.SendText(AText: string);
+begin
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then
+  begin
+    (DataObject as TDnmpGrpc).SayText('', AText);
+  end;
 end;
 
 { TContactItem }
@@ -300,13 +375,20 @@ end;
 
 { TMainFormPages }
 
-procedure TMainFormPages.AddPage(AFrame: TFrame; ACaption: string);
+procedure TMainFormPages.AddPage(AFrame: TFrame; ACaption: string;
+  ADataObject: TObject);
 var
   Item: TMainFormPageItem;
 begin
   Item:=(MainFormPages.Add() as TMainFormPageItem);
   Item.Frame:=AFrame;
   Item.Caption:=ACaption;
+  Item.DataObject:=ADataObject;
+end;
+
+procedure TMainFormPages.ActivatePage(APageItem: TMainFormPageItem);
+begin
+  FormMain.ActivatePage(APageItem);
 end;
 
 procedure TMainFormPages.ClearAll();
@@ -430,6 +512,39 @@ begin
   Mgr.OnIncomingMsg:=nil;
   FreeAndNil(Mgr);
   inherited Destroy();
+end;
+
+procedure TServiceDnmp.OpenChatRoom(AChatRoomName: string);
+var
+  i: integer;
+  NewFrame: TFrameChat;
+  ChatRoom: TChatRoom;
+  TmpObject: TObject;
+  Grpc: TDnmpGrpc;
+begin
+  if Copy(AChatRoomName, 1, 1)<>'#' then Exit;
+  // find for exists chat room page
+  for i:=0 to MainFormPages.Count-1 do
+  begin
+    TmpObject:=(MainFormPages.Items[i] as TMainFormPageItem).DataObject;
+    if Assigned(TmpObject) and (TmpObject is TChatRoom) then
+    begin
+      if (TmpObject as TChatRoom).Name=AChatRoomName then
+      begin
+        MainFormPages.ActivatePage((MainFormPages.Items[i] as TMainFormPageItem));
+        Exit;
+      end;
+    end;
+  end;
+  // create new chat room
+  Grpc:=(self.ServMgr.GetService('GRPC', AChatRoomName, True) as TDnmpGrpc);
+  ChatRoom:=TChatRoom.Create();
+  ChatRoom.DataObject:=Grpc;
+  // chat page
+  NewFrame:=TFrameChat.Create(nil);
+  NewFrame.ChatRoom:=ChatRoom;
+  ChatRoom.Frame:=NewFrame;
+  AddPage(NewFrame, AChatRoomName);
 end;
 
 initialization

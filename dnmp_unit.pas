@@ -309,7 +309,7 @@ type
   public
     LinkInfo: TDnmpLinkInfo;
     ContactsList: TDnmpContactList;
-    ServicesList: TObjectList;
+    ServicesList: TStringList;
     MsgInbox: TDnmpMsgQueue;
     MsgOutbox: TDnmpMsgQueue;
     constructor Create();
@@ -756,7 +756,7 @@ begin
   inherited Create();
   LinkInfo:=TDnmpLinkInfo.Create();
   ContactsList:=TDnmpContactList.Create();
-  ServicesList:=TObjectList.Create();
+  ServicesList:=TStringList.Create();
   MsgInbox:=TDnmpMsgQueue.Create();
   MsgOutbox:=TDnmpMsgQueue.Create();
 end;
