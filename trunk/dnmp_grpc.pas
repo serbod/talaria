@@ -665,6 +665,7 @@ var
   Abonent: TDnmpContact;
 begin
   Result:='';
+  if AbonentGUID='' then AbonentGUID:=self.Author.GUID;
 
   // Banned?
   if BanList.GetBan(AbonentGUID)<>nil then
@@ -698,6 +699,7 @@ var
   Abonent: TDnmpContact;
 begin
   Result:='';
+  if AbonentGUID='' then AbonentGUID:=self.Author.GUID;
 
   // Exists?
   Abonent:=Self.UsersList.GetByGUID(AbonentGUID);
@@ -773,6 +775,7 @@ end;
 function TDnmpGrpc.SetTopic(AbonentGUID, sTopic: string): string;
 begin
   Result:='';
+  if AbonentGUID='' then AbonentGUID:=self.Author.GUID;
   if self.BanList.GetBan(AbonentGUID)<>nil then
   begin
     Result:=('Cannot SET_TOPIC - abonent banned: '+AbonentGUID);
@@ -789,6 +792,7 @@ var
   ChanMsg: TDnmpChannelMessage;
 begin
   Result:='';
+  if AbonentGUID='' then AbonentGUID:=self.Author.GUID;
   if BanList.GetBan(AbonentGUID)<>nil then
   begin
     // Banned!

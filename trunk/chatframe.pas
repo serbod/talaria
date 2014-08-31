@@ -53,6 +53,7 @@ type
     procedure AddText(AText: string);
     procedure AddBBCode(AText: string);
     procedure UpdateContactList();
+    procedure UpdateText();
   end;
 
 implementation
@@ -66,7 +67,8 @@ procedure TFrameChat.TextToSendKeyDown(Sender: TObject; var Key: Word;
 begin
   if Key=VK_RETURN then
   begin
-    AddText(TextToSend.Text);
+    //AddText(TextToSend.Text);
+    if Assigned(ChatRoom) then ChatRoom.SendText(TextToSend.Text);
     TextToSend.Text:='';
     Key:=0;
   end;
@@ -102,6 +104,20 @@ begin
     //else tvItem.StateIndex:=ciIconUserBlue;
   end;
   tv.EndUpdate();
+end;
+
+procedure TFrameChat.UpdateText();
+var
+  i: integer;
+  ChatText: TChatText;
+begin
+  if not Assigned(ChatRoom) then Exit;
+  MemoText.Lines.Clear();
+  for i:=0 to ChatRoom.TextCount-1 do
+  begin
+    ChatText:=ChatRoom.GetText(i);
+    MemoText.Lines.AddObject(FormatDateTime('[hh:nn:ss]', ChatText.Timestamp)+'<'+ChatText.AuthorName+'> '+ChatText.Text, nil);
+  end;
 end;
 
 end.

@@ -21,6 +21,7 @@ type
     actGetLastMessages: TAction;
     actGetAll: TAction;
     actGetMode: TAction;
+    actUpdateAll: TAction;
     actSay: TAction;
     actLeaveUser: TAction;
     actJoinUser: TAction;
@@ -28,6 +29,7 @@ type
     actUnbanUser: TAction;
     alGrpcService: TActionList;
     btnSay: TButton;
+    Button1: TButton;
     edSay: TEdit;
     edTopic: TEdit;
     gbAbonList: TGroupBox;
@@ -59,6 +61,7 @@ type
     procedure actKickUserExecute(Sender: TObject);
     procedure actSayExecute(Sender: TObject);
     procedure actUnbanUserExecute(Sender: TObject);
+    procedure actUpdateAllExecute(Sender: TObject);
     procedure edTopicEditingDone(Sender: TObject);
   private
     { private declarations }
@@ -130,6 +133,11 @@ end;
 procedure TFrameGrpcService.actUnbanUserExecute(Sender: TObject);
 begin
   if Assigned(SelectedBan) then Grpc.UnbanAbonent(SelectedBan.AbonentGUID);
+  Update();
+end;
+
+procedure TFrameGrpcService.actUpdateAllExecute(Sender: TObject);
+begin
   Update();
 end;
 

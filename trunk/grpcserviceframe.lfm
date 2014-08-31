@@ -159,6 +159,14 @@ object FrameGrpcService: TFrameGrpcService
       TabOrder = 0
     end
   end
+  object Button1: TButton
+    Left = 10
+    Height = 17
+    Top = 24
+    Width = 102
+    Action = actUpdateAll
+    TabOrder = 5
+  end
   object alGrpcService: TActionList
     Images = FormMain.ImageList16
     left = 280
@@ -222,6 +230,10 @@ object FrameGrpcService: TFrameGrpcService
       Caption = 'Say'
       ImageIndex = 0
       OnExecute = actSayExecute
+    end
+    object actUpdateAll: TAction
+      Caption = 'Update all info'
+      OnExecute = actUpdateAllExecute
     end
   end
   object pmUsersList: TPopupMenu
