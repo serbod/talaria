@@ -96,6 +96,8 @@ type
     FOnAbonentsChange: TNotifyEvent;
     FOnUsersChange: TNotifyEvent;
     FOnBanlistChange: TNotifyEvent;
+    procedure FSetTopic(Value: string);
+    function FGetTopic(): string;
     // Create channel message with specified text and author
     function CreateChannelMsg(AbonGUID, sText: string): TDnmpChannelMessage;
     // Send channel message to specified address
@@ -114,11 +116,11 @@ type
     There may be another states. }
     function SetAbonentState(sData: string): TDnmpContact;
   public
-    Topic: string;
     Author: TDnmpContact;
     UsersList: TDnmpContactList;
     BanList: TGrpcBanList;
     MessagesList: TDnmpChannelMessagesList;
+    property Topic: string read FGetTopic write FSetTopic;
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
     function SendCmd(Text: string; Addr: TAddr): string;
@@ -159,7 +161,12 @@ type
   public
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
-    { входящая (принятая) команда }
+    { входящая (принятая) команда
+      JOIN <guid>
+      LEAVE <guid>
+      KICK <guid> [reason]
+      SAY <guid> [text]
+    }
     function ParseCmd(Text: string; Addr: TAddr): string; override;
     function ParseMsg(AMsg: TDnmpMsg): string; override;
     procedure Say(sText: string);
@@ -227,6 +234,7 @@ end;
 function TGrpcBanItem.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   Self.AuthorGUID:=Storage.GetString('author_guid');
   Self.AbonentGUID:=Storage.GetString('abonent_guid');
@@ -336,6 +344,7 @@ var
   Item: TGrpcBanItem;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'GrpcBanList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -401,6 +410,7 @@ end;
 function TDnmpChannelMessage.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   Self.Timestamp:=Storage.GetReal('timestamp');
   Self.MessageType:=Storage.GetInteger('msg_type');
@@ -492,6 +502,7 @@ var
   Item: TDnmpChannelMessage;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpChannelMessagesList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -526,6 +537,16 @@ begin
   FreeAndNil(BanList);
   FreeAndNil(UsersList);
   inherited Destroy();
+end;
+
+procedure TDnmpGrpc.FSetTopic(Value: string);
+begin
+  Self.ServiceInfo.Descr:=Value;
+end;
+
+function TDnmpGrpc.FGetTopic(): string;
+begin
+  Result:=Self.ServiceInfo.Descr;
 end;
 
 function TDnmpGrpc.CreateChannelMsg(AbonGUID, sText: string): TDnmpChannelMessage;
@@ -640,6 +661,7 @@ var
   SubStorage: TDnmpStorage;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpGrpc' then Exit;
   self.Topic:=Storage.GetString('topic');
@@ -1223,7 +1245,7 @@ begin
   else if sCmd='KICK' then
   begin
     sGUID:=ExtractFirstWord(sParams);
-    Result:=self.KickAbonent(sGUID);
+    Result:=self.KickAbonent(sGUID, sParams);
     Mgr.AddCmd('GRPC UPDATE '+self.ServiceInfo.Name);
   end
 

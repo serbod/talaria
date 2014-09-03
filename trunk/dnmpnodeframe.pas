@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
   ExtCtrls, dnmp_unit, dnmp_services, LinkInfoListFrame, DnmpServicesFrame,
-  ConfigFrame, LinkListFrame, LinkInfoFrame;
+  ConfigFrame, LinkListFrame, LinkInfoFrame, Core;
 
 type
 
@@ -16,6 +16,7 @@ type
   TFrameDnmp = class(TFrame)
     actContactList: TAction;
     actClient: TAction;
+    actChatRoomList: TAction;
     actShowLog: TAction;
     actServer: TAction;
     actTest: TAction;
@@ -25,6 +26,7 @@ type
     panNode: TPanel;
     Splitter1: TSplitter;
     ToolButton5: TToolButton;
+    ToolButton6: TToolButton;
     tsConfig: TTabSheet;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
@@ -38,16 +40,16 @@ type
     tsMyInfo: TTabSheet;
     tsContacts: TTabSheet;
     ToolBarNode: TToolBar;
+    procedure actChatRoomListExecute(Sender: TObject);
     procedure actClientExecute(Sender: TObject);
     procedure actContactListExecute(Sender: TObject);
     procedure actServerExecute(Sender: TObject);
     procedure actShowLogExecute(Sender: TObject);
     procedure actTestExecute(Sender: TObject);
     procedure PageControlNodeChange(Sender: TObject);
-    procedure Splitter1CanOffset(Sender: TObject; var NewOffset: Integer;
-      var Accept: Boolean);
   private
     { private declarations }
+    FServ: TServiceDnmp;
     FMgr: TDnmpManager;
     FServMgr: TDnmpServiceManager;
     FrameLinks: TFrameLinkList;
@@ -61,6 +63,7 @@ type
     //FrameMyInfo: TFrameMyInfo;
     //FrameSRVD: TFrameSRVD;
     //FrameRouting: TFrameRouting;
+    procedure FSetServ(Value: TServiceDnmp);
     procedure FSetServMgr(Value: TDnmpServiceManager);
     procedure FSetMgr(Value: TDnmpManager);
     procedure MgrLogHandler(Sender: TObject; LogMsg: string);
@@ -70,6 +73,7 @@ type
   public
     { public declarations }
     AppName: string;
+    property Serv: TServiceDnmp read FServ write FSetServ;
     property Mgr: TDnmpManager read FMgr write FSetMgr;
     property ServMgr: TDnmpServiceManager read FServMgr write FSetServMgr;
     procedure Update(); override;
@@ -79,7 +83,7 @@ type
 
 implementation
 
-uses Misc, Core;
+uses Misc;
 
 {$R *.lfm}
 
@@ -124,6 +128,12 @@ begin
   Update();
 end;
 
+procedure TFrameDnmp.actChatRoomListExecute(Sender: TObject);
+begin
+  if not Assigned(Serv) then Exit;
+  Serv.ShowChatRoomList();
+end;
+
 procedure TFrameDnmp.actServerExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
@@ -152,10 +162,14 @@ begin
   end;
 end;
 
-procedure TFrameDnmp.Splitter1CanOffset(Sender: TObject;
-  var NewOffset: Integer; var Accept: Boolean);
+procedure TFrameDnmp.FSetServ(Value: TServiceDnmp);
 begin
-
+  FServ:=Value;
+  if Assigned(FServ) then
+  begin
+    Mgr:=FServ.Mgr;
+    ServMgr:=FServ.ServMgr;
+  end;
 end;
 
 procedure TFrameDnmp.FSetServMgr(Value: TDnmpServiceManager);

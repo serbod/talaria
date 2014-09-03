@@ -73,6 +73,7 @@ type
   { TDnmpSerializer }
 
   TDnmpSerializer = class(TInterfacedObject)
+    function GetName(): string; virtual;
     // Serialize storage to string
     function StorageToString(AStorage: TDnmpStorage): AnsiString; virtual;
     // De-serialize storage from string
@@ -413,7 +414,7 @@ type
     { Commands handler:
     AUTH_OK - someone succesfully authorised
     EVENT <sender> <text> - internal event
-    ASK - request for some info (not implemented)
+    ASK <addr> <msg_type> <msg_info> - send request for some info (???)
     APPROVE <GUID> - approve link
     GET_INFO <addr> - send info request to specified address
     GET_POINTLIST <addr> - send pointlist request to specified address
@@ -726,6 +727,11 @@ end;
 
 { TDnmpSerializer }
 
+function TDnmpSerializer.GetName: string;
+begin
+  Result:='NONE';
+end;
+
 function TDnmpSerializer.StorageToString(AStorage: TDnmpStorage): AnsiString;
 begin
   Result:='';
@@ -896,6 +902,7 @@ var
   Item: TDnmpContact;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpContactList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -988,6 +995,7 @@ end;
 function TDnmpContact.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   Self.Addr:=StrToAddr(Storage.GetString('addr'));
   Self.GUID:=Storage.GetString('guid');
@@ -1056,7 +1064,14 @@ end;
 
 procedure TDnmpStorage.Add(AName: string; AValue: TDnmpStorage);
 begin
-  FItems.AddObject(AName, AValue);
+  if (StorageType=stDictionary) or (StorageType=stList) then
+  begin
+    FItems.AddObject(AName, AValue);
+  end
+  else
+  begin
+    // not valid for current storage type
+  end;
 end;
 
 procedure TDnmpStorage.Add(AName, AValue: string);
@@ -1425,6 +1440,7 @@ var
   Item: TDnmpMsg;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpMsgQueue' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -1544,6 +1560,7 @@ end;
 function TDnmpLinkInfo.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   Self.Addr:=StrToAddr(Storage.GetString('addr'));
   Self.GUID:=Storage.GetString('guid');
@@ -1716,6 +1733,7 @@ var
   Item: TDnmpLinkInfo;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpLinkInfoList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -1978,6 +1996,7 @@ var
   Item: TDnmpRoutingTableRecord;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpRoutingTable' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -2650,7 +2669,7 @@ end;
 
 function TDnmpManager.CmdHandler(CmdText: string): string;
 var
-  sCmd, sParams: string;
+  sCmd, sParams, s, s2: string;
   saParams: TStringArray;
   i: Integer;
   TraceID: Cardinal;
@@ -2676,6 +2695,10 @@ begin
   else if sCmd='ASK' then
   begin
     // Команда отправки запроса чего-то
+    if sParams='' then Exit;
+    s:=ExtractFirstWord(sParams);
+    s2:=ExtractFirstWord(sParams);
+    SendDataMsg(StrToAddr(s), s2, sParams, '');
   end
 
   else if sCmd='APPROVE' then

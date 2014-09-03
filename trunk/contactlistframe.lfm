@@ -6,15 +6,15 @@ object FrameContactList: TFrameContactList
   ClientHeight = 490
   ClientWidth = 365
   TabOrder = 0
-  DesignLeft = 1042
-  DesignTop = 216
+  DesignLeft = 411
+  DesignTop = 140
   object ScrollBox: TScrollBox
     Left = 0
     Height = 458
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 1
+    VertScrollBar.Increment = 0
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True

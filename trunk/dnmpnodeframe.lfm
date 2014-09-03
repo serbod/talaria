@@ -6,8 +6,8 @@ object FrameDnmp: TFrameDnmp
   ClientHeight = 519
   ClientWidth = 813
   TabOrder = 0
-  DesignLeft = 553
-  DesignTop = 223
+  DesignLeft = 292
+  DesignTop = 163
   object ToolBarNode: TToolBar
     Left = 0
     Height = 26
@@ -22,17 +22,17 @@ object FrameDnmp: TFrameDnmp
       Action = actTest
     end
     object ToolButton2: TToolButton
-      Left = 47
+      Left = 70
       Top = 2
       Action = actContactList
     end
     object ToolButton3: TToolButton
-      Left = 70
+      Left = 93
       Top = 2
       Action = actServer
     end
     object ToolButton4: TToolButton
-      Left = 93
+      Left = 116
       Top = 2
       Action = actClient
     end
@@ -41,6 +41,11 @@ object FrameDnmp: TFrameDnmp
       Top = 2
       Action = actShowLog
       Style = tbsCheck
+    end
+    object ToolButton6: TToolButton
+      Left = 47
+      Top = 2
+      Action = actChatRoomList
     end
   end
   object panNode: TPanel
@@ -58,9 +63,9 @@ object FrameDnmp: TFrameDnmp
       Height = 493
       Top = 0
       Width = 800
-      ActivePage = tsContacts
+      ActivePage = tsLinks
       Align = alClient
-      TabIndex = 3
+      TabIndex = 0
       TabOrder = 0
       OnChange = PageControlNodeChange
       object tsLinks: TTabSheet
@@ -107,7 +112,6 @@ object FrameDnmp: TFrameDnmp
       Top = 0
       Width = 5
       Align = alRight
-      OnCanOffset = Splitter1CanOffset
       ResizeAnchor = akRight
     end
   end
@@ -123,7 +127,7 @@ object FrameDnmp: TFrameDnmp
     object actContactList: TAction
       Caption = 'Contact list'
       Hint = 'Contact list'
-      ImageIndex = 37
+      ImageIndex = 20
       OnExecute = actContactListExecute
     end
     object actServer: TAction
@@ -144,6 +148,12 @@ object FrameDnmp: TFrameDnmp
       Hint = 'Show/hide log window'
       ImageIndex = 15
       OnExecute = actShowLogExecute
+    end
+    object actChatRoomList: TAction
+      Caption = 'Chat room list'
+      Hint = 'Chat room list'
+      ImageIndex = 37
+      OnExecute = actChatRoomListExecute
     end
   end
 end

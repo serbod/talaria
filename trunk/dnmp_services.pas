@@ -8,7 +8,7 @@ type
 
   { TDnmpServiceInfo }
 
-  TDnmpServiceInfo = class(TObject)
+  TDnmpServiceInfo = class(TInterfacedObject)
   public
     ServiceType: string; // FourCC
     Name: string;        // service name
@@ -27,6 +27,7 @@ type
     function Owner(): TDnmpContact; // first owner
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
+    procedure Assign(Item: TDnmpServiceInfo);
   end;
 
   { TDnmpServiceInfoList }
@@ -40,7 +41,9 @@ type
     function GetServiceByTypeName(sType, sName: string): TDnmpServiceInfo;
     function UpdateServiceInfo(sType, sName, sParent, sProvider, sRating, sAbonCount, sDescr: string): TDnmpServiceInfo;
     function ToStorage(): TDnmpStorage;
+    function ToStorageShort(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorageShort(Storage: TDnmpStorage): boolean;
   end;
 
   TDnmpServiceManager = class;
@@ -129,24 +132,39 @@ type
     procedure LoadFromFile();
     function Start(): boolean; override;
     { (Server) Find service by sType and sName, then modify it, sAction:
-    add - add service info (if not found), set owner by GUID from sParams
-    del - delete service and service info
-    set_parent - set ParentName from sParams
-    set_descr - set Descr from sParams
-    set_owner - clear Owners, add owner by GUID from sParams
-    add_owner - add owner by GUID from sParams
-    del_owner - delete owner by GUID from sParams }
+      add - add service info (if not found), set owner by GUID from sParams
+      del - delete service and service info
+      set_parent - set ParentName from sParams
+      set_descr - set Descr from sParams
+      set_owner - clear Owners, add owner by GUID from sParams
+      add_owner - add owner by GUID from sParams
+      del_owner - delete owner by GUID from sParams }
     function ModService(sType, sName, sAction, sParams: string): Boolean;
     { Create service with given ServiceInfo }
     function CreateService(ServiceInfo: TDnmpServiceInfo): TDnmpService;
     { Get service by type and name }
     function GetService(AServiceType, AServiceName: string; DoCreate: boolean = false): TDnmpService;
-    // Обработка команды от указанного адреса
+    { Обработка команды от указанного адреса
+      GET_TYPES - send types list
+      GET_LOCAL_LIST [filter] - send local services list
+      GET_LIST [filter] - same as GET_LOCAL_LIST
+      GET_INFO <type> <name> - send service info
+      ADD_SERVICE <type> <name> [guid] - add new service and send service info
+      SET_PARENT <type> <name> <parent_name> - set ParentName
+      SET_OWNER <type> <name> <guid> - clear owners, then add owner guid
+      ADD_OWNER <type> <name> <guid> - add owner guid
+      DEL_OWNER <type> <name> <guid> - delete owner guid
+      SET_DESCR <type> <name> [descr] - set description
+      DEL_SERVICE <type> <name> - delete service
+    }
     function Cmd(Text: string; Addr: TAddr): string; override;
     // Разбор сообщения и выполнение требуемых действий
     // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
     // Try to create service !!!
     function ParseMsg(AMsg: TDnmpMsg): boolean; override;
+    procedure RequestTypes();
+    procedure RequestList(sType: string);
+    procedure RequestInfo(sType, sName: string);
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
   end;
 
@@ -219,6 +237,7 @@ end;
 function TDnmpServiceInfo.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   // Basic info
   self.ServiceType:=Storage.GetString('type');
@@ -238,6 +257,15 @@ begin
   // Subscribers
   self.Subscribers.FromStorage(Storage.GetObject('subscribers'));
   Result:=True;
+end;
+
+procedure TDnmpServiceInfo.Assign(Item: TDnmpServiceInfo);
+begin
+  Self.ServiceType:=Item.ServiceType;
+  Self.Name:=Item.Name;
+  Self.Descr:=Item.Descr;
+  Self.AbonentsCount:=Item.AbonentsCount;
+  Self.HostAddr:=Item.HostAddr;
 end;
 
 
@@ -306,6 +334,28 @@ begin
   Result.Add('items', SubStorage);
 end;
 
+function TDnmpServiceInfoList.ToStorageShort(): TDnmpStorage;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  si: TDnmpServiceInfo;
+begin
+  Result:=TDnmpStorage.Create(stList);
+
+  for i:=0 to Self.Count-1 do
+  begin
+    si:=Self.Items[i];
+    SubStorage:=TDnmpStorage.Create(stDictionary);
+    SubStorage.Add('type', si.ServiceType);
+    SubStorage.Add('name', si.Name);
+    SubStorage.Add('parent_name', si.ParentName);
+    SubStorage.Add('description', si.Descr);
+    SubStorage.Add('host_addr', AddrToStr(si.HostAddr));
+    SubStorage.Add('rating', si.Rating);
+    Result.Add(IntToStr(i), SubStorage);
+  end;
+end;
+
 function TDnmpServiceInfoList.FromStorage(Storage: TDnmpStorage): boolean;
 var
   SubStorage: TDnmpStorage;
@@ -313,6 +363,7 @@ var
   Item: TDnmpServiceInfo;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpServiceInfoList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -327,6 +378,40 @@ begin
     end;
     if not Assigned(self.GetServiceByTypeName(Item.ServiceType, Item.Name)) then self.Add(Item)
     else Item.Free();
+  end;
+  Result:=True;
+end;
+
+function TDnmpServiceInfoList.FromStorageShort(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+  i: Integer;
+  Item, Item2: TDnmpServiceInfo;
+begin
+  Result:=False;
+  if not Assigned(Storage) then Exit;
+  if Storage.StorageType <> stList then Exit;
+  for i:=0 to Storage.Count()-1 do
+  begin
+    SubStorage:=Storage.GetObject(i);
+    if SubStorage.StorageType <> stDictionary then Continue;
+    Item:=TDnmpServiceInfo.Create();
+    // Basic info
+    Item.ServiceType:=SubStorage.GetString('type');
+    Item.Name:=SubStorage.GetString('name');
+    Item.ParentName:=SubStorage.GetString('parent_name');
+    Item.Descr:=SubStorage.GetString('description');
+    Item.HostAddr:=StrToAddr(SubStorage.GetString('host_addr'));
+    Item.Rating:=SubStorage.GetInteger('rating');
+
+    Item2:=self.GetServiceByTypeName(Item.ServiceType, Item.Name);
+    if not Assigned(Item2) then
+      self.Add(Item)
+    else
+    begin
+      Item2.Assign(Item);
+      Item.Free();
+    end;
   end;
   Result:=True;
 end;
@@ -467,6 +552,7 @@ var
   Item: TDnmpService;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpServiceList' then Exit;
   SubStorage:=Storage.GetObject('items');
@@ -624,6 +710,39 @@ begin
   else
   begin
     Mgr.SendErrorMsg(AMsg.SourceAddr, ServiceType, 'Service name not found: '+sName);
+  end;
+end;
+
+procedure TDnmpServiceManager.RequestTypes();
+var
+  addr: TAddr;
+begin
+  if Assigned(Mgr.Uplink) then
+  begin
+    addr:=Mgr.Uplink.LinkInfo.Addr;
+    Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_TYPES', '');
+  end;
+end;
+
+procedure TDnmpServiceManager.RequestList(sType: string);
+var
+  addr: TAddr;
+begin
+  if Assigned(Mgr.Uplink) then
+  begin
+    addr:=Mgr.Uplink.LinkInfo.Addr;
+    Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_LIST '+sType, '');
+  end;
+end;
+
+procedure TDnmpServiceManager.RequestInfo(sType, sName: string);
+var
+  addr: TAddr;
+begin
+  if Assigned(Mgr.Uplink) then
+  begin
+    addr:=Mgr.Uplink.LinkInfo.Addr;
+    Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_INFO '+sType+' '+sName, '');
   end;
 end;
 
@@ -786,15 +905,21 @@ end;
 function TDnmpServiceManager.SendServList(Addr: TAddr; Filter: string = ''): Boolean;
 var
   i: Integer;
-  sFilter: string;
+  sFilter, sData: string;
   si: TDnmpServiceInfo;
-  sl, slData: TStringList;
+  //sl, slData: TStringList;
+  TmpList: TDnmpServiceInfoList;
+  Storage: TDnmpStorage;
+  SubStorage: TDnmpStorage;
 begin
   Result:=False;
   if not Assigned(ServiceInfoList) then Exit;
   sFilter:=Trim(Filter);
-  sl:=TStringList.Create();
+
+  {
+  // CSV list (deprecated)
   slData:=TStringList.Create();
+  sl:=TStringList.Create();
   for i:=0 to ServiceInfoList.Count-1 do
   begin
     si:=ServiceInfoList[i];
@@ -813,9 +938,31 @@ begin
   end;
   Result:=True;
   sl.Free();
-
   Mgr.SendDataMsg(Addr, ServiceType, 'data=SERVICES_LIST', slData.Text);
   slData.Free();
+  }
+
+  // default serializer
+  TmpList:=TDnmpServiceInfoList.Create(False);
+  for i:=0 to ServiceInfoList.Count-1 do
+  begin
+    si:=ServiceInfoList[i];
+    if Length(sFilter)>0 then
+    begin
+      //if not AnsiContainsText(si.Name, Filter) then Continue;
+      if si.ServiceType<>Filter then Continue;
+    end;
+    TmpList.Add(si);
+  end;
+  Storage:=TmpList.ToStorageShort();
+  if Assigned(Storage) then
+  begin
+    sData:=Mgr.Serializer.StorageToString(Storage);
+    Storage.Free();
+    Mgr.SendDataMsg(Addr, ServiceType, 'data=SERVICES_LIST'+CRLF+'serializer='+Mgr.Serializer.GetName(), sData);
+  end;
+  TmpList.Free();
+
 end;
 
 function TDnmpServiceManager.Cmd(Text: string; Addr: TAddr): string;
@@ -937,16 +1084,6 @@ begin
     ReadServiceList(sData, sDataType);
   end
 
-  else if sDataType='SERVICES_LIST_LOCAL' then
-  begin
-    ReadServiceList(sData, sDataType);
-  end
-
-  else if sDataType='SERVICES_LIST_SUBSCRIBED' then
-  begin
-    ReadServiceList(sData, sDataType);
-  end
-
   else if sDataType='ABONENTS_LIST' then
   begin
     //ReadServiceList(sDataType, sData);
@@ -993,7 +1130,8 @@ begin
   Result:=True;
 end;
 
-//
+{
+// CSV list version (deprecated)
 // SERVICES_LIST
 // Содержит список сервисов в формате CSV.
 // type - тип сервиса
@@ -1052,6 +1190,31 @@ begin
   end;
   FreeAndNil(slData);
   FreeAndNil(sl);
+end;
+}
+
+function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Boolean;
+var
+  i: Integer;
+  TmpList: TDnmpServiceInfoList;
+  TmpStorage: TDnmpStorage;
+
+begin
+  Result:=False;
+
+  if sListType='SERVICES_LIST' then TmpList:=self.RemoteServiceInfoList
+  else Exit;
+
+  TmpStorage:=TDnmpStorage.Create(stUnknown);
+  if Mgr.Serializer.StorageFromString(TmpStorage, sDataList) then
+  begin
+    if TmpList.FromStorageShort(TmpStorage) then
+    begin
+      if Assigned(OnEvent) then OnEvent(sListType, TmpList);
+      Result:=True;
+    end;
+  end;
+  TmpStorage.Free();
 end;
 
 

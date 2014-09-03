@@ -28,6 +28,7 @@ type
     edOtherInfo: TEdit;
     edSGUID: TEdit;
     edStatusMessage: TEdit;
+    edKey: TEdit;
     gbContact: TGroupBox;
     gbLinkInfo: TGroupBox;
     imgPicture: TImage;
@@ -41,6 +42,7 @@ type
     lbOtherInfo: TLabel;
     lbSGUID: TLabel;
     lbStatusMessage: TLabel;
+    lbKey: TLabel;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -134,6 +136,7 @@ begin
   edGUID.Text:=LinkInfo.GUID;
   edSGUID.Text:=LinkInfo.SeniorGUID;
   edStatusMessage.Text:=LinkInfo.StatusMessage;
+  edKey.Text:=LinkInfo.Key;
 
   edOwner.Text:=LinkInfo.Owner;
   edLocation.Text:=LinkInfo.Location;
@@ -166,6 +169,7 @@ begin
   LinkInfo.GUID:=Trim(edGUID.Text);
   LinkInfo.SeniorGUID:=Trim(edSGUID.Text);
   LinkInfo.StatusMessage:=Trim(edStatusMessage.Text);
+  LinkInfo.Key:=Trim(edKey.Text);
 
   ss:=TStringStream.Create('');
   //imgPicture.Picture.Jpeg.SaveToStream(ss);
