@@ -19,9 +19,11 @@ type
     actSaveServicesList: TAction;
     actSaveInfoList: TAction;
     alServices: TActionList;
+    edDescr: TEdit;
     gbOwners: TGroupBox;
     gbServicesTree: TGroupBox;
     gbServiceInfo: TGroupBox;
+    lbDescr: TLabel;
     lbServiceType: TLabel;
     lbTypeLabel: TLabel;
     lbServiceName: TLabel;
@@ -120,6 +122,7 @@ begin
   begin
     lbServiceName.Caption:=FCurServiceInfo.Name;
     lbServiceType.Caption:=FCurServiceInfo.ServiceType;
+    edDescr.Text:=FCurServiceInfo.Descr;
 
     // owners
     lvOwners.BeginUpdate();

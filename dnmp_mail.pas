@@ -192,6 +192,7 @@ var
   Item: TDnmpMailMessage;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpMailbox' then Exit;
   Self.Name:=Storage.GetString('name');
@@ -346,6 +347,7 @@ end;
 function TDnmpMailMessage.FromStorage(Storage: TDnmpStorage): boolean;
 begin
   Result:=False;
+  if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   Self.Timestamp:=Storage.GetReal('timestamp');
   Self.AuthorAddr:=StrToAddr(Storage.GetString('author_addr'));

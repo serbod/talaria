@@ -10,30 +10,6 @@ uses
 
 type
 
-  { TServiceDnmp }
-
-  TServiceDnmp = class(TObject)
-  private
-    FOnLog: TGetStrProc;
-    FOnEvent: TMgrEvent;
-    FOnIncomingMsg: TIncomingMsgEvent;
-    procedure UpdateInfo();
-    procedure LogHandler(Sender: TObject; LogMsg: string);
-    procedure EventHandler(Sender, Text: string);
-    procedure MsgHandler(Sender: TObject; Msg: TDnmpMsg);
-  public
-    AppName: string;
-    Mgr: TDnmpManager;
-    ServMgr: TDnmpServiceManager;
-    Frame: TFrame;
-    constructor Create(ConfigName: string);
-    destructor Destroy; override;
-    property OnLog: TGetStrProc read FOnLog write FOnLog;
-    property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
-    property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
-    procedure OpenChatRoom(AChatRoomName: string);
-  end;
-
   TMainFormPageItem = class(TCollectionItem)
   public
     Caption: string;
@@ -79,6 +55,8 @@ type
     FDataObject: TObject;
     procedure FSetDataObject(Value: TObject);
     function FGetName(): string; virtual;
+    function FGetTopic(): string; virtual;
+    function FGetPicture(): AnsiString; virtual;
     function FGetContactCount(): integer; virtual;
     function FGetTextCount(): integer; virtual;
     procedure OnSayHandler(Sender: TObject); virtual;
@@ -87,11 +65,40 @@ type
     Frame: TFrame;
     property DataObject: TObject read FDataObject write FSetDataObject;
     property Name: string read FGetName;
+    property Topic: string read FGetTopic;
+    property Picture: AnsiString read FGetPicture;
     property ContactCount: integer read FGetContactCount;
     property TextCount: integer read FGetTextCount;
     function GetContact(Index: integer): TContactItem; virtual;
     function GetText(Index: integer): TChatText; virtual;
     procedure SendText(AText: string); virtual;
+  end;
+
+  { TServiceDnmp }
+
+  TServiceDnmp = class(TObject)
+  private
+    FOnLog: TGetStrProc;
+    FOnEvent: TMgrEvent;
+    FOnIncomingMsg: TIncomingMsgEvent;
+    procedure UpdateInfo();
+    procedure LogHandler(Sender: TObject; LogMsg: string);
+    procedure EventHandler(Sender, Text: string);
+    procedure MsgHandler(Sender: TObject; Msg: TDnmpMsg);
+  public
+    AppName: string;
+    Mgr: TDnmpManager;
+    ServMgr: TDnmpServiceManager;
+    Frame: TFrame;
+    constructor Create(ConfigName: string);
+    destructor Destroy; override;
+    property OnLog: TGetStrProc read FOnLog write FOnLog;
+    property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
+    property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
+    procedure OpenChatRoom(AChatRoomName: string);
+    function ChatRoomCount(): integer;
+    function GetChatRoom(Index: integer): TChatRoom;
+    procedure ShowChatRoomList();
   end;
 
 
@@ -118,7 +125,7 @@ const
 implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
-  MailboxFrame, ContactListFrame, LinkInfoFrame;
+  MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame;
 
 procedure Init(ConfigName: string);
 var
@@ -134,8 +141,7 @@ begin
   ServiceDnmpNode:=TServiceDnmp.Create(ConfigName);
   frame:=TFrameDnmp.Create(nil);
   ServiceDnmpNode.Frame:=frame;
-  (frame as TFrameDnmp).Mgr:=ServiceDnmpNode.Mgr;
-  (frame as TFrameDnmp).ServMgr:=ServiceDnmpNode.ServMgr;
+  (frame as TFrameDnmp).Serv:=ServiceDnmpNode;
   Core.AddPage(frame, 'Node '+ConfigName);
 
   // status page
@@ -156,8 +162,7 @@ begin
   ServiceDnmpPoint:=TServiceDnmp.Create('1.2');
   frame:=TFrameDnmp.Create(nil);
   ServiceDnmpPoint.Frame:=frame;
-  (frame as TFrameDnmp).Mgr:=ServiceDnmpPoint.Mgr;
-  (frame as TFrameDnmp).ServMgr:=ServiceDnmpPoint.ServMgr;
+  (frame as TFrameDnmp).Serv:=ServiceDnmpPoint;
   Core.AddPage(frame, 'Point 1.2');
 end;
 
@@ -291,6 +296,20 @@ begin
   Result:='#ChatRoom';
   if not Assigned(DataObject) then Exit;
   if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).ServiceInfo.Name;
+  if (DataObject is TDnmpServiceInfo) then Result:=(DataObject as TDnmpServiceInfo).Name;
+end;
+
+function TChatRoom.FGetTopic(): string;
+begin
+  Result:='';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).Topic;
+  if (DataObject is TDnmpServiceInfo) then Result:=(DataObject as TDnmpServiceInfo).Descr;
+end;
+
+function TChatRoom.FGetPicture(): AnsiString;
+begin
+  Result:='';
 end;
 
 function TChatRoom.FGetContactCount(): integer;
@@ -298,6 +317,7 @@ begin
   Result:=0;
   if not Assigned(DataObject) then Exit;
   if (DataObject is TDnmpGrpc) then Result:=(DataObject as TDnmpGrpc).UsersList.Count;
+  if (DataObject is TDnmpServiceInfo) then Result:=(DataObject as TDnmpServiceInfo).AbonentsCount;
 end;
 
 function TChatRoom.FGetTextCount(): integer;
@@ -545,6 +565,72 @@ begin
   NewFrame.ChatRoom:=ChatRoom;
   ChatRoom.Frame:=NewFrame;
   AddPage(NewFrame, AChatRoomName);
+end;
+
+function TServiceDnmp.ChatRoomCount(): integer;
+var
+  i: integer;
+  si: TDnmpServiceInfo;
+begin
+  Result:=0;
+  // local services
+  for i:=0 to self.ServMgr.ServiceInfoList.Count-1 do
+  begin
+    si:=self.ServMgr.ServiceInfoList.Items[i];
+    if si.ServiceType='GRPC' then Inc(Result);
+  end;
+  // remote services
+  for i:=0 to self.ServMgr.RemoteServiceInfoList.Count-1 do
+  begin
+    si:=self.ServMgr.RemoteServiceInfoList.Items[i];
+    if si.ServiceType='GRPC' then Inc(Result);
+  end;
+end;
+
+function TServiceDnmp.GetChatRoom(Index: integer): TChatRoom;
+var
+  i, n: integer;
+  ServiceInfo: TDnmpServiceInfo;
+begin
+  Result:=nil;
+  n:=-1;
+  ServiceInfo:=nil;
+  // local services
+  for i:=0 to self.ServMgr.ServiceInfoList.Count-1 do
+  begin
+    ServiceInfo:=Self.ServMgr.ServiceInfoList.Items[i];
+    if ServiceInfo.ServiceType='GRPC' then Inc(n);
+    if n=Index then Break;
+    ServiceInfo:=nil
+  end;
+
+  if ServiceInfo=nil then
+  begin
+    // remote services
+    for i:=0 to Self.ServMgr.RemoteServiceInfoList.Count-1 do
+    begin
+      ServiceInfo:=Self.ServMgr.RemoteServiceInfoList.Items[i];
+      if ServiceInfo.ServiceType='GRPC' then Inc(n);
+      if n=Index then Break;
+      ServiceInfo:=nil
+    end;
+  end;
+
+  if Assigned(ServiceInfo) then
+  begin
+    Result:=TChatRoom.Create();
+    Result.DataObject:=ServiceInfo;
+  end;
+end;
+
+procedure TServiceDnmp.ShowChatRoomList();
+var
+  TmpFrame: TFrameChatRoomList;
+begin
+  TmpFrame:=TFrameChatRoomList.Create(nil);
+  TmpFrame.Serv:=self;
+  TmpFrame.Update();
+  ShowForm(TmpFrame, 'Chat room list');
 end;
 
 initialization

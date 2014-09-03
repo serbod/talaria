@@ -138,6 +138,22 @@ object FrameDnmpServices: TFrameDnmpServices
           ViewStyle = vsReport
         end
       end
+      object lbDescr: TLabel
+        Left = 144
+        Height = 15
+        Top = 3
+        Width = 29
+        Caption = 'Descr'
+        ParentColor = False
+      end
+      object edDescr: TEdit
+        Left = 181
+        Height = 23
+        Top = 3
+        Width = 251
+        ReadOnly = True
+        TabOrder = 1
+      end
     end
   end
   object alServices: TActionList

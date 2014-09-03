@@ -13,6 +13,7 @@ type
 
   TDnmpSerializerJson = class(TDnmpSerializer)
   public
+    function GetName(): string; override;
     function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
     function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString
       ): boolean; override;
@@ -32,6 +33,7 @@ type
   }
   TDnmpSerializerIni = class(TDnmpSerializer)
   public
+    function GetName(): string; override;
     function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
     function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString
       ): boolean; override;
@@ -55,6 +57,7 @@ type
   }
   TDnmpSerializerBencode = class(TDnmpSerializer)
   private
+    function GetName(): string; override;
     function StorageToBencode(AStorage: TDnmpStorage): AnsiString;
     function ReadBencodeValue(AStorage: TdnmpStorage; AString: AnsiString;
       var APos: Cardinal; ALen: Cardinal): boolean;
@@ -79,6 +82,11 @@ type
 implementation
 
 { TDnmpSerializerBencode }
+
+function TDnmpSerializerBencode.GetName: string;
+begin
+  Result:='BENCODE';
+end;
 
 function TDnmpSerializerBencode.StorageToBencode(AStorage: TDnmpStorage
   ): AnsiString;
@@ -292,6 +300,11 @@ end;
 
 { TDnmpSerializerIni }
 
+function TDnmpSerializerIni.GetName: string;
+begin
+  Result:='INI';
+end;
+
 function TDnmpSerializerIni.StorageToString(AStorage: TDnmpStorage): AnsiString;
 begin
   Result:=inherited StorageToString(AStorage);
@@ -399,6 +412,11 @@ begin
 end;
 
 { TDnmpSerializerJson }
+
+function TDnmpSerializerJson.GetName: string;
+begin
+  Result:='JSON';
+end;
 
 function TDnmpSerializerJson.StorageToString(AStorage: TDnmpStorage
   ): AnsiString;

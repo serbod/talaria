@@ -1,0 +1,80 @@
+object FrameChatRoomList: TFrameChatRoomList
+  Left = 0
+  Height = 379
+  Top = 0
+  Width = 496
+  ClientHeight = 379
+  ClientWidth = 496
+  TabOrder = 0
+  DesignLeft = 430
+  DesignTop = 181
+  object panBottom: TPanel
+    Left = 0
+    Height = 66
+    Top = 313
+    Width = 496
+    Align = alBottom
+    ClientHeight = 66
+    ClientWidth = 496
+    TabOrder = 0
+    object edNameFilter: TEdit
+      Left = 8
+      Height = 23
+      Top = 40
+      Width = 240
+      TabOrder = 0
+    end
+    object btnRequestList: TBitBtn
+      Left = 8
+      Height = 26
+      Top = 8
+      Width = 107
+      Action = actRequestList
+      TabOrder = 1
+    end
+    object btnCreateNew: TBitBtn
+      Left = 141
+      Height = 26
+      Top = 8
+      Width = 107
+      Action = actCreateNew
+      TabOrder = 2
+    end
+    object Button1: TButton
+      Left = 272
+      Height = 25
+      Top = 8
+      Width = 75
+      Action = actUpdateView
+      TabOrder = 3
+    end
+  end
+  object ScrollBox: TScrollBox
+    Left = 0
+    Height = 313
+    Top = 0
+    Width = 496
+    HorzScrollBar.Page = 1
+    VertScrollBar.Increment = 0
+    VertScrollBar.Page = 1
+    VertScrollBar.Smooth = True
+    VertScrollBar.Tracking = True
+    Align = alClient
+    TabOrder = 1
+  end
+  object alChatRooms: TActionList
+    left = 157
+    top = 134
+    object actUpdateView: TAction
+      Caption = 'Update view'
+      OnExecute = actUpdateViewExecute
+    end
+    object actRequestList: TAction
+      Caption = 'Request list'
+      OnExecute = actRequestListExecute
+    end
+    object actCreateNew: TAction
+      Caption = 'Create new'
+    end
+  end
+end

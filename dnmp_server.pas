@@ -210,6 +210,7 @@ begin
 
   else if MsgType='AUTH' then // Built-in Authentication service
   begin
+    Result:=True;
     sCmd:=Msg.Info.Values['cmd'];
 
     if sCmd='AURQ' then // Authentication request
@@ -233,6 +234,7 @@ begin
       // Msg for me
       if MsgType='INFO' then // Built-in Information service
       begin
+        Result:=True;
         sCmd:=Msg.Info.Values['cmd'];
 
         if sCmd='NLRQ' then // Nodelist request
@@ -270,7 +272,6 @@ begin
 
   end;
 
-  Result:=True;
 end;
 
 
