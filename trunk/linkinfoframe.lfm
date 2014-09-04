@@ -1,9 +1,9 @@
 object FrameLinkInfo: TFrameLinkInfo
   Left = 0
-  Height = 256
+  Height = 225
   Top = 0
   Width = 615
-  ClientHeight = 256
+  ClientHeight = 225
   ClientWidth = 615
   PopupMenu = pmLinkInfo
   TabOrder = 0
@@ -11,11 +11,11 @@ object FrameLinkInfo: TFrameLinkInfo
   DesignTop = 314
   object gbContact: TGroupBox
     Left = 8
-    Height = 200
+    Height = 168
     Top = 8
     Width = 264
     Caption = 'Contact'
-    ClientHeight = 182
+    ClientHeight = 150
     ClientWidth = 260
     TabOrder = 0
     object lbAddr: TLabel
@@ -35,22 +35,22 @@ object FrameLinkInfo: TFrameLinkInfo
       TabOrder = 0
       Text = 'edAddr'
     end
-    object lbAddr1: TLabel
+    object lbName: TLabel
       Left = 9
       Height = 23
       Top = 37
       Width = 55
       AutoSize = False
-      Caption = 'Nickname:'
+      Caption = 'Name:'
       ParentColor = False
     end
-    object edNick: TEdit
+    object edName: TEdit
       Left = 72
       Height = 23
       Top = 37
       Width = 112
       TabOrder = 1
-      Text = 'edNick'
+      Text = 'edName'
     end
     object lbGUID: TLabel
       Left = 9
@@ -114,31 +114,14 @@ object FrameLinkInfo: TFrameLinkInfo
       Proportional = True
       Stretch = True
     end
-    object lbKey: TLabel
-      Left = 9
-      Height = 23
-      Top = 149
-      Width = 79
-      AutoSize = False
-      Caption = 'Key:'
-      ParentColor = False
-    end
-    object edKey: TEdit
-      Left = 96
-      Height = 23
-      Top = 149
-      Width = 152
-      TabOrder = 5
-      Text = 'edKey'
-    end
   end
   object gbLinkInfo: TGroupBox
     Left = 280
-    Height = 176
+    Height = 200
     Top = 8
     Width = 304
     Caption = 'Link info'
-    ClientHeight = 158
+    ClientHeight = 182
     ClientWidth = 300
     TabOrder = 1
     object lbOwner: TLabel
@@ -226,18 +209,35 @@ object FrameLinkInfo: TFrameLinkInfo
       TabOrder = 4
       Text = 'edOtherInfo'
     end
+    object lbKey: TLabel
+      Left = 8
+      Height = 23
+      Top = 149
+      Width = 79
+      AutoSize = False
+      Caption = 'Key:'
+      ParentColor = False
+    end
+    object edKey: TEdit
+      Left = 88
+      Height = 23
+      Top = 149
+      Width = 208
+      TabOrder = 5
+      Text = 'edKey'
+    end
   end
   object btnSaveInfo: TButton
-    Left = 509
+    Left = 8
     Height = 25
-    Top = 200
+    Top = 184
     Width = 75
     Action = actSaveInfo
     TabOrder = 2
   end
   object alLinkInfo: TActionList
-    left = 104
-    top = 192
+    left = 520
+    top = 32
     object actUpdateInfo: TAction
       Caption = 'Update info'
       Hint = 'Read and show info'
@@ -254,8 +254,8 @@ object FrameLinkInfo: TFrameLinkInfo
     end
   end
   object pmLinkInfo: TPopupMenu
-    left = 200
-    top = 192
+    left = 520
+    top = 96
     object MenuItem1: TMenuItem
       Action = actUpdateInfo
     end

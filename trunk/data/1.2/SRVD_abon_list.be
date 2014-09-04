@@ -1,1 +1,1 @@
-d4:type15:DnmpContactList5:itemsd1:0d4:addr3:1.24:guid38:{FB054DD6-C3F1-499F-9A26-7E95DCEDAE57}11:senior_guid38:{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}5:state7:Unknown4:nick0:6:status0:7:picture0:eee
+d4:type15:DnmpContactList5:itemsd1:0d4:addr3:1.24:guid38:{FB054DD6-C3F1-499F-9A26-7E95DCEDAE57}11:senior_guid38:{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}5:state7:Unknown4:name0:6:status0:7:picture0:eee

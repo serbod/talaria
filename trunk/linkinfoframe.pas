@@ -22,7 +22,7 @@ type
     edIPAddr: TEdit;
     edPhoneNo: TEdit;
     edOwner: TEdit;
-    edNick: TEdit;
+    edName: TEdit;
     edGUID: TEdit;
     edLocation: TEdit;
     edOtherInfo: TEdit;
@@ -33,7 +33,7 @@ type
     gbLinkInfo: TGroupBox;
     imgPicture: TImage;
     lbAddr: TLabel;
-    lbAddr1: TLabel;
+    lbName: TLabel;
     lbGUID: TLabel;
     lbIPAddr: TLabel;
     lbPhoneNo: TLabel;
@@ -132,7 +132,7 @@ var
 begin
   if not Assigned(LinkInfo) then Exit;
   edAddr.Text:=LinkInfo.AddrStr();
-  edNick.Text:=LinkInfo.Nick;
+  edName.Text:=LinkInfo.Name;
   edGUID.Text:=LinkInfo.GUID;
   edSGUID.Text:=LinkInfo.SeniorGUID;
   edStatusMessage.Text:=LinkInfo.StatusMessage;
@@ -165,7 +165,7 @@ var
   ss: TStringStream;
 begin
   LinkInfo.Addr:=StrToAddr(Trim(edAddr.Text));
-  LinkInfo.Nick:=Trim(edNick.Text);
+  LinkInfo.Name:=Trim(edName.Text);
   LinkInfo.GUID:=Trim(edGUID.Text);
   LinkInfo.SeniorGUID:=Trim(edSGUID.Text);
   LinkInfo.StatusMessage:=Trim(edStatusMessage.Text);

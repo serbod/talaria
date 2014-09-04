@@ -158,7 +158,7 @@ begin
   if Assigned(AAbonent) then
   begin
     Result.AuthorAddr:=AAbonent.Addr;
-    Result.AuthorName:=AAbonent.Nick;
+    Result.AuthorName:=AAbonent.Name;
   end;
   self.AddItem(Result);
 end;
@@ -231,7 +231,7 @@ begin
   if Assigned(Abon) then
   begin
     Result.AuthorAddr:=Abon.Addr;
-    Result.AuthorName:=Abon.Nick;
+    Result.AuthorName:=Abon.Name;
   end;
 end;
 
@@ -323,7 +323,7 @@ procedure TDnmpMailMessage.FillMsg(Msg: TDnmpMsg);
 begin
   if not Assigned(Msg) then Exit;
   //sl.Values['name']:=self.ServiceInfo.Name;
-  Msg.MsgType:='MAIL';
+  Msg.MsgType:=csMAIL;
   Msg.Info.Values['author_addr']:=AddrToStr(AuthorAddr);
   Msg.Info.Values['author_name']:=AuthorName;
   Msg.Info.Values['author_guid']:=AuthorGUID;

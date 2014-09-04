@@ -139,7 +139,7 @@ type
   TDnmpContact = class(TInterfacedObject)
   public
     { Contact name }
-    Nick: string;
+    Name: string;
     { point address }
     Addr: TAddr;
     { GUID assigned when contact approved by node }
@@ -171,7 +171,7 @@ type
     function GetByGUID(sGUID: string): TDnmpContact;
     function AddByGUID(sGUID: string): TDnmpContact;
     function DelByGUID(sGUID: string): TDnmpContact;
-    function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sNick, sState, sStatus: string): TDnmpContact; overload;
+    function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName, sState, sStatus: string): TDnmpContact; overload;
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
@@ -197,7 +197,6 @@ type
   { Link information. Refcounted. }
   TDnmpLinkInfo = class(TDnmpContact)
   public
-    Name: string;
     { Owner info (name, organization, etc) }
     Owner: string;
     { Location info (address, region) }
@@ -832,7 +831,7 @@ begin
   end;
 end;
 
-function TDnmpContactList.UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sNick,
+function TDnmpContactList.UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName,
   sState, sStatus: string): TDnmpContact;
 begin
   Result:=GetByGUID(sGUID);
@@ -852,7 +851,7 @@ begin
     self.Add(Result);
     if Assigned(ParentList) then ParentList.Add(Result);
   end;
-  Result.Nick:=sNick;
+  Result.Name:=sName;
   Result.Addr:=Addr;
   Result.StateFromStr(sState);
   Result.StatusMessage:=sStatus;
@@ -938,7 +937,7 @@ begin
     // Send service info
 //    sl.Values['guid']:=Item.GUID;
 //    sl.Values['state']:=Item.Status;
-//    sl.Values['nick']:=Item.Name;
+//    sl.Values['name']:=Item.Name;
 //    sl.Values['addr']:=AddrToStr(Item.Addr);
 //    sl.Values['rights']:='';
 //    sl.Values['status']:=Item.StatusMsg;
@@ -947,7 +946,7 @@ begin
     sl.Add(Item.GUID);
     sl.Add(Item.SeniorGUID);
     sl.Add(Item.StateStr());
-    sl.Add(Item.Nick);
+    sl.Add(Item.Name);
     sl.Add(Item.StatusMessage);
     slData.Add(sl.DelimitedText);
   end;
@@ -987,7 +986,7 @@ begin
   Result.Add('guid', Self.GUID);
   Result.Add('senior_guid', Self.SeniorGUID);
   Result.Add('state', Self.StateStr());
-  Result.Add('nick', Self.Nick);
+  Result.Add('name', Self.Name);
   Result.Add('status', Self.StatusMessage);
   Result.Add('picture', Self.Picture);
 end;
@@ -1001,7 +1000,7 @@ begin
   Self.GUID:=Storage.GetString('guid');
   Self.SeniorGUID:=Storage.GetString('senior_guid');
   Self.StateFromStr(Storage.GetString('state'));
-  Self.Nick:=Storage.getString('nick');
+  Self.Name:=Storage.getString('name');
   Self.StatusMessage:=Storage.GetString('status');
   Self.Picture:=Storage.GetString('picture');
   Result:=True;
@@ -1031,7 +1030,7 @@ end;
 procedure TDnmpContact.Assign(Item: TDnmpContact);
 begin
   if not Assigned(Item) then Exit;
-  Self.Nick:=Item.Nick;
+  Self.Name:=Item.Name;
   Self.Addr:=Item.Addr;
   Self.GUID:=Item.GUID;
   Self.SeniorGUID:=Item.SeniorGUID;
@@ -1544,7 +1543,6 @@ begin
   Result.Add('addr', Self.AddrStr);
   Result.Add('guid', Self.GUID);
   Result.Add('senior_guid', Self.SeniorGUID);
-  Result.Add('nick', Self.Nick);
   Result.Add('name', Self.Name);
   Result.Add('status_msg', Self.StatusMessage);
   Result.Add('picture', Self.Picture);
@@ -1565,7 +1563,6 @@ begin
   Self.Addr:=StrToAddr(Storage.GetString('addr'));
   Self.GUID:=Storage.GetString('guid');
   Self.SeniorGUID:=Storage.GetString('senior_guid');
-  Self.Nick:=Storage.getString('nick');
   Self.Name:=Storage.getString('name');
   Self.StatusMessage:=Storage.getString('status_msg');
   Self.Picture:=Storage.getString('picture');

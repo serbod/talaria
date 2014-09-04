@@ -27,7 +27,7 @@ type
     procedure AddTestContacts();
   public
     { public declarations }
-    //SvcMgr: TDnmpServiceManager;
+    Mgr: TDnmpManager;
     ContactList: TDnmpContactList;
     procedure UpdateList();
     procedure Update(); override;
@@ -61,7 +61,7 @@ begin
     Item.Addr.Node:=1;
     Item.Addr.Point:=1+i;
     Item.GUID:=GenerateGUID();
-    Item.Nick:='Point '+AddrToStr(Item.Addr);
+    Item.Name:='Point '+AddrToStr(Item.Addr);
 
     ContactList.Add(Item);
   end;
@@ -123,7 +123,7 @@ begin
     lb.Width:=200;
 
     lb.Font.Size:=12;
-    lb.Caption:=Item.Nick;
+    lb.Caption:=Item.Name;
     lb.ShowHint:=True;
     lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
 

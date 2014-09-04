@@ -99,7 +99,7 @@ begin
   s:=InputBox('Channel name', 'Channel name: ', '');
   if Trim(s)='' then Exit;
   s:='#'+s;
-  TmpService:=SvcMgr.GetService('GRPC', s, True);
+  TmpService:=SvcMgr.GetService(csGRPC, s, True);
   if Assigned(TmpService) then Core.AddServicePage(TmpService);
   Update();
 end;
@@ -134,7 +134,7 @@ begin
       li:=lvOwners.Items.Add();
 
       li.Caption:=AddrToStr(Abon.Addr);
-      li.SubItems.Add(Abon.Nick);
+      li.SubItems.Add(Abon.Name);
       li.SubItems.Add(Abon.StateStr());
       li.SubItems.Add(Abon.GUID);
       li.SubItems.Add(Abon.SeniorGUID);

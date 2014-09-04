@@ -152,7 +152,7 @@ begin
 
   // mail page
   frame:=TFrameMailbox.Create(nil);
-  (frame as TFrameMailbox).MailRoom:=(ServiceDnmpNode.ServMgr.GetService('MAIL','') as TDnmpMail);
+  (frame as TFrameMailbox).MailRoom:=(ServiceDnmpNode.ServMgr.GetService(csMAIL,'') as TDnmpMail);
   (frame as TFrameMailbox).Update();
   AddPage(frame, 'Mail');
 
@@ -374,7 +374,7 @@ function TContactItem.FGetCaption(): string;
 begin
   Result:='Contact';
   if not Assigned(DataObject) then Exit;
-  if (DataObject is TDnmpContact) then Result:=(DataObject as TDnmpContact).Nick;
+  if (DataObject is TDnmpContact) then Result:=(DataObject as TDnmpContact).Name;
 end;
 
 function TContactItem.FGetHint(): string;
@@ -483,7 +483,7 @@ begin
     end;
   end
 
-  else if Sender='GRPC' then
+  else if Sender=csGRPC then
   begin
     ExtractCmd(Text, sCmd, sParam);
 
@@ -557,7 +557,7 @@ begin
     end;
   end;
   // create new chat room
-  Grpc:=(self.ServMgr.GetService('GRPC', AChatRoomName, True) as TDnmpGrpc);
+  Grpc:=(self.ServMgr.GetService(csGRPC, AChatRoomName, True) as TDnmpGrpc);
   ChatRoom:=TChatRoom.Create();
   ChatRoom.DataObject:=Grpc;
   // chat page
@@ -577,13 +577,13 @@ begin
   for i:=0 to self.ServMgr.ServiceInfoList.Count-1 do
   begin
     si:=self.ServMgr.ServiceInfoList.Items[i];
-    if si.ServiceType='GRPC' then Inc(Result);
+    if si.ServiceType=csGRPC then Inc(Result);
   end;
   // remote services
   for i:=0 to self.ServMgr.RemoteServiceInfoList.Count-1 do
   begin
     si:=self.ServMgr.RemoteServiceInfoList.Items[i];
-    if si.ServiceType='GRPC' then Inc(Result);
+    if si.ServiceType=csGRPC then Inc(Result);
   end;
 end;
 
@@ -599,7 +599,7 @@ begin
   for i:=0 to self.ServMgr.ServiceInfoList.Count-1 do
   begin
     ServiceInfo:=Self.ServMgr.ServiceInfoList.Items[i];
-    if ServiceInfo.ServiceType='GRPC' then Inc(n);
+    if ServiceInfo.ServiceType=csGRPC then Inc(n);
     if n=Index then Break;
     ServiceInfo:=nil
   end;
@@ -610,7 +610,7 @@ begin
     for i:=0 to Self.ServMgr.RemoteServiceInfoList.Count-1 do
     begin
       ServiceInfo:=Self.ServMgr.RemoteServiceInfoList.Items[i];
-      if ServiceInfo.ServiceType='GRPC' then Inc(n);
+      if ServiceInfo.ServiceType=csGRPC then Inc(n);
       if n=Index then Break;
       ServiceInfo:=nil
     end;
