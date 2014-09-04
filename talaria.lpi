@@ -101,7 +101,6 @@
       <Unit9>
         <Filename Value="Misc.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Misc"/>
       </Unit9>
       <Unit10>
         <Filename Value="dnmpservicesframe.pas"/>
@@ -132,7 +131,6 @@
         <ComponentName Value="FrameMailbox"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="MailboxFrame"/>
       </Unit13>
       <Unit14>
         <Filename Value="dnmp_mail.pas"/>
@@ -170,7 +168,6 @@
       <Unit19>
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_serializers"/>
       </Unit19>
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
@@ -204,9 +201,6 @@
         </Win32>
       </Options>
     </Linking>
-    <Other>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

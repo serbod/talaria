@@ -14,14 +14,14 @@ type
     Name: string;        // service name
     ParentName: string;  // parent service name
     Descr: string;       // multi-line description
-    HostAddr: TAddr;     // address of service provider (?)
-    Donor: TDnmpContact; // uplink
-    Subscribers: TDnmpContactList; // downlinks
+    ProviderAddr: TAddr; // service uplink
     Rating: Integer;     // service rating
-    //Abonents: TDnmpAbonentList;
     Owners: TDnmpContactList;  // owners list
+    //Abonents: TDnmpAbonentList;
+    Subscribers: TDnmpContactList; // downlinks
     AbonentsCount: Integer;    // abonents count (approximately)
-    constructor Create();
+    { ParentContactList needed for Owners and Subscribers }
+    constructor Create(ParentContactList: TDnmpContactList);
     destructor Destroy(); override;
     //function AbonentsCount(): Integer;
     function Owner(): TDnmpContact; // first owner
@@ -37,6 +37,7 @@ type
     function GetItem(Index: Integer): TDnmpServiceInfo;
     procedure SetItem(Index: Integer; Value: TDnmpServiceInfo);
   public
+    ParentContactList: TDnmpContactList;
     property Items[Index: Integer]: TDnmpServiceInfo read GetItem write SetItem; default;
     function GetServiceByTypeName(sType, sName: string): TDnmpServiceInfo;
     function UpdateServiceInfo(sType, sName, sParent, sProvider, sRating, sAbonCount, sDescr: string): TDnmpServiceInfo;
@@ -173,6 +174,8 @@ var
   sPrefixAbonent: string = '@abonent:';
 
 const
+  csGRPC = 'GRPC';
+  csMAIL = 'MAIL';
   csSRVDInfoFileName = 'SRVD_info_list';
   csSRVDAbonFileName = 'SRVD_abon_list';
   csSRVDKnownFileName = 'SRVD_known_list';
@@ -183,12 +186,14 @@ uses Misc, dnmp_grpc, dnmp_mail;
 
 
 // === TDnmpServiceInfo ===
-constructor TDnmpServiceInfo.Create();
+constructor TDnmpServiceInfo.Create(ParentContactList: TDnmpContactList);
 begin
   inherited Create();
   //Self.Abonents:=TDnmpAbonentList.Create(False);
   Self.Subscribers:=TDnmpContactList.Create(False);
+  Self.Subscribers.ParentList:=ParentContactList;
   Self.Owners:=TDnmpContactList.Create(False);
+  Self.Owners.ParentList:=ParentContactList;
 end;
 
 destructor TDnmpServiceInfo.Destroy();
@@ -199,7 +204,7 @@ begin
   inherited Destroy();
 end;
 
-function TDnmpServiceInfo.Owner: TDnmpContact;
+function TDnmpServiceInfo.Owner(): TDnmpContact;
 begin
   Result:=nil;
   if Owners.Count>0 then Result:=Owners.Items[0];
@@ -218,18 +223,13 @@ begin
   Result.Add('name', self.Name);
   Result.Add('parent_name', self.ParentName);
   Result.Add('description', self.Descr);
-  Result.Add('host_addr', AddrToStr(Self.HostAddr));
+  Result.Add('provider_addr', AddrToStr(Self.ProviderAddr));
   Result.Add('rating', self.Rating);
 
   // Abonents list
   //Result.Add('abonents', self.Abonents.ToStorage());
   // Owners list
   Result.Add('owners', Self.Owners.ToStorage());
-  // Donor
-  if Assigned(Self.Donor) then
-  begin
-    Result.Add('donor', Self.Donor.ToStorage());
-  end;
   // Subscribers
   Result.Add('subscribers', Self.Subscribers.ToStorage());
 end;
@@ -244,16 +244,13 @@ begin
   self.Name:=Storage.GetString('name');
   self.ParentName:=Storage.GetString('parent_name');
   self.Descr:=Storage.GetString('description');
-  Self.HostAddr:=StrToAddr(Storage.GetString('host_addr'));
+  Self.ProviderAddr:=StrToAddr(Storage.GetString('provider_addr'));
   self.Rating:=Storage.GetInteger('rating');
 
   // Abonents list
   //self.Abonents.FromStorage(Storage.GetObject('abonents'));
   // Owners list
   self.Owners.FromStorage(Storage.GetObject('owners'));
-  // Donor
-  {TODO: read donor from contacts}
-  //self.Donor.FromStorage(Storage.GetObject('subscribers'));
   // Subscribers
   self.Subscribers.FromStorage(Storage.GetObject('subscribers'));
   Result:=True;
@@ -265,7 +262,7 @@ begin
   Self.Name:=Item.Name;
   Self.Descr:=Item.Descr;
   Self.AbonentsCount:=Item.AbonentsCount;
-  Self.HostAddr:=Item.HostAddr;
+  Self.ProviderAddr:=Item.ProviderAddr;
 end;
 
 
@@ -305,13 +302,13 @@ begin
   si:=self.GetServiceByTypeName(sType, sName);
   if not Assigned(si) then
   begin
-    si:=TDnmpServiceInfo.Create();
+    si:=TDnmpServiceInfo.Create(Self.ParentContactList);
     self.Add(si);
     si.ServiceType:=sType;
     si.Name:=sName;
   end;
   if Length(sParent)>0 then si.ParentName:=sParent;
-  if Length(sProvider)>0 then si.HostAddr:=StrToAddr(sProvider);
+  if Length(sProvider)>0 then si.ProviderAddr:=StrToAddr(sProvider);
   if Length(sRating)>0 then si.Rating:=StrToIntDef(sRating, 0);
   if Length(sAbonCount)>0 then si.AbonentsCount:=StrToIntDef(sAbonCount, 0);
   if Length(sDescr)>0 then si.Descr:=sDescr;
@@ -350,7 +347,7 @@ begin
     SubStorage.Add('name', si.Name);
     SubStorage.Add('parent_name', si.ParentName);
     SubStorage.Add('description', si.Descr);
-    SubStorage.Add('host_addr', AddrToStr(si.HostAddr));
+    SubStorage.Add('provider_addr', AddrToStr(si.ProviderAddr));
     SubStorage.Add('rating', si.Rating);
     Result.Add(IntToStr(i), SubStorage);
   end;
@@ -370,7 +367,7 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    Item:=TDnmpServiceInfo.Create();
+    Item:=TDnmpServiceInfo.Create(Self.ParentContactList);
     if not Item.FromStorage(SubStorage.GetObject(i)) then
     begin
       Item.Free();
@@ -395,13 +392,13 @@ begin
   begin
     SubStorage:=Storage.GetObject(i);
     if SubStorage.StorageType <> stDictionary then Continue;
-    Item:=TDnmpServiceInfo.Create();
+    Item:=TDnmpServiceInfo.Create(Self.ParentContactList);
     // Basic info
     Item.ServiceType:=SubStorage.GetString('type');
     Item.Name:=SubStorage.GetString('name');
     Item.ParentName:=SubStorage.GetString('parent_name');
     Item.Descr:=SubStorage.GetString('description');
-    Item.HostAddr:=StrToAddr(SubStorage.GetString('host_addr'));
+    Item.ProviderAddr:=StrToAddr(SubStorage.GetString('provider_addr'));
     Item.Rating:=SubStorage.GetInteger('rating');
 
     Item2:=self.GetServiceByTypeName(Item.ServiceType, Item.Name);
@@ -579,12 +576,17 @@ begin
   FServiceType:='SRVD';
   ServiceTypes:=TStringList.Create();
   ServiceTypes.Add(ServiceType);
-  ServiceTypes.Add('GRPC');
-  ServiceTypes.Add('MAIL');
+  ServiceTypes.Add(csGRPC);
+  ServiceTypes.Add(csMAIL);
 
   Self.AllAbonents:=TDnmpContactList.Create(True);
+  // local services
   self.ServiceInfoList:=TDnmpServiceInfoList.Create(True);
+  self.ServiceInfoList.ParentContactList:=Self.AllAbonents;
+  // remote services
   self.RemoteServiceInfoList:=TDnmpServiceInfoList.Create(True);
+  self.RemoteServiceInfoList.ParentContactList:=Self.AllAbonents;
+
   Self.ServiceList:=TDnmpServiceList.Create(True);
 
   self.DefaultOwner:=self.AllAbonents.GetByGUID(AMgr.MyInfo.GUID);
@@ -639,7 +641,7 @@ begin
   Result:=inherited Start();
   // default services
   // Mail
-  si:=ServiceInfoList.UpdateServiceInfo('MAIL', '', '', '', '', '', 'Mailer');
+  si:=ServiceInfoList.UpdateServiceInfo(csMAIL, '', '', '', '', '', 'Mailer');
   if Assigned(si) then self.CreateService(si);
 
   Result:=True;
@@ -763,7 +765,7 @@ begin
   Result:=self.ServiceList.GetService(ServiceInfo.ServiceType, ServiceInfo.Name);
   if Assigned(Result) then Exit;
 
-  if ServiceInfo.ServiceType='GRPC' then
+  if ServiceInfo.ServiceType=csGRPC then
   begin
     if Mgr.ServerMode then
       Result:=TDnmpGrpcServer.Create(Mgr, Self, ServiceInfo)
@@ -772,7 +774,7 @@ begin
     (Result as TDnmpGrpc).Author:=self.DefaultOwner;
   end;
 
-  if ServiceInfo.ServiceType='MAIL' then
+  if ServiceInfo.ServiceType=csMAIL then
   begin
     if Mgr.ServerMode then
       Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo)
@@ -807,7 +809,7 @@ begin
   if sAction='add' then
   begin
     if Assigned(item) then Exit;
-    item:=TDnmpServiceInfo.Create();
+    item:=TDnmpServiceInfo.Create(self.ServiceInfoList.ParentContactList);
     item.ServiceType:=sType;
     item.Name:=sName;
     if sParams='' then
@@ -815,7 +817,7 @@ begin
       if Assigned(DefaultOwner) then item.Owners.AddByGUID(DefaultOwner.GUID);
     end;
     item.Owners.AddByGUID(sParams);
-    item.HostAddr:=Mgr.MyInfo.Addr;
+    item.ProviderAddr:=Mgr.MyInfo.Addr;
     self.ServiceInfoList.Add(item);
     //self.AddService(Self.CreateService(item));
   end
@@ -888,7 +890,7 @@ begin
     sl.Values['name']:=si.Name;
     sl.Values['parent']:=si.ParentName;
     sl.Values['abonent_count']:=IntToStr(si.AbonentsCount);
-    sl.Values['provider']:=AddrToStr(si.HostAddr);
+    sl.Values['provider_addr']:=AddrToStr(si.ProviderAddr);
     sl.Values['rating']:=IntToStr(si.Rating);
     //sl.Values['provider']:=si.;
     for n:=0 to si.Owners.Count-1 do

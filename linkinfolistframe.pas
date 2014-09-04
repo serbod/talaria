@@ -212,7 +212,6 @@ begin
 
   n:=1;
   SetRow(n, 'Addr', AddrToStr(LinkInfo.Addr));
-  SetRow(n, 'Nick', LinkInfo.Nick);
   SetRow(n, 'Name', LinkInfo.Name);
   SetRow(n, 'GUID', LinkInfo.GUID);
   SetRow(n, 'SeniorGUID', LinkInfo.SeniorGUID);

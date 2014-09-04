@@ -113,7 +113,7 @@ begin
     // addr
     lvItem.Caption:=Item.AddrStr();
     // name
-    lvItem.SubItems.Append(Item.Nick);
+    lvItem.SubItems.Append(Item.Name);
     // state
     lvItem.SubItems.Append(Item.StateStr());
   end;
@@ -141,7 +141,7 @@ begin
     // addr
     lvItem.Caption:=Item.LinkInfo.AddrStr();
     // name
-    lvItem.SubItems.Append(Item.LinkInfo.Nick);
+    lvItem.SubItems.Append(Item.LinkInfo.Name);
     // state
     lvItem.SubItems.Append(Item.LinkInfo.StateStr());
     // info
@@ -174,7 +174,6 @@ begin
 
   n:=1;
   SetRow(n, 'Addr', AddrToStr(LinkInfo.Addr));
-  SetRow(n, 'Nick', LinkInfo.Nick);
   SetRow(n, 'Name', LinkInfo.Name);
   SetRow(n, 'GUID', LinkInfo.GUID);
   SetRow(n, 'SeniorGUID', LinkInfo.SeniorGUID);

@@ -217,7 +217,7 @@ begin
     for i:=0 to Grpc.ServiceMgr.AllAbonents.Count-1 do
     begin
       Item:=Grpc.ServiceMgr.AllAbonents[i];
-      lboxAbonentsList.AddItem(AddrToStr(Item.Addr)+': '+Item.Nick, Item);
+      lboxAbonentsList.AddItem(AddrToStr(Item.Addr)+': '+Item.Name, Item);
     end;
   end;
 end;
@@ -231,7 +231,7 @@ begin
   for i:=0 to Grpc.UsersList.Count-1 do
   begin
     Abon:=Grpc.UsersList[i];
-    lboxUsersList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, Abon);
+    lboxUsersList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Name, Abon);
   end;
 end;
 
@@ -247,7 +247,7 @@ begin
     BanItem:=Grpc.BanList.GetItem(i);
     Abon:=Grpc.GetAbonentByGUID(BanItem.AbonentGUID);
     if Assigned(Abon) then
-      lboxBanList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Nick, BanItem)
+      lboxBanList.AddItem(AddrToStr(Abon.Addr)+': '+Abon.Name, BanItem)
     else
       lboxBanList.AddItem(BanItem.AbonentGUID+': '+BanItem.Reason, BanItem);
   end;

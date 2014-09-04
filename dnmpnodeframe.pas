@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
   ExtCtrls, dnmp_unit, dnmp_services, LinkInfoListFrame, DnmpServicesFrame,
-  ConfigFrame, LinkListFrame, LinkInfoFrame, Core;
+  ConfigFrame, LinkListFrame, LinkInfoFrame, Core, ContactListFrame;
 
 type
 
@@ -55,7 +55,7 @@ type
     FrameLinks: TFrameLinkList;
     FrameNodesList: TFrameLinkInfoList;
     FramePointsList: TFrameLinkInfoList;
-    FrameContactsList: TFrameLinkInfoList;
+    FrameContactsList: TFrameContactList;
     FrameServices: TFrameDnmpServices;
     FrameMyInfo: TFrameLinkInfo;
     FrameConfig: TFrameConfig;
@@ -192,11 +192,21 @@ begin
     Mgr.OnIncomingMsg:=@MgrMsgHandler;
     Mgr.OnLog:=@MgrLogHandler;
     if Assigned(FrameLinks) then FrameLinks.Mgr:=Mgr;
-    if Assigned(FrameNodesList) then FrameNodesList.InfoList:=Mgr.NodeList;
-    if Assigned(FrameNodesList) then FrameNodesList.DnmpMgr:=Mgr;
-    if Assigned(FramePointsList) then FramePointsList.InfoList:=Mgr.PointList;
-    if Assigned(FramePointsList) then FramePointsList.DnmpMgr:=Mgr;
-    if Assigned(FrameContactsList) then FrameContactsList.InfoList:=Mgr.LinkInfoList;
+    if Assigned(FrameNodesList) then
+    begin
+      FrameNodesList.InfoList:=Mgr.NodeList;
+      FrameNodesList.DnmpMgr:=Mgr;
+    end;
+    if Assigned(FramePointsList) then
+    begin
+      FramePointsList.InfoList:=Mgr.PointList;
+      FramePointsList.DnmpMgr:=Mgr;
+    end;
+    if Assigned(FrameContactsList) then
+    begin
+      FrameContactsList.ContactList:=Mgr.ContactList;
+      FrameContactsList.Mgr:=Mgr;
+    end;
     if Assigned(FrameMyInfo) then FrameMyInfo.LinkInfo:=Mgr.MyInfo;
     if Assigned(FrameConfig) then
     begin
@@ -260,7 +270,7 @@ begin
     end;
   end
 
-  else if Sender='GRPC' then
+  else if Sender=csGRPC then
   begin
     ExtractCmd(Text, sCmd, sParam);
 
@@ -313,7 +323,7 @@ begin
   FramePointsList.Parent:=tsPoints;
   FramePointsList.Align:=alClient;
   // Contacts
-  FrameContactsList:=TFrameLinkInfoList.Create(tsContacts);
+  FrameContactsList:=TFrameContactList.Create(tsContacts);
   FrameContactsList.Parent:=tsContacts;
   FrameContactsList.Align:=alClient;
   // Services
@@ -336,10 +346,10 @@ var
   SomeService: TDnmpService;
 begin
   if not Assigned(ServMgr) then Exit;
-  SomeService:=ServMgr.ServiceList.GetService('GRPC', sName);
+  SomeService:=ServMgr.ServiceList.GetService(csGRPC, sName);
   if not Assigned(SomeService) then
   begin
-    ServiceInfo:=ServMgr.ServiceInfoList.GetServiceByTypeName('GRPC', sName);
+    ServiceInfo:=ServMgr.ServiceInfoList.GetServiceByTypeName(csGRPC, sName);
     if not Assigned(ServiceInfo) then Exit;
     SomeService:=ServMgr.CreateService(ServiceInfo);
     if Assigned(SomeService) then Core.AddServicePage(SomeService);

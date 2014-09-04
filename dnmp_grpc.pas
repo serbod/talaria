@@ -473,7 +473,7 @@ begin
   if Assigned(Author) then
   begin
     TempItem.AuthorAddr:=Author.Addr;
-    TempItem.AuthorName:=Author.Nick;
+    TempItem.AuthorName:=Author.Name;
   end;
   self.Add(TempItem);
   Result:=TempItem;
@@ -565,7 +565,7 @@ begin
   if Assigned(Abon) then
   begin
     Result.AuthorAddr:=Abon.Addr;
-    Result.AuthorName:=Abon.Nick;
+    Result.AuthorName:=Abon.Name;
   end;
 end;
 
@@ -604,7 +604,7 @@ begin
   Result:='';
   sParams:=Text;
   sCmd:=ExtractFirstWord(sParams);
-  if SameAddr(Addr, EmptyAddr()) then Addr:=ServiceInfo.HostAddr;
+  if SameAddr(Addr, EmptyAddr()) then Addr:=ServiceInfo.ProviderAddr;
   Mgr.SendDataMsg(Addr, Self.ServiceInfo.ServiceType, 'name='+Self.ServiceInfo.Name+#13+#10+'cmd='+sCmd, sParams);
 end;
 
@@ -1147,7 +1147,7 @@ var
   Msg: TDnmpMsg;
 begin
   if not Assigned(ChanMsg) then Exit;
-  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr, 'GRPC', '', '');
+  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr, csGRPC, '', '');
   Msg.Info.Values['name']:=ServiceInfo.Name;
   ChanMsg.FillMsg(Msg);
   // Broadcast to my points
@@ -1162,10 +1162,10 @@ begin
     end;
   end;
   { TODO : Broadcast to nodes }
-  if not SameNode(ServiceInfo.HostAddr, ChanMsg.AuthorAddr) then
+  if not SameNode(ServiceInfo.ProviderAddr, ChanMsg.AuthorAddr) then
   begin
     //SendChannelMsg(ServiceInfo.HostAddr, ChanMsg);
-    Msg.TargetAddr:=ServiceInfo.HostAddr;
+    Msg.TargetAddr:=ServiceInfo.ProviderAddr;
     Mgr.SendMsg(Msg);
   end;
   Msg.Free();
@@ -1180,7 +1180,7 @@ begin
   sCmdParams:=sCmd;
   sCmdName:=ExtractFirstWord(sCmdParams);
 
-  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr(), 'GRPC', '', sCmdParams);
+  Msg:=TDnmpMsg.Create(Mgr.MyInfo.Addr, EmptyAddr(), csGRPC, '', sCmdParams);
   Msg.Info.Values['name']:=ServiceInfo.Name;
   Msg.Info.Values['cmd']:=sCmdName;
 
@@ -1194,9 +1194,9 @@ begin
     end;
   end;
   { TODO : Broadcast to nodes }
-  if not SameNode(ServiceInfo.HostAddr, Mgr.MyInfo.Addr) then
+  if not SameNode(ServiceInfo.ProviderAddr, Mgr.MyInfo.Addr) then
   begin
-    Msg.TargetAddr:=ServiceInfo.HostAddr;
+    Msg.TargetAddr:=ServiceInfo.ProviderAddr;
     Mgr.SendMsg(Msg);
   end;
   Msg.Free();
