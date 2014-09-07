@@ -1,13 +1,7 @@
 unit Misc;
 
 interface
-uses SysUtils, ComCtrls, ValEdit, dnmp_unit, IniFiles, Classes, Windows;
-
-procedure LinkInfoToVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
-procedure LinkInfoFromVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
-
-procedure ShowLinkInfoList(lv: TListView; lil: TLinkInfoList);
-procedure ShowLinksList(lv: TListView; ll: TDnmpLinkList);
+uses SysUtils, ComCtrls, ValEdit, IniFiles, Classes, Windows;
 
 procedure IniToVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
 procedure IniFromVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
@@ -43,104 +37,6 @@ function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 
 
 implementation
-
-procedure LinkInfoToVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
-begin
-  if not Assigned(vle) then Exit;
-  if not Assigned(LinkInfo) then Exit;
-  vle.Strings.BeginUpdate();
-  vle.Strings.Clear();
-  vle.Values['Addr']:=AddrToStr(LinkInfo.Addr);
-  vle.Values['GUID']:=LinkInfo.GUID;
-  vle.Values['SeniorGUID']:=LinkInfo.SeniorGUID;
-  vle.Values['Name']:=LinkInfo.Name;
-  vle.Values['Owner']:=LinkInfo.Owner;
-  vle.Values['Location']:=LinkInfo.Location;
-  vle.Values['IpAddr']:=LinkInfo.IpAddr;
-  vle.Values['PhoneNo']:=LinkInfo.PhoneNo;
-  vle.Values['OtherInfo']:=LinkInfo.OtherInfo;
-  vle.Values['Rating']:=IntToStr(LinkInfo.Rating);
-  vle.Values['Key']:=LinkInfo.Key;
-  vle.Strings.EndUpdate();
-end;
-
-procedure LinkInfoFromVLE(LinkInfo: TDnmpLinkInfo; vle: TValueListEditor);
-begin
-  if not Assigned(vle) then Exit;
-  if not Assigned(LinkInfo) then Exit;
-  LinkInfo.Addr:=StrToAddr(vle.Values['Addr']);
-  LinkInfo.GUID:=vle.Values['GUID'];
-  LinkInfo.SeniorGUID:=vle.Values['SeniorGUID'];
-  LinkInfo.Name:=vle.Values['Name'];
-  LinkInfo.Owner:=vle.Values['Owner'];
-  LinkInfo.Location:=vle.Values['Location'];
-  LinkInfo.IpAddr:=vle.Values['IpAddr'];
-  LinkInfo.PhoneNo:=vle.Values['PhoneNo'];
-  LinkInfo.OtherInfo:=vle.Values['OtherInfo'];
-  LinkInfo.Rating:=StrToIntDef(vle.Values['Rating'], 1);
-  LinkInfo.Key:=vle.Values['Key'];
-end;
-
-procedure ShowLinkInfoList(lv: TListView; lil: TLinkInfoList);
-var
-  i, si, ic: Integer;
-  li: TDnmpLinkInfo;
-  lvi: TListItem;
-begin
-  lv.Items.BeginUpdate();
-  si:=lv.ItemIndex;
-  ic:=lil.Count;
-  while lv.Items.Count <> ic do
-  begin
-    if lv.Items.Count > ic then lv.Items.Delete(lv.Items.Count-1);
-    if lv.Items.Count < ic then lv.Items.Add();
-  end;
-  for i:=0 to ic-1 do
-  begin
-    li:=lil[i];
-    lvi:=lv.Items[i];
-    lvi.Data:=li;
-    lvi.Caption:=AddrToStr(li.Addr);
-    while lvi.SubItems.Count < 3 do lvi.SubItems.Add('');
-    lvi.SubItems[0]:=li.Name;
-    lvi.SubItems[1]:=LinkTypeToStr(li.LinkType);
-    if li.Online then lvi.SubItems[2]:='Online' else lvi.SubItems[2]:='Offline';
-  end;
-  if si < lv.Items.Count then lv.ItemIndex:=si;
-  lv.Items.EndUpdate();
-end;
-
-procedure ShowLinksList(lv: TListView; ll: TDnmpLinkList);
-var
-  i, si, ic: Integer;
-  li: TDnmpLinkInfo;
-  lvi: TListItem;
-  s: string;
-begin
-  lv.Items.BeginUpdate();
-  si:=lv.ItemIndex;
-  ic:=ll.Count;
-  while lv.Items.Count <> ic do
-  begin
-    if lv.Items.Count > ic then lv.Items.Delete(lv.Items.Count-1);
-    if lv.Items.Count < ic then lv.Items.Add();
-  end;
-  for i:=0 to ic-1 do
-  begin
-    li:=TDnmpLink(ll[i]).LinkInfo;
-    lvi:=lv.Items[i];
-    lvi.Data:=ll[i];
-    lvi.Caption:=AddrToStr(li.Addr);
-    lvi.SubItems.Clear();
-    lvi.SubItems.Add(li.Name);
-    lvi.SubItems.Add(LinkTypeToStr(TDnmpLink(ll[i]).LinkType));
-
-    if TDnmpLink(ll[i]).Active then lvi.SubItems.Add('Active')
-    else lvi.SubItems.Add('Down');
-  end;
-  if si < lv.Items.Count then lv.ItemIndex:=si;
-  lv.Items.EndUpdate();
-end;
 
  procedure IniToVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
 var

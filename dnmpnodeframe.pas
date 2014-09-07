@@ -118,7 +118,7 @@ end;
 
 procedure TFrameDnmp.actContactListExecute(Sender: TObject);
 begin
-  ShowContactList(ServMgr.AllAbonents);
+  ShowContactList(Mgr.ContactList);
 end;
 
 procedure TFrameDnmp.actClientExecute(Sender: TObject);

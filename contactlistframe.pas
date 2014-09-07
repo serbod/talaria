@@ -6,13 +6,23 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, Core, dnmp_unit,
-  dnmp_services, ExtCtrls, StdCtrls, ActnList, Menus;
+  dnmp_services, ExtCtrls, StdCtrls, ActnList, Menus, Graphics;
 
 type
+  TVisualItem = class(TCollectionItem)
+  public
+    Item: TDnmpContact;
+    Rect: TRect;
+    Image: TImage;
+    lbName: TStaticText;
+    Background: TShape;
+    Selected: boolean;
+  end;
 
   { TFrameContactList }
 
   TFrameContactList = class(TFrame)
+    actDeleteContact: TAction;
     actTest1: TAction;
     alContactList: TActionList;
     imgDefault: TImage;
@@ -20,15 +30,21 @@ type
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
+    procedure actDeleteContactExecute(Sender: TObject);
     procedure actTest1Execute(Sender: TObject);
     procedure tcGroupsChange(Sender: TObject);
   private
     { private declarations }
+    VisualItems: TCollection;
     procedure AddTestContacts();
+    function AddVisualItem(Item: TDnmpContact): TVisualItem;
+    function SelectedItem(): TDnmpContact;
   public
     { public declarations }
     Mgr: TDnmpManager;
     ContactList: TDnmpContactList;
+    procedure AfterConstruction(); override;
+    procedure BeforeDestruction(); override;
     procedure UpdateList();
     procedure Update(); override;
   end;
@@ -50,6 +66,11 @@ begin
   Update();
 end;
 
+procedure TFrameContactList.actDeleteContactExecute(Sender: TObject);
+begin
+  //
+end;
+
 procedure TFrameContactList.AddTestContacts();
 var
   i: integer;
@@ -67,68 +88,114 @@ begin
   end;
 end;
 
-procedure TFrameContactList.UpdateList();
+function TFrameContactList.AddVisualItem(Item: TDnmpContact): TVisualItem;
 var
   i, x, y, h: integer;
-  Item: TDnmpContact;
   //Pan: TPanel;
   Image: TImage;
-  lb: TLabel;
+  lb: TStaticText;
   ss: TStringStream;
+begin
+  if not Assigned(ContactList) then Exit;
+  x:=0;
+  h:=24;
+  i:=VisualItems.Count;
+  y:=(h+2)*i;
+
+  //Result:=TVisualItem.Create();
+  Result:=(VisualItems.Add() as TVisualItem);
+  Result.Item:=Item;
+  Result.Rect.Top:=y;
+  Result.Rect.Left:=x;
+
+  // selected background
+  Result.Background:=TShape.Create(ScrollBox);
+  Result.Background.Name:='bg'+IntToStr(i);
+  Result.Background.Parent:=ScrollBox;
+  Result.Background.Left:=x;
+  Result.Background.Top:=y;
+  Result.Background.Shape:=stRectangle;
+  Result.Background.Pen.Color:=clNone;
+
+  // image
+  Image:=TImage.Create(ScrollBox);
+  Image.Name:='img'+IntToStr(i);
+  Image.Parent:=ScrollBox;
+  Image.Left:=x;
+  Image.Top:=y;
+  Image.Height:=h;
+  Image.Width:=h;
+
+  if Length(Item.Picture)>4 then
+  begin
+    ss:=TStringStream.Create(Item.Picture);
+    try
+      Image.Picture.LoadFromStream(ss);
+    finally
+      ss.Free();
+    end;
+  end
+  else
+  begin
+    Image.Picture.Assign(imgDefault.Picture);
+  end;
+  Result.Image:=Image;
+  x:=x+Image.Width+2;
+
+  // name
+  lb:=TStaticText.Create(ScrollBox);
+  lb.Name:='lb'+IntToStr(i);
+  lb.Parent:=ScrollBox;
+  lb.AutoSize:=False;
+  lb.Left:=x;
+  lb.Top:=y;
+  lb.Height:=h;
+  lb.Width:=200;
+
+  lb.Font.Size:=12;
+  lb.Caption:=Item.Name;
+  lb.ShowHint:=True;
+  lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  Result.lbName:=lb;
+  x:=x+lb.Width+2;
+
+  Result.Rect.Right:=x;
+  Result.Rect.Bottom:=y+h;
+
+  Result.Background.Width:=Result.Rect.Right-Result.Rect.Left;
+  Result.Background.Height:=Result.Rect.Bottom-Result.Rect.Top;
+end;
+
+function TFrameContactList.SelectedItem(): TDnmpContact;
+begin
+  //
+end;
+
+procedure TFrameContactList.AfterConstruction();
+begin
+  inherited AfterConstruction();
+  VisualItems:=TCollection.Create(TVisualItem);
+end;
+
+procedure TFrameContactList.BeforeDestruction();
+begin
+  FreeAndNil(VisualItems);
+  inherited BeforeDestruction();
+end;
+
+procedure TFrameContactList.UpdateList();
+var
+  i: integer;
 begin
   if not Assigned(ContactList) then Exit;
 
   // clear list
   for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
+  VisualItems.Clear();
 
-  y:=0;
-  h:=24;
   for i:=0 to ContactList.Count-1 do
   begin
-    Item:=ContactList.Items[i];
-    // add item
-    x:=0;
-    // image
-    Image:=TImage.Create(ScrollBox);
-    Image.Name:='img'+IntToStr(i);
-    Image.Parent:=ScrollBox;
-    Image.Left:=x;
-    Image.Top:=y;
-    Image.Height:=h;
-    Image.Width:=h;
-
-    if Length(Item.Picture)>4 then
-    begin
-      ss:=TStringStream.Create(Item.Picture);
-      try
-        Image.Picture.LoadFromStream(ss);
-      finally
-        ss.Free();
-      end;
-    end
-    else
-    begin
-      Image.Picture.Assign(imgDefault.Picture);
-    end;
-    x:=x+Image.Width+2;
-
-    // name
-    lb:=TLabel.Create(ScrollBox);
-    lb.Name:='lb'+IntToStr(i);
-    lb.Parent:=ScrollBox;
-    lb.AutoSize:=False;
-    lb.Left:=x;
-    lb.Top:=y;
-    lb.Height:=h;
-    lb.Width:=200;
-
-    lb.Font.Size:=12;
-    lb.Caption:=Item.Name;
-    lb.ShowHint:=True;
-    lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
-
-    // next line
-    y:=y+h+2;
+    AddVisualItem(ContactList.Items[i]);
   end;
 end;
 
