@@ -101,6 +101,7 @@
       <Unit9>
         <Filename Value="Misc.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="Misc"/>
       </Unit9>
       <Unit10>
         <Filename Value="dnmpservicesframe.pas"/>
@@ -201,6 +202,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

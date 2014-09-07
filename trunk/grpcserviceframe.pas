@@ -214,9 +214,9 @@ begin
   if Assigned(Grpc.ServiceInfo) then
   begin
     lboxAbonentsList.Clear();
-    for i:=0 to Grpc.ServiceMgr.AllAbonents.Count-1 do
+    for i:=0 to Grpc.Mgr.ContactList.Count-1 do
     begin
-      Item:=Grpc.ServiceMgr.AllAbonents[i];
+      Item:=Grpc.Mgr.ContactList[i];
       lboxAbonentsList.AddItem(AddrToStr(Item.Addr)+': '+Item.Name, Item);
     end;
   end;

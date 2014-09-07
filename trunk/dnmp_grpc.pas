@@ -526,7 +526,7 @@ constructor TDnmpGrpc.Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManage
 begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
   Self.UsersList:=TDnmpContactList.Create(False);
-  Self.UsersList.ParentList:=AServiceMgr.AllAbonents;
+  Self.UsersList.ParentList:=AMgr.ContactList;
   Self.BanList:=TGrpcBanList.Create();
   Self.MessagesList:=TDnmpChannelMessagesList.Create(True);
 end;

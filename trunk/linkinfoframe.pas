@@ -131,59 +131,64 @@ var
   ss: TStringStream;
 begin
   if not Assigned(LinkInfo) then Exit;
-  edAddr.Text:=LinkInfo.AddrStr();
-  edName.Text:=LinkInfo.Name;
-  edGUID.Text:=LinkInfo.GUID;
-  edSGUID.Text:=LinkInfo.SeniorGUID;
-  edStatusMessage.Text:=LinkInfo.StatusMessage;
-  edKey.Text:=LinkInfo.Key;
+  //imgPicture.Picture.Assign(imgDefault.Picture);
+  imgPicture.Picture.Clear();
+
+  if Assigned(LinkInfo.Contact) then
+  begin
+    edAddr.Text:=AddrToStr(LinkInfo.Contact.Addr);
+    edName.Text:=LinkInfo.Contact.Name;
+    edGUID.Text:=LinkInfo.Contact.GUID;
+    edSGUID.Text:=LinkInfo.Contact.SeniorGUID;
+    edStatusMessage.Text:=LinkInfo.Contact.StatusMessage;
+    if Length(LinkInfo.Contact.Picture)>4 then
+    begin
+      ss:=TStringStream.Create(LinkInfo.Contact.Picture);
+      try
+        imgPicture.Picture.LoadFromStream(ss);
+      finally
+        ss.Free();
+      end;
+    end;
+  end;
 
   edOwner.Text:=LinkInfo.Owner;
   edLocation.Text:=LinkInfo.Location;
   edIPAddr.Text:=LinkInfo.IpAddr;
   edPhoneNo.Text:=LinkInfo.PhoneNo;
   edOtherInfo.Text:=LinkInfo.OtherInfo;
+  edKey.Text:=LinkInfo.Key;
 
-  if Length(LinkInfo.Picture)>4 then
-  begin
-    ss:=TStringStream.Create(LinkInfo.Picture);
-    try
-      imgPicture.Picture.LoadFromStream(ss);
-    finally
-      ss.Free();
-    end;
-  end
-  else
-  begin
-    //imgPicture.Picture.Assign(imgDefault.Picture);
-    imgPicture.Picture.Clear();
-  end;
 end;
 
 procedure TFrameLinkInfo.LinkInfoFromForm();
 var
   ss: TStringStream;
 begin
-  LinkInfo.Addr:=StrToAddr(Trim(edAddr.Text));
-  LinkInfo.Name:=Trim(edName.Text);
-  LinkInfo.GUID:=Trim(edGUID.Text);
-  LinkInfo.SeniorGUID:=Trim(edSGUID.Text);
-  LinkInfo.StatusMessage:=Trim(edStatusMessage.Text);
-  LinkInfo.Key:=Trim(edKey.Text);
+  if Assigned(LinkInfo.Contact) then
+  begin
+    LinkInfo.Contact.Addr:=StrToAddr(Trim(edAddr.Text));
+    LinkInfo.Contact.Name:=Trim(edName.Text);
+    LinkInfo.Contact.GUID:=Trim(edGUID.Text);
+    LinkInfo.Contact.SeniorGUID:=Trim(edSGUID.Text);
+    LinkInfo.Contact.StatusMessage:=Trim(edStatusMessage.Text);
 
-  ss:=TStringStream.Create('');
-  //imgPicture.Picture.Jpeg.SaveToStream(ss);
-  imgPicture.Picture.PNG.SaveToStream(ss);
-  //imgPicture.Picture.SaveToStreamWithFileExt(ss, 'jpg');
-  LinkInfo.Picture:=ss.DataString;
-  ss.Free;
-  if Length(LinkInfo.Picture)<4 then LinkInfo.Picture:='';
+    // picture
+    ss:=TStringStream.Create('');
+    //imgPicture.Picture.Jpeg.SaveToStream(ss);
+    imgPicture.Picture.PNG.SaveToStream(ss);
+    //imgPicture.Picture.SaveToStreamWithFileExt(ss, 'jpg');
+    LinkInfo.Contact.Picture:=ss.DataString;
+    ss.Free;
+    if Length(LinkInfo.Contact.Picture)<4 then LinkInfo.Contact.Picture:='';
+  end;
 
   LinkInfo.Owner:=Trim(edOwner.Text);
   LinkInfo.Location:=Trim(edLocation.Text);
   LinkInfo.IpAddr:=Trim(edIPAddr.Text);
   LinkInfo.PhoneNo:=Trim(edPhoneNo.Text);
   LinkInfo.OtherInfo:=Trim(edOtherInfo.Text);
+  LinkInfo.Key:=Trim(edKey.Text);
 end;
 
 end.

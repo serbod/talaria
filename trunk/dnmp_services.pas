@@ -122,7 +122,7 @@ type
     // Known services
     RemoteServiceInfoList: TDnmpServiceInfoList;
     // All abonents
-    AllAbonents: TDnmpContactList;
+    //AllAbonents: TDnmpContactList;
     // Default owner
     DefaultOwner: TDnmpContact;
     constructor Create(AMgr: TDnmpManager);
@@ -420,15 +420,12 @@ begin
   Self.FMgr:=AMgr;
   Self.FServiceMgr:=AServiceMgr;
   Self.ServiceInfo:=AServiceInfo;
+  {
   if Assigned(FMgr) and Assigned(ServiceInfo) then
   begin
-    if Assigned(FServiceMgr) then
-    begin
-      ServiceInfo.Owners.ParentList:=FServiceMgr.AllAbonents;
-      //ServiceInfo.Abonents.ParentList:=FServiceMgr.AllAbonents;
-      //if ServiceInfo.Abonents.IndexOf(FServiceMgr.DefaultOwner)=-1 then ServiceInfo.Abonents.Add(FServiceMgr.DefaultOwner);
-    end;
-  end;  
+    ServiceInfo.Owners.ParentList:=FMgr.ContactList;
+  end;
+  }
 end;
 
 destructor TDnmpService.Destroy();
@@ -465,15 +462,15 @@ begin
 
   if not Assigned(Result) then
   begin
-    if Assigned(Mgr) and Assigned(FServiceMgr) then
+    if Assigned(Mgr) then
     begin
-      Result:=FServiceMgr.AllAbonents.GetByGUID(sGUID);
+      Result:=Mgr.ContactList.GetByGUID(sGUID);
     end;
   end;
 
   if not Assigned(Result) then
   begin
-    li:=Mgr.GetInfoByGUID(sGUID);
+    li:=Mgr.GetLinkInfoByGUID(sGUID);
     if Assigned(li) and Assigned(Self.ServiceInfo) then
     begin
       //Result:=Self.ServiceInfo.Abonents.UpdateAbonent(sGUID, li.Name, 'NONE', '', '', li.Addr);
@@ -579,20 +576,19 @@ begin
   ServiceTypes.Add(csGRPC);
   ServiceTypes.Add(csMAIL);
 
-  Self.AllAbonents:=TDnmpContactList.Create(True);
   // local services
   self.ServiceInfoList:=TDnmpServiceInfoList.Create(True);
-  self.ServiceInfoList.ParentContactList:=Self.AllAbonents;
+  self.ServiceInfoList.ParentContactList:=AMgr.ContactList;
   // remote services
   self.RemoteServiceInfoList:=TDnmpServiceInfoList.Create(True);
-  self.RemoteServiceInfoList.ParentContactList:=Self.AllAbonents;
+  self.RemoteServiceInfoList.ParentContactList:=AMgr.ContactList;
 
   Self.ServiceList:=TDnmpServiceList.Create(True);
 
-  self.DefaultOwner:=self.AllAbonents.GetByGUID(AMgr.MyInfo.GUID);
+  self.DefaultOwner:=AMgr.MyInfo.Contact;
   if not Assigned(self.DefaultOwner) then
   begin
-    self.DefaultOwner:=self.AllAbonents.UpdateItem(AMgr.MyInfo.Addr, AMgr.MyInfo.GUID, AMgr.MyInfo.SeniorGUID, AMgr.MyInfo.Name, '', '');
+    //self.DefaultOwner:=self.AllAbonents.UpdateItem(AMgr.MyInfo.Addr, AMgr.MyInfo.GUID, AMgr.MyInfo.SeniorGUID, AMgr.MyInfo.Name, '', '');
   end;
 end;
 
@@ -602,7 +598,6 @@ begin
   FreeAndNil(Self.ServiceList);
   FreeAndNil(Self.RemoteServiceInfoList);
   FreeAndNil(Self.ServiceInfoList);
-  FreeAndNil(Self.AllAbonents);
   FreeAndNil(ServiceTypes);
   inherited Destroy();
 end;
@@ -610,7 +605,6 @@ end;
 procedure TDnmpServiceManager.SaveToFile();
 begin
   if not Assigned(Mgr.Serializer) then Exit;
-  Mgr.Serializer.StorageToFile(Self.AllAbonents.ToStorage(), Self.Mgr.sDataPath+csSRVDAbonFileName);
   Mgr.Serializer.StorageToFile(Self.ServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDInfoFileName);
   Mgr.Serializer.StorageToFile(Self.RemoteServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDKnownFileName);
 end;
@@ -620,10 +614,6 @@ var
   Storage: TDnmpStorage;
 begin
   if not Assigned(Mgr.Serializer) then Exit;
-
-  Storage:=TDnmpStorage.Create(stUnknown);
-  if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDAbonFileName) then Self.AllAbonents.FromStorage(Storage);
-  Storage.Free();
 
   Storage:=TDnmpStorage.Create(stUnknown);
   if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDInfoFileName) then Self.ServiceInfoList.FromStorage(Storage);
@@ -1016,7 +1006,7 @@ begin
     s:='';
     if Length(Params) = 3 then
     begin
-      li:=Mgr.GetInfoByAddr(Addr);
+      li:=Mgr.GetLinkInfoByAddr(Addr);
       if Assigned(li) then s:=li.GUID;
     end
     else s:=Params[3];

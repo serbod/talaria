@@ -115,7 +115,7 @@ begin
     // name
     lvItem.SubItems.Append(Item.Name);
     // state
-    lvItem.SubItems.Append(Item.StateStr());
+    lvItem.SubItems.Append(BoolToStr(Item.Online, 'Online', 'Offline'));
   end;
   lv.EndUpdate();
 end;
@@ -143,7 +143,7 @@ begin
     // name
     lvItem.SubItems.Append(Item.LinkInfo.Name);
     // state
-    lvItem.SubItems.Append(Item.LinkInfo.StateStr());
+    lvItem.SubItems.Append(BoolToStr(Item.LinkInfo.Online, 'Online', 'Offline'));
     // info
     lvItem.SubItems.Append(LinkTypeToStr(Item.LinkType));
   end;

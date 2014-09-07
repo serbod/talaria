@@ -124,12 +124,12 @@ begin
   // Нужно отдать инфу о себе и ключ сервера, хешированный нашим ключом
   TestPhrase:=StreamToStr(Msg.Data);
   if LinkInfo.Key='' then LinkInfo.Key:=TestPhrase;
-  LinkInfo.Addr:=Msg.SourceAddr;
+  LinkInfo.GUID:=Msg.Info.Values['guid'];
+  //LinkInfo.Addr:=Msg.SourceAddr;
   LinkInfo.Name:=Msg.Info.Values['name'];
+  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
   LinkInfo.Owner:=Msg.Info.Values['owner'];
   LinkInfo.Location:=Msg.Info.Values['location'];
-  LinkInfo.GUID:=Msg.Info.Values['guid'];
-  LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
   LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
@@ -148,11 +148,11 @@ begin
   MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH', '', sKey);
   MsgOut.Info.Values['cmd']:='ARPL';
   MsgOut.Info.Values['addr']:=MyInfo.AddrStr;
-  MsgOut.Info.Values['name']:=MyInfo.Name;
+  MsgOut.Info.Values['name']:=MyInfo.Contact.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
   MsgOut.Info.Values['location']:=MyInfo.Location;
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
-  MsgOut.Info.Values['senior_guid']:=MyInfo.SeniorGUID;
+  MsgOut.Info.Values['senior_guid']:=MyInfo.Contact.SeniorGUID;
   MsgOut.Info.Values['ip_addr']:=MyInfo.IpAddr;
   MsgOut.Info.Values['phone_no']:=MyInfo.PhoneNo;
   MsgOut.Info.Values['other_info']:=MyInfo.OtherInfo;
@@ -176,7 +176,12 @@ begin
   if sResult='OK' then
   begin
     // Опознание успешно
-    MyInfo.Addr:=Msg.TargetAddr;
+    MyInfo.TmpAddr:=Msg.TargetAddr;
+    if MyInfo.SameAddr(EmptyAddr()) then
+    begin
+      // Мой адрес был пустым
+      MyInfo.Contact.Addr:=MyInfo.TmpAddr;
+    end;
     Mgr.AddCmd('AUTH OK');
   end
   else if sResult='KEY_NOT_FOUND' then

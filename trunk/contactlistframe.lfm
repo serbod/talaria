@@ -14,7 +14,7 @@ object FrameContactList: TFrameContactList
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 1
+    VertScrollBar.Increment = 0
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True
@@ -127,6 +127,10 @@ object FrameContactList: TFrameContactList
     object actTest1: TAction
       Caption = 'Add 50 contacts'
       OnExecute = actTest1Execute
+    end
+    object actDeleteContact: TAction
+      Caption = 'Delete contact'
+      OnExecute = actDeleteContactExecute
     end
   end
   object pmContactList: TPopupMenu

@@ -97,7 +97,7 @@ end;
 function TDnmpParserServer.Start(): Boolean;
 begin
   if self.MyInfo.Key='' then Self.MyInfo.Key:=GenerateKey();
-  self.LinkInfo.Addr:=EmptyAddr();
+  //self.LinkInfo.Addr:=EmptyAddr();
   self.SendAuthRequest();
   Result:=True;
 end;
@@ -313,19 +313,19 @@ begin
   if self.MyInfo.Key='' then Self.MyInfo.Key:=sRemotePlaintext;
   sLocalKey:=self.MyInfo.Key;
 
-  li:=Mgr.GetInfoByAddr(Msg.SourceAddr);
+  li:=Mgr.GetLinkInfoByAddr(Msg.SourceAddr);
   if Assigned(li) then
   begin
     FreeAndNil(self.Link.LinkInfo);
     self.Link.LinkInfo:=li;
     self.LinkInfo:=li;
   end;
-  LinkInfo.Addr:=Msg.SourceAddr;
+  LinkInfo.TmpAddr:=Msg.SourceAddr;
   LinkInfo.Name:=Msg.Info.Values['name'];
   LinkInfo.Owner:=Msg.Info.Values['owner'];
   LinkInfo.Location:=Msg.Info.Values['location'];
   LinkInfo.GUID:=Msg.Info.Values['guid'];
-  LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
   LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
@@ -349,7 +349,7 @@ begin
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
   MsgOut.Info.Values['location']:=MyInfo.Location;
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
-  MsgOut.Info.Values['senior_guid']:=MyInfo.SeniorGUID;
+  //MsgOut.Info.Values['senior_guid']:=MyInfo.Contact.SeniorGUID;
   MsgOut.Info.Values['ip_addr']:=MyInfo.IpAddr;
   MsgOut.Info.Values['phone_no']:=MyInfo.PhoneNo;
   MsgOut.Info.Values['other_info']:=MyInfo.OtherInfo;
@@ -385,12 +385,12 @@ end;
 begin
   sRemoteCypher:=StreamToStr(Msg.Data);
 
-  LinkInfo.Addr:=StrToAddr(Msg.Info.Values['addr']);
+  LinkInfo.TmpAddr:=StrToAddr(Msg.Info.Values['addr']);
   LinkInfo.Name:=Msg.Info.Values['name'];
   LinkInfo.Owner:=Msg.Info.Values['owner'];
   LinkInfo.Location:=Msg.Info.Values['location'];
   LinkInfo.GUID:=Msg.Info.Values['guid'];
-  LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
   LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
@@ -398,17 +398,17 @@ begin
 
   li:=nil;
   Found:=False;
-  if LinkInfo.Addr.Node<>0 then
+  if LinkInfo.TmpAddr.Node<>0 then
   begin
     // Ищем по адресу
-    if LinkInfo.Addr.Node = MyInfo.Addr.Node then
+    if LinkInfo.TmpAddr.Node = MyInfo.Addr.Node then
     begin
-      li:=Mgr.PointList.GetLinkInfoByAddr(LinkInfo.Addr);
+      li:=Mgr.PointList.GetLinkInfoByAddr(LinkInfo.TmpAddr);
       if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end
     else
     begin
-      li:=Mgr.NodeList.GetLinkInfoByAddr(LinkInfo.Addr);
+      li:=Mgr.NodeList.GetLinkInfoByAddr(LinkInfo.TmpAddr);
       if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
     end;
   end
@@ -450,7 +450,7 @@ begin
   if (not Found) and (Mgr.Conf.ReadBool('Main', 'AutoApprove', False)) then
   begin
     LinkInfo.Key:=TestPhrase;
-    LinkInfo.Addr:=EmptyAddr();
+    LinkInfo.TmpAddr:=EmptyAddr();
     Link.Approve();
     li:=LinkInfo;
     Found:=True;
@@ -461,7 +461,7 @@ begin
     if li <> LinkInfo then
     begin
       // Сохраняем полученную от клиента второстепенную информацию (имя, владелец, статус, итд..)
-      li.Name:=LinkInfo.Name;
+      //li.Name:=LinkInfo.Name;
       li.Owner:=LinkInfo.Owner;
       li.Location:=LinkInfo.Location;
       li.OtherInfo:=LinkInfo.OtherInfo;
@@ -474,12 +474,12 @@ begin
     SendAuthResult('OK');
     Mgr.Cmd('AUTH_OK '+li.AddrStr);
     //
-    if LinkInfo.Addr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
+    if LinkInfo.TmpAddr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
   end
   else
   begin
     LinkInfo.Key:=TestPhrase;
-    LinkInfo.Addr:=EmptyAddr();
+    LinkInfo.TmpAddr:=EmptyAddr();
 
     // Сохраняем информацию линка в списке контактов
     Mgr.ContactList.Add(LinkInfo);
@@ -504,7 +504,7 @@ begin
   MsgOut.Info.Values['cmd']:='ARSL';
   MsgOut.Info.Values['addr']:=LinkInfo.AddrStr;
   MsgOut.Info.Values['guid']:=LinkInfo.GUID;
-  MsgOut.Info.Values['senior_guid']:=LinkInfo.SeniorGUID;
+  //MsgOut.Info.Values['senior_guid']:=LinkInfo.SeniorGUID;
   MsgOut.Info.Values['auth_result']:=sResult;
 
   Self.SendMsg(MsgOut);
@@ -526,9 +526,10 @@ begin
     // Опознание успешно
     if SameAddr(MyInfo.Addr, EmptyAddr()) then
     begin
-      MyInfo.Addr:=Msg.TargetAddr;
+      // Мой адрес был пустым
       MyInfo.GUID:=Msg.Info.Values['guid'];
-      MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+      MyInfo.Contact.Addr:=Msg.TargetAddr;
+      MyInfo.Contact.SeniorGUID:=Msg.Info.Values['senior_guid'];
     end;
 
     OnAuthOkNodeOut();
@@ -617,7 +618,7 @@ end;
 procedure TDnmpParserServer.OnGetInfoRequest(Msg: TDnmpMsg);
 var
   SomeAddr: TAddr;
-  SomeName: string;
+  SomeGUID: string;
   i, n: Integer;
 begin
   // Поиск по адресу
@@ -642,15 +643,15 @@ begin
     end;
   end;
 
-  // Поиск по имени
-  SomeName:=AnsiLowerCase(Trim(Msg.Info.Values['name']));
+  // Поиск по GUID
+  SomeGUID:=AnsiLowerCase(Trim(Msg.Info.Values['guid']));
   n:=0;
-  if Length(SomeName)>0 then
+  if Length(SomeGUID)>0 then
   begin
     // Поиск в поинтлисте
     for i:=0 to Mgr.PointList.Count-1 do
     begin
-      if Pos(SomeName, AnsiLowerCase(Mgr.PointList[i].Name))>0 then
+      if Pos(SomeGUID, AnsiLowerCase(Mgr.PointList[i].GUID))>0 then
       begin
         // Отправка информации
         Mgr.SendLinkInfo(Mgr.PointList[i], Msg.SourceAddr);
@@ -659,6 +660,7 @@ begin
     end;
     if n>0 then Exit;
   end;
+
   // Не нашли
   //SendErrorMsg(Msg, 'GINF_ERR', 'Point not found');
   Mgr.SendErrorMsg(Msg.SourceAddr, 'GINF_ERR', 'Point not found');
