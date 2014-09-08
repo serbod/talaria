@@ -12,8 +12,8 @@ type
 
   TDnmpParserServer = class(TDnmpMsgHandler)
   private
-    MyInfo: TDnmpLinkInfo;
-    LinkInfo: TDnmpLinkInfo;
+    MyInfo: TDnmpContact;
+    RemoteInfo: TDnmpContact;
     // some random text
     TestPhrase: AnsiString;
 
@@ -90,14 +90,14 @@ constructor TDnmpParserServer.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
   inherited Create(AMgr, ALink);
   Self.MyInfo:=Link.MyInfo;
-  LinkInfo:=Link.LinkInfo;
+  RemoteInfo:=Link.RemoteInfo;
 end;
 
 //=====================================
 function TDnmpParserServer.Start(): Boolean;
 begin
   if self.MyInfo.Key='' then Self.MyInfo.Key:=GenerateKey();
-  //self.LinkInfo.Addr:=EmptyAddr();
+  //self.RemoteInfo.Addr:=EmptyAddr();
   self.SendAuthRequest();
   Result:=True;
 end;
@@ -263,9 +263,9 @@ begin
     begin
       // Msg not for me
       // Add link seen-by
-      if LinkInfo.Addr.Point=0 then
+      if RemoteInfo.Addr.Point=0 then
       begin
-        Msg.AddSeenBy(LinkInfo.Addr);
+        Msg.AddSeenBy(RemoteInfo.Addr);
       end;
       Mgr.SendMsg(Msg);
     end;
@@ -306,29 +306,29 @@ procedure TDnmpParserServer.OnAuthRequest(Msg: TDnmpMsg);
 var
   //RC4Data: TRC4Data;
   sRemotePlaintext, sLocalKey, sNewCypher: AnsiString;
-  li: TDnmpLinkInfo;
+  TmpInfo: TDnmpContact;
 begin
   sRemotePlaintext:=StreamToStr(Msg.Data);
   // Если нет своего ключа, то делаем своим ключом кодовое слово сервера
   if self.MyInfo.Key='' then Self.MyInfo.Key:=sRemotePlaintext;
   sLocalKey:=self.MyInfo.Key;
 
-  li:=Mgr.GetLinkInfoByAddr(Msg.SourceAddr);
-  if Assigned(li) then
+  TmpInfo:=Mgr.GetLinkInfoByAddr(Msg.SourceAddr);
+  if Assigned(TmpInfo) then
   begin
-    FreeAndNil(self.Link.LinkInfo);
-    self.Link.LinkInfo:=li;
-    self.LinkInfo:=li;
+    FreeAndNil(Self.Link.RemoteInfo);
+    Self.Link.RemoteInfo:=TmpInfo;
+    Self.RemoteInfo:=TmpInfo;
   end;
-  LinkInfo.TmpAddr:=Msg.SourceAddr;
-  LinkInfo.Name:=Msg.Info.Values['name'];
-  LinkInfo.Owner:=Msg.Info.Values['owner'];
-  LinkInfo.Location:=Msg.Info.Values['location'];
-  LinkInfo.GUID:=Msg.Info.Values['guid'];
-  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
-  LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
-  LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
-  LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
+  RemoteInfo.Addr:=Msg.SourceAddr;
+  RemoteInfo.Name:=Msg.Info.Values['name'];
+  RemoteInfo.Owner:=Msg.Info.Values['owner'];
+  RemoteInfo.Location:=Msg.Info.Values['location'];
+  RemoteInfo.GUID:=Msg.Info.Values['guid'];
+  RemoteInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+  RemoteInfo.IpAddr:=Msg.Info.Values['ip_addr'];
+  RemoteInfo.PhoneNo:=Msg.Info.Values['phone_no'];
+  RemoteInfo.OtherInfo:=Msg.Info.Values['other_info'];
 
   sNewCypher:=RC4.RC4EncryptText(sRemotePlaintext, sLocalKey);
   SendAuthReply(sNewCypher);
@@ -342,14 +342,14 @@ var
   MsgOut: TDnmpMsg;
   sMsgBody: AnsiString;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH', '', sKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'AUTH', '', sKey);
   MsgOut.Info.Values['cmd']:='ARPL';
-  MsgOut.Info.Values['addr']:=MyInfo.AddrStr;
+  MsgOut.Info.Values['addr']:=AddrToStr(MyInfo.Addr);
   MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
   MsgOut.Info.Values['location']:=MyInfo.Location;
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
-  //MsgOut.Info.Values['senior_guid']:=MyInfo.Contact.SeniorGUID;
+  MsgOut.Info.Values['senior_guid']:=MyInfo.SeniorGUID;
   MsgOut.Info.Values['ip_addr']:=MyInfo.IpAddr;
   MsgOut.Info.Values['phone_no']:=MyInfo.PhoneNo;
   MsgOut.Info.Values['other_info']:=MyInfo.OtherInfo;
@@ -369,7 +369,7 @@ var
   sRemoteCypher: AnsiString;
   i: Integer;
   Found: Boolean;
-  li: TDnmpLinkInfo;
+  TmpInfo: TDnmpContact;
 
 // Шифруем PlainText и сравниваем с CypherText
 function CheckKey(Key, CypherText, PlainText: AnsiString): boolean;
@@ -385,38 +385,38 @@ end;
 begin
   sRemoteCypher:=StreamToStr(Msg.Data);
 
-  LinkInfo.TmpAddr:=StrToAddr(Msg.Info.Values['addr']);
-  LinkInfo.Name:=Msg.Info.Values['name'];
-  LinkInfo.Owner:=Msg.Info.Values['owner'];
-  LinkInfo.Location:=Msg.Info.Values['location'];
-  LinkInfo.GUID:=Msg.Info.Values['guid'];
-  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
-  LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
-  LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
-  LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
+  RemoteInfo.Addr:=StrToAddr(Msg.Info.Values['addr']);
+  RemoteInfo.Name:=Msg.Info.Values['name'];
+  RemoteInfo.Owner:=Msg.Info.Values['owner'];
+  RemoteInfo.Location:=Msg.Info.Values['location'];
+  RemoteInfo.GUID:=Msg.Info.Values['guid'];
+  //RemoteInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+  RemoteInfo.IpAddr:=Msg.Info.Values['ip_addr'];
+  RemoteInfo.PhoneNo:=Msg.Info.Values['phone_no'];
+  RemoteInfo.OtherInfo:=Msg.Info.Values['other_info'];
   if Msg.Info.Values['type']='node' then self.Link.LinkType:=ltNode;
 
-  li:=nil;
+  TmpInfo:=nil;
   Found:=False;
-  if LinkInfo.TmpAddr.Node<>0 then
+  if RemoteInfo.Addr.Node<>0 then
   begin
     // Ищем по адресу
-    if LinkInfo.TmpAddr.Node = MyInfo.Addr.Node then
+    if RemoteInfo.Addr.Node = MyInfo.Addr.Node then
     begin
-      li:=Mgr.PointList.GetLinkInfoByAddr(LinkInfo.TmpAddr);
-      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+      TmpInfo:=Mgr.PointList.GetByAddr(RemoteInfo.Addr);
+      if Assigned(TmpInfo) then Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end
     else
     begin
-      li:=Mgr.NodeList.GetLinkInfoByAddr(LinkInfo.TmpAddr);
-      if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+      TmpInfo:=Mgr.NodeList.GetByAddr(RemoteInfo.Addr);
+      if Assigned(TmpInfo) then Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end;
   end
   else
   begin
     // Ищем в списке неавторизованных контактов
-    li:=Mgr.LinkInfoList.GetLinkInfoByGUID(LinkInfo.GUID);
-    if Assigned(li) then Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+    TmpInfo:=Mgr.ContactList.GetByGUID(RemoteInfo.GUID);
+    if Assigned(TmpInfo) then Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
   end;
 
   // Возможно, этот блок не нужен..
@@ -426,66 +426,66 @@ begin
     for i:=0 to Mgr.ContactList.Count-1 do
     begin
       if Found then Break;
-      li:=Mgr.LinkInfoList[i];
-      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+      TmpInfo:=Mgr.ContactList[i];
+      Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end;
 
     // Подбираем ключ из поинтлиста
     for i:=0 to Mgr.PointList.Count-1 do
     begin
       if Found then Break;
-      li:=Mgr.PointList[i];
-      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+      TmpInfo:=Mgr.PointList[i];
+      Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end;
 
     // Подбираем ключ из нодлиста
     for i:=0 to Mgr.NodeList.Count-1 do
     begin
       if Found then Break;
-      li:=Mgr.NodeList[i];
-      Found:=CheckKey(li.Key, sRemoteCypher, TestPhrase);
+      TmpInfo:=Mgr.NodeList[i];
+      Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end;
   end;
 
   if (not Found) and (Mgr.Conf.ReadBool('Main', 'AutoApprove', False)) then
   begin
-    LinkInfo.Key:=TestPhrase;
-    LinkInfo.TmpAddr:=EmptyAddr();
+    RemoteInfo.Key:=TestPhrase;
+    RemoteInfo.Addr:=EmptyAddr();
     Link.Approve();
-    li:=LinkInfo;
+    TmpInfo:=RemoteInfo;
     Found:=True;
   end;
 
   if Found then
   begin
-    if li <> LinkInfo then
+    if TmpInfo <> RemoteInfo then
     begin
       // Сохраняем полученную от клиента второстепенную информацию (имя, владелец, статус, итд..)
-      //li.Name:=LinkInfo.Name;
-      li.Owner:=LinkInfo.Owner;
-      li.Location:=LinkInfo.Location;
-      li.OtherInfo:=LinkInfo.OtherInfo;
+      TmpInfo.Name:=RemoteInfo.Name;
+      TmpInfo.Owner:=RemoteInfo.Owner;
+      TmpInfo.Location:=RemoteInfo.Location;
+      TmpInfo.OtherInfo:=RemoteInfo.OtherInfo;
       // Остальную информацию берем из поинтлиста
-      FreeAndNil(Link.LinkInfo); // Free temporary link info
-      Link.LinkInfo:=li;
-      LinkInfo:=li;
+      FreeAndNil(Link.RemoteInfo); // Free temporary link info
+      Link.RemoteInfo:=TmpInfo;
+      RemoteInfo:=TmpInfo;
     end;
     // ...
     SendAuthResult('OK');
-    Mgr.Cmd('AUTH_OK '+li.AddrStr);
+    Mgr.Cmd('AUTH_OK '+AddrToStr(TmpInfo.Addr));
     //
-    if LinkInfo.TmpAddr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
+    if RemoteInfo.Addr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
   end
   else
   begin
-    LinkInfo.Key:=TestPhrase;
-    LinkInfo.TmpAddr:=EmptyAddr();
+    RemoteInfo.Key:=TestPhrase;
+    RemoteInfo.Addr:=EmptyAddr();
 
     // Сохраняем информацию линка в списке контактов
-    Mgr.ContactList.Add(LinkInfo);
+    Mgr.ContactList.Add(RemoteInfo);
 
     SendAuthResult('KEY_NOT_FOUND');
-    Mgr.Cmd('AUTH_FAIL '+LinkInfo.GUID);
+    Mgr.Cmd('AUTH_FAIL '+RemoteInfo.GUID);
   end;
   Mgr.AddCmd('UPDATE LINKS');
 end;
@@ -500,11 +500,11 @@ var
 begin
   //sMsgBody:='AuthResult=OK';
 
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'AUTH','','');
   MsgOut.Info.Values['cmd']:='ARSL';
-  MsgOut.Info.Values['addr']:=LinkInfo.AddrStr;
-  MsgOut.Info.Values['guid']:=LinkInfo.GUID;
-  //MsgOut.Info.Values['senior_guid']:=LinkInfo.SeniorGUID;
+  MsgOut.Info.Values['addr']:=AddrToStr(RemoteInfo.Addr);
+  MsgOut.Info.Values['guid']:=RemoteInfo.GUID;
+  //MsgOut.Info.Values['senior_guid']:=RemoteInfo.SeniorGUID;
   MsgOut.Info.Values['auth_result']:=sResult;
 
   Self.SendMsg(MsgOut);
@@ -528,8 +528,8 @@ begin
     begin
       // Мой адрес был пустым
       MyInfo.GUID:=Msg.Info.Values['guid'];
-      MyInfo.Contact.Addr:=Msg.TargetAddr;
-      MyInfo.Contact.SeniorGUID:=Msg.Info.Values['senior_guid'];
+      MyInfo.Addr:=Msg.TargetAddr;
+      MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
     end;
 
     OnAuthOkNodeOut();
@@ -538,7 +538,7 @@ begin
   begin
     // Линк не подтвержден
     // Сохраняем ключ сервера как свой
-    //MyInfo.Key:=LinkInfo.Key;
+    //MyInfo.Key:=RemoteInfo.Key;
   end
   else
   begin
@@ -585,7 +585,7 @@ procedure TDnmpParserServer.SendNodelistRequest();
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=NLRQ', '');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'INFO', 'cmd=NLRQ', '');
 
   SendMsg(MsgOut);
   MsgOut.Free();
@@ -602,7 +602,7 @@ begin
     // Отправка подробной информации об известных узлах
     for i:=0 to Mgr.NodeList.Count-1 do
     begin
-      Mgr.SendLinkInfo(Mgr.NodeList[i], Msg.SourceAddr);
+      Mgr.SendContactInfo(Mgr.NodeList[i], Msg.SourceAddr);
     end;
   end
   else
@@ -610,7 +610,7 @@ begin
     // Отправка базовой информации об известных узлах
     for i:=0 to Mgr.NodeList.Count-1 do
     begin
-      Mgr.SendLinkInfo(Mgr.NodeList[i], Msg.SourceAddr);
+      Mgr.SendContactInfo(Mgr.NodeList[i], Msg.SourceAddr);
     end;
   end;
 end;
@@ -628,16 +628,16 @@ begin
     if SomeAddr.Point=0 then
     begin
       // Отправляем инфо о себе
-      Mgr.SendLinkInfo(MyInfo, Msg.SourceAddr);
+      Mgr.SendContactInfo(MyInfo, Msg.SourceAddr);
       Exit;
     end;
     // Поиск информации об адресе
     for i:=0 to Mgr.PointList.Count-1 do
     begin
-      if Mgr.PointList[i].SameAddr(SomeAddr) then
+      if SameAddr(Mgr.PointList[i].Addr, SomeAddr) then
       begin
         // Отправка информации об адресе
-        Mgr.SendLinkInfo(Mgr.PointList[i], Msg.SourceAddr);
+        Mgr.SendContactInfo(Mgr.PointList[i], Msg.SourceAddr);
         Exit;
       end;
     end;
@@ -654,7 +654,7 @@ begin
       if Pos(SomeGUID, AnsiLowerCase(Mgr.PointList[i].GUID))>0 then
       begin
         // Отправка информации
-        Mgr.SendLinkInfo(Mgr.PointList[i], Msg.SourceAddr);
+        Mgr.SendContactInfo(Mgr.PointList[i], Msg.SourceAddr);
         Inc(n);
       end;
     end;
@@ -689,9 +689,9 @@ begin
   if Link.Active then s:='on' else s:='off';
   sl:=TStringList.Create();
   sl.Values['cmd']:='NINF';
-  sl.Values['addr']:=LinkInfo.AddrStr();
+  sl.Values['addr']:=AddrToStr(RemoteInfo.Addr);
   sl.Values['state']:=s;
-  sl.Values['rate']:=IntToStr(LinkInfo.Rating);
+  sl.Values['rate']:=IntToStr(RemoteInfo.Rating);
   sl.Values['avail']:='';
   sl.Values['speed']:=IntToStr(Link.Speed);
 
@@ -733,16 +733,16 @@ var
   s, s1: string;
   l: TDnmpLink;
 begin
-  Msg:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=NLST', '');
+  Msg:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'INFO', 'cmd=NLST', '');
   sl:=TStringList.Create();
   for i:=0 to Mgr.LinkList.Count-1 do
   begin
     l:=Mgr.LinkList[i];
     if l.LinkType <> ltNode then Continue;
-    if l.Active then s1:='on' else s1:='off';
-    s:=l.LinkInfo.AddrStr; // addr
+    s1:=BoolToStr(l.Active, 'on', 'off');
+    s:=AddrToStr(l.RemoteInfo.Addr); // addr
     s:=s+','+s1; // state
-    s:=s+','+IntToStr(l.LinkInfo.Rating); // rate
+    s:=s+','+IntToStr(l.RemoteInfo.Rating); // rate
     s:=s+','; // avail
     s:=s+','+IntToStr(l.Speed); // speed
     sl.Add(s);
@@ -773,7 +773,7 @@ procedure TDnmpParserServer.SendErrorMsg(OrigMsg: TDnmpMsg; ErrCode, ErrText: st
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'INFO','','');
   MsgOut.Info.Values['cmd']:='ERRR';
   MsgOut.Info.Values['code']:=ErrCode;
   MsgOut.Info.Values['text']:=ErrText;
@@ -793,7 +793,7 @@ procedure TDnmpParserServer.SendInfoMsg(OrigMsg: TDnmpMsg; InfoCode, InfoText: s
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO','','');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'INFO','','');
   MsgOut.Info.Values['cmd']:='INFO';
   MsgOut.Info.Values['code']:=InfoCode;
   MsgOut.Info.Values['text']:=InfoText;

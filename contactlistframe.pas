@@ -126,6 +126,9 @@ begin
   Image.Height:=h;
   Image.Width:=h;
 
+  Image.Center:=True;
+  Image.Proportional:=True;
+  Image.Stretch:=True;
   if Length(Item.Picture)>4 then
   begin
     ss:=TStringStream.Create(Item.Picture);

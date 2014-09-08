@@ -64,11 +64,11 @@ type
     procedure UpdateInfoList();
     procedure UpdateSelectedInfo();
     procedure FormToSelectedInfo();
-    function GetSelectedInfo(): TDnmpLinkInfo;
+    function GetSelectedInfo(): TDnmpContact;
   public
     { public declarations }
     DnmpMgr: TDnmpManager;
-    InfoList: TLinkInfoList;
+    InfoList: TDnmpContactList;
     { Update view }
     procedure Update(); override;
   end;
@@ -105,7 +105,7 @@ end;
 
 procedure TFrameLinkInfoList.actGenerateGUIDExecute(Sender: TObject);
 var
-  Item: TDnmpLinkInfo;
+  Item: TDnmpContact;
 begin
   Item:=GetSelectedInfo();
   if not Assigned(Item) then Exit;
@@ -121,17 +121,17 @@ end;
 
 procedure TFrameLinkInfoList.actInfoAddExecute(Sender: TObject);
 var
-  Item: TDnmpLinkInfo;
+  Item: TDnmpContact;
 begin
   if not Assigned(InfoList) then Exit;
-  Item:=TDnmpLinkInfo.Create();
+  Item:=TDnmpContact.Create();
   InfoList.Add(Item);
   UpdateInfoList();
 end;
 
 procedure TFrameLinkInfoList.actInfoDelExecute(Sender: TObject);
 var
-  Item: TDnmpLinkInfo;
+  Item: TDnmpContact;
 begin
   if not Assigned(InfoList) then Exit;
   Item:=GetSelectedInfo();
@@ -158,16 +158,16 @@ procedure TFrameLinkInfoList.UpdateInfoList();
 var
   i, si, ic: Integer;
   lv: TListView;
-  li: TDnmpLinkInfo;
-  lil: TLinkInfoList;
+  Item: TDnmpContact;
+  ItemList: TDnmpContactList;
   lvi: TListItem;
 begin
   if not Assigned(InfoList) then Exit;
   lv:=lvInfoList;
-  lil:=InfoList;
+  ItemList:=InfoList;
   lv.Items.BeginUpdate();
   si:=lv.ItemIndex;
-  ic:=lil.Count;
+  ic:=ItemList.Count;
   while lv.Items.Count <> ic do
   begin
     if lv.Items.Count > ic then lv.Items.Delete(lv.Items.Count-1);
@@ -175,14 +175,14 @@ begin
   end;
   for i:=0 to ic-1 do
   begin
-    li:=lil[i];
+    Item:=ItemList[i];
     lvi:=lv.Items[i];
-    lvi.Data:=li;
-    lvi.Caption:=AddrToStr(li.Addr);
+    lvi.Data:=Item;
+    lvi.Caption:=AddrToStr(Item.Addr);
     while lvi.SubItems.Count < 3 do lvi.SubItems.Add('');
-    lvi.SubItems[0]:=li.Name;
-    //lvi.SubItems[1]:=LinkTypeToStr(li.LinkType);
-    if li.Online then lvi.SubItems[1]:='Online' else lvi.SubItems[2]:='Offline';
+    lvi.SubItems[0]:=Item.Name;
+    //lvi.SubItems[1]:=LinkTypeToStr(Item.LinkType);
+    if Item.Online then lvi.SubItems[1]:='Online' else lvi.SubItems[2]:='Offline';
   end;
   if si < lv.Items.Count then lv.ItemIndex:=si;
   lv.Items.EndUpdate();
@@ -191,7 +191,7 @@ end;
 procedure TFrameLinkInfoList.UpdateSelectedInfo();
 var
   n: integer;
-  LinkInfo: TDnmpLinkInfo;
+  Item: TDnmpContact;
   sg: TStringGrid;
 
   procedure SetRow(RowNum: integer; Name, Value: string);
@@ -203,25 +203,25 @@ var
   end;
 
 begin
-  LinkInfo:=GetSelectedInfo();
-  if not Assigned(LinkInfo) then Exit;
+  Item:=GetSelectedInfo();
+  if not Assigned(Item) then Exit;
 
   sg:=StringGridInfo;
   sg.BeginUpdate();
   sg.Clean([gzNormal]);
 
   n:=1;
-  SetRow(n, 'Addr', AddrToStr(LinkInfo.Addr));
-  SetRow(n, 'Name', LinkInfo.Name);
-  SetRow(n, 'GUID', LinkInfo.GUID);
-  SetRow(n, 'SeniorGUID', LinkInfo.SeniorGUID);
-  SetRow(n, 'Owner', LinkInfo.Owner);
-  SetRow(n, 'Location', LinkInfo.Location);
-  SetRow(n, 'IpAddr', LinkInfo.IpAddr);
-  SetRow(n, 'PhoneNo', LinkInfo.PhoneNo);
-  SetRow(n, 'OtherInfo', LinkInfo.OtherInfo);
-  SetRow(n, 'Rating', IntToStr(LinkInfo.Rating));
-  SetRow(n, 'Key', LinkInfo.Key);
+  SetRow(n, 'Addr', AddrToStr(Item.Addr));
+  SetRow(n, 'Name', Item.Name);
+  SetRow(n, 'GUID', Item.GUID);
+  SetRow(n, 'SeniorGUID', Item.SeniorGUID);
+  SetRow(n, 'Owner', Item.Owner);
+  SetRow(n, 'Location', Item.Location);
+  SetRow(n, 'IpAddr', Item.IpAddr);
+  SetRow(n, 'PhoneNo', Item.PhoneNo);
+  SetRow(n, 'OtherInfo', Item.OtherInfo);
+  SetRow(n, 'Rating', IntToStr(Item.Rating));
+  SetRow(n, 'Key', Item.Key);
 
   sg.EndUpdate();
 
@@ -229,7 +229,7 @@ end;
 
 procedure TFrameLinkInfoList.FormToSelectedInfo();
 var
-  LinkInfo: TDnmpLinkInfo;
+  Item: TDnmpContact;
   sg: TStringGrid;
 
 function GetValue(Name: string): string;
@@ -246,30 +246,30 @@ begin
 end;
 
 begin
-  LinkInfo:=GetSelectedInfo();
-  if not Assigned(LinkInfo) then Exit;
+  Item:=GetSelectedInfo();
+  if not Assigned(Item) then Exit;
   sg:=StringGridInfo;
 
-  LinkInfo.Addr:=StrToAddr(GetValue('Addr'));
-  LinkInfo.GUID:=GetValue('GUID');
-  LinkInfo.SeniorGUID:=GetValue('SeniorGUID');
-  LinkInfo.Name:=GetValue('Name');
-  LinkInfo.Owner:=GetValue('Owner');
-  LinkInfo.Location:=GetValue('Location');
-  LinkInfo.IpAddr:=GetValue('IpAddr');
-  LinkInfo.PhoneNo:=GetValue('PhoneNo');
-  LinkInfo.OtherInfo:=GetValue('OtherInfo');
-  LinkInfo.Rating:=StrToIntDef(GetValue('Rating'), 0);
-  LinkInfo.Key:=GetValue('Key');
+  Item.Addr:=StrToAddr(GetValue('Addr'));
+  Item.GUID:=GetValue('GUID');
+  Item.SeniorGUID:=GetValue('SeniorGUID');
+  Item.Name:=GetValue('Name');
+  Item.Owner:=GetValue('Owner');
+  Item.Location:=GetValue('Location');
+  Item.IpAddr:=GetValue('IpAddr');
+  Item.PhoneNo:=GetValue('PhoneNo');
+  Item.OtherInfo:=GetValue('OtherInfo');
+  Item.Rating:=StrToIntDef(GetValue('Rating'), 0);
+  Item.Key:=GetValue('Key');
 
 end;
 
-function TFrameLinkInfoList.GetSelectedInfo(): TDnmpLinkInfo;
+function TFrameLinkInfoList.GetSelectedInfo(): TDnmpContact;
 begin
   Result:=nil;
   if not Assigned(lvInfoList.Selected) then Exit;
   if not Assigned(lvInfoList.Selected.Data) then Exit;
-  Result:=TDnmpLinkInfo(lvInfoList.Selected.Data);
+  Result:=TDnmpContact(lvInfoList.Selected.Data);
 end;
 
 procedure TFrameLinkInfoList.Update();

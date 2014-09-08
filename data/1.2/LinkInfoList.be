@@ -1,1 +1,1 @@
-d4:type16:DnmpLinkInfoList5:itemsdee
+d4:type15:DnmpContactList5:itemsdee

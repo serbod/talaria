@@ -1,1 +1,1 @@
-d4:type16:DnmpLinkInfoList5:itemsd1:0d4:addr3:2.04:guid0:11:senior_guid0:4:name6:Node 210:status_msg0:7:picture0:5:owner2:SB8:location4:Home7:ip_addr14:localhost:40425:phone4:none10:other_info11:test node 26:ratingi0e3:key64:iFBiZ47j6jdA8PFHex1PpDtew2d4eATDZi5ibFEHJs8fNTkzyGCwVlO2Bl1iwHvNeee
+d4:type15:DnmpContactList5:itemsd1:0d4:addr3:2.04:guid0:4:name6:Node 25:state7:Unknowneee

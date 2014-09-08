@@ -53,7 +53,7 @@ type
     LinkPort: string;
     Incoming: Boolean;
     IdleTimestamp: TDateTime;
-    constructor Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo = nil); override;
+    constructor Create(AMgr: TDnmpManager; ALinkInfo: TDnmpContact = nil); override;
     destructor Destroy(); override;
     procedure ReaderEventHandler(LastError: integer; Data: string);
     procedure ListenerEventHandler(Sock: TSocket; LastError: integer; Data: string);
@@ -193,13 +193,13 @@ end;
 // ===================
 // === TIpLink     ===
 // ===================
-constructor TIpLink.Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo);
+constructor TIpLink.Create(AMgr: TDnmpManager; ALinkInfo: TDnmpContact);
 var
   sHost, sPort, sProto: string;
 begin
   inherited Create(AMgr, ALinkInfo);
-  sHost:=GetIpHost(LinkInfo.IpAddr);
-  sPort:=GetIpPort(LinkInfo.IpAddr);
+  sHost:=GetIpHost(RemoteInfo.IpAddr);
+  sPort:=GetIpPort(RemoteInfo.IpAddr);
   sProto:='TCP';
   if sHost='' then sHost:='localhost';
   if sPort='' then sPort:='4044';
@@ -227,7 +227,7 @@ begin
   // Set addresses
   Self.LinkHost:=Socket.GetRemoteSinIP();
   Self.LinkPort:=IntToStr(Socket.GetRemoteSinPort());
-  LinkInfo.Name:=IpProto+' link '+LinkHost+':'+LinkPort;
+  RemoteInfo.Name:=IpProto+' link '+LinkHost+':'+LinkPort;
   Self.OnIncomingMsg:=@Mgr.IncomingMsgHandler;
 
   Reader:=TSockReader.Create(Self.Socket, @ReaderEventHandler);
@@ -255,7 +255,7 @@ begin
     Exit;
   end;
   FActive:=StartReader();
-  LinkInfo.Online:=Active;
+  RemoteInfo.Online:=Active;
   Result:=true;
 end;
 
@@ -290,7 +290,7 @@ begin
     end;
     StartReader();
   end;
-  LinkInfo.Name:=IpProto+' listener '+LinkHost+':'+LinkPort;
+  RemoteInfo.Name:=IpProto+' listener '+LinkHost+':'+LinkPort;
 
   FActive:=true;
   Result:=true;
@@ -302,7 +302,7 @@ begin
   Mgr.DebugText('IpLink.Disconnect()');
   if not Active then Exit;
   FActive:=false;
-  LinkInfo.Online:=Active;
+  RemoteInfo.Online:=Active;
   IdleTimestamp:=Now();
   if Assigned(Reader) then
   begin
@@ -430,7 +430,7 @@ begin
   //NewIpLink.OnIncomingMsg:=Mgr.OnIncomingMsg;
   NewIpLink.Incoming:=True;
   NewIpLink.FActive:=NewIpLink.StartReader();
-  NewIpLink.LinkInfo.Online:=NewIpLink.Active;
+  NewIpLink.RemoteInfo.Online:=NewIpLink.Active;
 
 //  { TODO : Это для отладки, можно убрать }
 //  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, NewIpLink.LinkInfo.Addr, 'INFO', 'CMD=Hello', 'Hello!');

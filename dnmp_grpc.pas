@@ -525,8 +525,7 @@ end;
 constructor TDnmpGrpc.Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo);
 begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
-  Self.UsersList:=TDnmpContactList.Create(False);
-  Self.UsersList.ParentList:=AMgr.ContactList;
+  Self.UsersList:=TDnmpContactList.Create(AMgr.ContactList);
   Self.BanList:=TGrpcBanList.Create();
   Self.MessagesList:=TDnmpChannelMessagesList.Create(True);
 end;
@@ -646,7 +645,7 @@ begin
   Storage:=Self.ServiceInfo.ToStorage();
   Result.Add('service_info', Storage);
 
-  Storage:=Self.UsersList.ToStorage();
+  Storage:=Self.UsersList.ToStorage(ctBrief);
   Result.Add('users_list', Storage);
 
   Storage:=Self.BanList.ToStorage();
@@ -1253,7 +1252,7 @@ begin
   begin
     sGUID:=ExtractFirstWord(sParams);
     Result:=SayText(sGUID, sParams);
-    //SendChannelMsg(Mgr.Uplink.LinkInfo.Addr, ChanMsg);
+    //SendChannelMsg(Mgr.Uplink.RemoteInfo.Addr, ChanMsg);
     Mgr.AddCmd('GRPC UPDATE '+self.ServiceInfo.Name+' TEXT');
   end
 
