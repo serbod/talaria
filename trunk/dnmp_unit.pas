@@ -52,6 +52,7 @@ type
     function GetInteger(AName: string = ''): Integer;
     function GetCardinal(AName: string = ''): Cardinal;
     function GetReal(AName: string = ''): Real;
+    function HaveName(AName: string): boolean;
   end;
 
   {
@@ -133,25 +134,52 @@ type
 
 
   TDnmpContactState = (asUnknown, asOnline, asOffline, asBusy);
+  TDnmpContactInfoType = (ctBrief, ctPublic, ctPrivate, ctAll);
+  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener);
 
   { TDnmpContact }
 
   TDnmpContact = class(TInterfacedObject)
   public
+    { === Brief info === }
     { Contact name }
     Name: string;
     { point address }
     Addr: TAddr;
     { GUID assigned when contact approved by node }
     GUID: string;
-    { GUID of node, that approved this contact }
-    SeniorGUID: string;
     { Contact state }
     State: TDnmpContactState;  // asUnknown, asOnline, asOffline, asBusy
+    { === Public info === }
+    { GUID of node, that approved this contact }
+    SeniorGUID: string;
+    { Status message }
+    StatusMessage: string;
     { Avatar picture }
     Picture: AnsiString;
-    StatusMessage: string; // Status message
-    function ToStorage(): TDnmpStorage;
+    { Rating }
+    Rating: integer;
+    { === Private info === }
+    { Owner info (name, organization, etc) }
+    Owner: string;
+    { Location info (address, region) }
+    Location: string;
+    { IP address (optional) }
+    IpAddr: string;
+    { Phone number (optional) }
+    PhoneNo: string;
+    { Any other info}
+    OtherInfo: string;
+    { Private key }
+    Key: AnsiString;
+    { === Temporary info === }
+    { Online state }
+    Online: boolean;
+    { ltPoint, ltNode, ltTemporary }
+    LinkType: TDnmpLinkType;
+    function AddrStr(): string;
+    function SameAddr(AAddr: TAddr): boolean;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     function StateStr(): string;
     function StateFromStr(s: string): boolean;
@@ -168,6 +196,7 @@ type
   public
     ParentList: TDnmpContactList;
     Filename: string;
+    constructor Create(AParentList: TDnmpContactList); reintroduce;
     property Items[Index: Integer]: TDnmpContact read GetItem write SetItem; default;
     // Search only in this list
     function GetByAddr(AAddr: TAddr): TDnmpContact;
@@ -177,8 +206,9 @@ type
     function AddByGUID(sGUID: string): TDnmpContact;
     function DelByGUID(sGUID: string): TDnmpContact;
     function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName, sState, sStatus: string): TDnmpContact; overload;
+    { Find item by GUID or Addr, if found then update, if not found then add }
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
-    function ToStorage(): TDnmpStorage;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
     { Содержит список контактов в формате CSV.
     Каждый элемент списка содержит сведения:
@@ -194,97 +224,21 @@ type
     function UpdateFromCSV(sData: string): boolean;
   end;
 
-
-  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener);
-
-  { TDnmpLinkInfo }
-  { Link information. Refcounted. }
-  TDnmpLinkInfo = class(TInterfacedObject)
-  private
-    FGUID: string;
-    FSGUID: string;
-    FAddr: TAddr;
-    function FGetGuid(): string;
-    procedure FSetGuid(Value: string);
-    function FGetSGuid(): string;
-    procedure FSetSGuid(Value: string);
-    function FGetAddr(): TAddr;
-    procedure FSetAddr(Value: TAddr);
-  public
-    ContactList: TDnmpContactList;
-    Contact: TDnmpContact;
-    { Owner info (name, organization, etc) }
-    Owner: string;
-    { Location info (address, region) }
-    Location: string;
-    { IP address (optional) }
-    IpAddr: string;
-    { Phone number (optional) }
-    PhoneNo: string;
-    { Any other info}
-    OtherInfo: string;
-    { Private key }
-    Key: AnsiString;
-    { Rating }
-    Rating: integer;
-    { ltPoint, ltNode, ltTemporary }
-    LinkType: TDnmpLinkType;
-    { Online state }
-    Online: boolean;
-    { Visible link name }
-    Name: string;
-    { Addr for temporary link }
-    TmpAddr: TAddr;
-    { GUID assigned when contact approved by node }
-    property GUID: string read FGetGuid write FSetGuid;
-    property SeniorGUID: string read FGetSGuid write FSetSGuid;
-    property Addr: TAddr read FGetAddr write FSetAddr;
-    function AddrStr(): string;
-    function SameAddr(AAddr: TAddr): Boolean;
-    function SameNode(AAddr: TAddr): Boolean;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
-    function FromConf(Conf: TDnmpConf; SectName: string): Boolean;
-    function ToConf(Conf: TDnmpConf; SectName: string): Boolean;
-    { Copy all info from another item }
-    procedure Assign(Item: TDnmpLinkInfo); reintroduce;
-  end;
-
-  { TLinkInfoList }
-
-  TLinkInfoList = class(TObjectList)
-  private
-    function GetLinkInfo(Index: Integer): TDnmpLinkInfo;
-    procedure SetLinkInfo(Index: Integer; Value: TDnmpLinkInfo);
-  public
-    ContactList: TDnmpContactList;
-    Filename: string;
-    property Items[Index: Integer]: TDnmpLinkInfo read GetLinkInfo write SetLinkInfo; default;
-    function GetLinkInfoByAddr(FAddr: TAddr): TDnmpLinkInfo;
-    function GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
-    // Return maximum point ID +1
-    function GetFreePointID(): TPointID;
-    // Return maximum node ID +1
-    function GetFreeNodeID(): TNodeID;
-  end;
-
   { TDnmpPassport }
 
   TDnmpPassport = class(TInterfacedObject)
   public
-    LinkInfo: TDnmpLinkInfo;
+    Contact: TDnmpContact;
     ContactsList: TDnmpContactList;
     ServicesList: TStringList;
     MsgInbox: TDnmpMsgQueue;
     MsgOutbox: TDnmpMsgQueue;
-    constructor Create();
+    constructor Create(AContact: TDnmpContact);
     destructor Destroy; override;
   end;
 
-  TNodeList = class(TLinkInfoList);
-  TPointList = class(TLinkInfoList);
+  TNodeList = class(TDnmpContactList);
+  TPointList = class(TDnmpContactList);
 
   TIncomingMsgEvent = procedure(Sender: TObject; Msg: TDnmpMsg) of object;
 
@@ -296,9 +250,9 @@ type
   public
     Mgr: TDnmpManager;
     // my info from Mgr
-    MyInfo: TDnmpLinkInfo;
+    MyInfo: TDnmpContact;
     // remote side info
-    LinkInfo: TDnmpLinkInfo;
+    RemoteInfo: TDnmpContact;
     // link type, default ltTemporary
     LinkType: TDnmpLinkType;
     Speed: Integer;
@@ -306,7 +260,7 @@ type
     // link-specific incoming message handler
     MsgHandler: TDnmpMsgHandler;
 
-    constructor Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo = nil); virtual;
+    constructor Create(AMgr: TDnmpManager; ARemoteInfo: TDnmpContact = nil); virtual;
     destructor Destroy(); override;
     // Установить соединение
     function Connect(): boolean; virtual;
@@ -451,13 +405,13 @@ type
     // Serializer for objects
     Serializer: TDnmpSerializer;
     MyPassport: TDnmpPassport;
-    MyInfo: TDnmpLinkInfo;
+    MyInfo: TDnmpContact;
     // Known linkable nodes
     NodeList: TNodeList;
     // Owned points (Server only)
     PointList: TPointList;
     // Unapproved links (Server only)
-    LinkInfoList: TLinkInfoList;
+    UnapprovedList: TDnmpContactList;
     // Global contact list (??)
     ContactList: TDnmpContactList;
     // Active links
@@ -495,8 +449,8 @@ type
     procedure StopServer();
     procedure StartClient();
     procedure StopClient();
-    procedure StartNodeConnection(NodeInfo: TDnmpLinkInfo);
-    procedure StopNodeConnection(NodeInfo: TDnmpLinkInfo);
+    procedure StartNodeConnection(NodeInfo: TDnmpContact);
+    procedure StopNodeConnection(NodeInfo: TDnmpContact);
     property OnLog: TLogEvent read FOnLog write FOnLog;
     property OnCmd: TLogEvent read FOnCmd write FOnCmd;
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
@@ -518,14 +472,18 @@ type
     function DelLink(Link: TDnmpLink): Boolean;
     function GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
     function GetContactByGUID(SomeGUID: string): TDnmpContact;
-    function GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpLinkInfo;
-    function GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
-    function Approve(ALinkInfo: TDnmpLinkInfo): boolean;
+    function GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpContact;
+    function GetLinkInfoByGUID(SomeGUID: string): TDnmpContact;
+    function Approve(ALinkInfo: TDnmpContact): boolean;
+    // Return maximum point ID +1
+    function GetFreePointID(): TPointID;
+    // Return maximum node ID +1
+    function GetFreeNodeID(): TNodeID;
     // ==== Сервисные функции
     procedure SendChatMsg(DestAddr: TAddr; Text: string);
     procedure RequestInfoByAddr(Addr: TAddr);
     procedure RequestPointlist(Addr: TAddr);
-    procedure SendLinkInfo(ALinkInfo: TDnmpLinkInfo; TargetAddr: TAddr); // [S]
+    procedure SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr); // [S]
     // !! not used
     procedure ReadLinkInfo(Msg: TDnmpMsg); // [SC]
   end;
@@ -574,7 +532,7 @@ const
   csMyInfoFileName = 'MyInfo';
   csPointlistFileName = 'PointList';
   csNodelistFileName = 'NodeList';
-  csLinkInfoFileName = 'LinkInfoList';
+  csUnapprovedFileName = 'UnapprovedList';
   csContactListFileName = 'ContactList';
   csMsgQueueFileName = 'MsgQueue';
   ciKeyLength = 8;
@@ -782,11 +740,11 @@ end;
 
 { TDnmpPassport }
 
-constructor TDnmpPassport.Create();
+constructor TDnmpPassport.Create(AContact: TDnmpContact);
 begin
   inherited Create();
-  LinkInfo:=TDnmpLinkInfo.Create();
-  ContactsList:=TDnmpContactList.Create();
+  Contact:=AContact;
+  ContactsList:=TDnmpContactList.Create(nil); // !!! parent contact list
   ServicesList:=TStringList.Create();
   MsgInbox:=TDnmpMsgQueue.Create();
   MsgOutbox:=TDnmpMsgQueue.Create();
@@ -798,7 +756,6 @@ begin
   FreeAndNil(MsgInbox);
   FreeAndNil(ServicesList);
   FreeAndNil(ContactsList);
-  FreeAndNil(LinkInfo);
   inherited Destroy;
 end;
 
@@ -812,6 +769,12 @@ end;
 procedure TDnmpContactList.SetItem(Index: Integer; Value: TDnmpContact);
 begin
   inherited Items[Index]:=Value;
+end;
+
+constructor TDnmpContactList.Create(AParentList: TDnmpContactList);
+begin
+  inherited Create(False);
+  ParentList:=AParentList;
 end;
 
 function TDnmpContactList.GetByAddr(AAddr: TAddr): TDnmpContact;
@@ -896,11 +859,20 @@ end;
 function TDnmpContactList.UpdateItem(Item: TDnmpContact): TDnmpContact;
 begin
   Result:=Self.GetByGUID(Item.GUID);
+  if not Assigned(Result) then Result:=Self.GetByAddr(Item.Addr);
   if not Assigned(Result) then
   begin
     // Not found in this list, look in parent list
-    if Assigned(ParentList) then Result:=ParentList.GetByGUID(Item.GUID);
-    if Assigned(Result) then self.Add(Result);
+    if Assigned(ParentList) then
+    begin
+      Result:=ParentList.GetByGUID(Item.GUID);
+      if not Assigned(Result) then Result:=ParentList.GetByAddr(Item.Addr);
+    end;
+    if Assigned(Result) then
+    begin
+      self.Add(Result);
+      Exit;
+    end;
   end;
 
   if not Assigned(Result) then
@@ -908,13 +880,17 @@ begin
     // Contact not found anywhere (fishy!)
     Result:=Item;
     self.Add(Result);
-    if Assigned(ParentList) then ParentList.Add(Result);
-    Exit;
+    if Assigned(ParentList) then
+    begin
+      ParentList.Add(Result);
+      Exit;
+    end;
   end;
   Result.Assign(Item);
 end;
 
-function TDnmpContactList.ToStorage: TDnmpStorage;
+function TDnmpContactList.ToStorage(InfoType: TDnmpContactInfoType
+  ): TDnmpStorage;
 var
   Storage: TDnmpStorage;
   i: Integer;
@@ -922,7 +898,7 @@ begin
   Storage:=TDnmpStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
-    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
+    Storage.Add(IntToStr(i), Self.Items[i].ToStorage(InfoType));
   end;
 
   Result:=TDnmpStorage.Create(stDictionary);
@@ -1015,16 +991,45 @@ end;
 
 { TDnmpContact }
 
-function TDnmpContact.ToStorage(): TDnmpStorage;
+function TDnmpContact.AddrStr(): string;
+begin
+  Result:=AddrToStr(Self.Addr);
+end;
+
+function TDnmpContact.SameAddr(AAddr: TAddr): boolean;
+begin
+  Result:=((Self.Addr.Node=AAddr.Node) and (Self.Addr.Point=AAddr.Point));
+end;
+
+function TDnmpContact.ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
 begin
   Result:=TDnmpStorage.Create(stDictionary);
+  // Brief info
   Result.Add('addr', AddrToStr(Self.Addr));
   Result.Add('guid', Self.GUID);
-  Result.Add('senior_guid', Self.SeniorGUID);
-  Result.Add('state', Self.StateStr());
   Result.Add('name', Self.Name);
+  Result.Add('state', Self.StateStr());
+  if InfoType=ctBrief then Exit;
+
+  // Public info
+  Result.Add('senior_guid', Self.SeniorGUID);
   Result.Add('status', Self.StatusMessage);
   Result.Add('picture', Self.Picture);
+  Result.Add('rating', Self.Rating);
+  if InfoType=ctPublic then Exit;
+
+  // Private info
+  Result.Add('owner', Self.Owner);
+  Result.Add('location', Self.Location);
+  Result.Add('ip_addr', Self.IpAddr);
+  Result.Add('phone_no', Self.PhoneNo);
+  Result.Add('other_info', Self.OtherInfo);
+  Result.Add('key', Self.Key);
+  if InfoType=ctPrivate then Exit;
+
+  // Temporary info
+  Result.Add('online', BoolToStr(Self.Online, '1', '0'));
+  Result.Add('link_type', LinkTypeToStr(Self.LinkType));
 end;
 
 function TDnmpContact.FromStorage(Storage: TDnmpStorage): boolean;
@@ -1032,17 +1037,44 @@ begin
   Result:=False;
   if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
+
+  // Brief info
   Self.Addr:=StrToAddr(Storage.GetString('addr'));
   Self.GUID:=Storage.GetString('guid');
-  Self.SeniorGUID:=Storage.GetString('senior_guid');
-  Self.StateFromStr(Storage.GetString('state'));
   Self.Name:=Storage.getString('name');
-  Self.StatusMessage:=Storage.GetString('status');
-  Self.Picture:=Storage.GetString('picture');
+  Self.StateFromStr(Storage.GetString('state'));
+
+  // Public info
+  if Storage.HaveName('senior_guid') then
+  begin
+    Self.SeniorGUID:=Storage.GetString('senior_guid');
+    Self.StatusMessage:=Storage.GetString('status');
+    Self.Picture:=Storage.GetString('picture');
+    Self.Rating:=Storage.GetInteger('rating');
+  end;
+
+  // Private info
+  if Storage.HaveName('owner') then
+  begin
+    Self.Owner:=Storage.GetString('owner');
+    Self.Location:=Storage.GetString('location');
+    Self.IpAddr:=Storage.GetString('ip_addr');
+    Self.PhoneNo:=Storage.GetString('phone_no');
+    Self.OtherInfo:=Storage.GetString('other_info');
+    Self.Key:=Storage.GetString('key');
+  end;
+
+  // Temporary info
+  if Storage.HaveName('link_type') then
+  begin
+    Self.LinkType:=StrToLinkType(Storage.GetString('link_type'));
+    Self.Online:=(Storage.GetString('online')='1');
+  end;
+
   Result:=True;
 end;
 
-function TDnmpContact.StateStr: string;
+function TDnmpContact.StateStr(): string;
 begin
   Result:='Unknown';
   case State of
@@ -1066,13 +1098,26 @@ end;
 procedure TDnmpContact.Assign(Item: TDnmpContact);
 begin
   if not Assigned(Item) then Exit;
+  // Brief
   Self.Name:=Item.Name;
   Self.Addr:=Item.Addr;
   Self.GUID:=Item.GUID;
-  Self.SeniorGUID:=Item.SeniorGUID;
   Self.State:=Item.State;
+  // Public
+  Self.SeniorGUID:=Item.SeniorGUID;
   Self.StatusMessage:=Item.StatusMessage;
   Self.Picture:=Item.Picture;
+  Self.Rating:=Item.Rating;
+  // Private
+  Self.Owner:=Item.Owner;
+  Self.Location:=Item.Location;
+  Self.IpAddr:=Item.IpAddr;
+  Self.PhoneNo:=Item.PhoneNo;
+  Self.OtherInfo:=Item.OtherInfo;
+  Self.Key:=Item.Key;
+  // Temp
+  Self.Online:=Item.Online;
+  Self.LinkType:=Item.LinkType;
 end;
 
 
@@ -1209,6 +1254,11 @@ end;
 function TDnmpStorage.GetReal(AName: string): Real;
 begin
   Result:=StrToFloatDef(GetString(AName), 0);
+end;
+
+function TDnmpStorage.HaveName(AName: string): boolean;
+begin
+  Result:=(FItems.IndexOf(AName)<>-1);
 end;
 
 { === TDnmpMsg === }
@@ -1557,249 +1607,6 @@ begin
   Result:=True;
 end;
 
-function TDnmpLinkInfo.FGetGuid(): string;
-begin
-  if Assigned(Contact) then Result:=Contact.GUID else Result:=FGUID;
-end;
-
-procedure TDnmpLinkInfo.FSetGuid(Value: string);
-begin
-  if Assigned(ContactList) then
-  begin
-    Self.Contact:=Self.ContactList.GetByGUID(Value);
-  end
-  else FGUID:=Value;
-end;
-
-function TDnmpLinkInfo.FGetSGuid(): string;
-begin
-  if Assigned(Contact) then Result:=Contact.SeniorGUID else Result:=FSGUID;
-end;
-
-procedure TDnmpLinkInfo.FSetSGuid(Value: string);
-begin
-  if Assigned(Contact) then Self.Contact.SeniorGUID:=Value else FSGUID:=Value;
-end;
-
-function TDnmpLinkInfo.FGetAddr: TAddr;
-begin
-  if Assigned(Contact) then Result:=Contact.Addr else Result:=FAddr;
-end;
-
-procedure TDnmpLinkInfo.FSetAddr(Value: TAddr);
-begin
-  if Assigned(Contact) then Self.Contact.Addr:=Value else FAddr:=Value;
-end;
-
-// === TDnmpLinkInfo ===
-function TDnmpLinkInfo.AddrStr(): string;
-begin
-  Result:='';
-  if Assigned(Contact) then Result:=AddrToStr(Contact.Addr);
-end;
-
-function TDnmpLinkInfo.SameAddr(AAddr: TAddr): Boolean;
-begin
-  Result:=False;
-  if Assigned(Contact) then Result := ((Contact.Addr.Node=AAddr.Node) and (Contact.Addr.Point=AAddr.Point));
-end;
-
-function TDnmpLinkInfo.SameNode(AAddr: TAddr): Boolean;
-begin
-  Result:=False;
-  if Assigned(Contact) then Result := (Contact.Addr.Node=AAddr.Node);
-end;
-
-function TDnmpLinkInfo.ToStorage(): TDnmpStorage;
-begin
-  Result:=TDnmpStorage.Create(stDictionary);
-  Result.Add('guid', Self.GUID);
-  Result.Add('owner', Self.Owner);
-  Result.Add('location', Self.Location);
-  Result.Add('ip_addr', Self.IpAddr);
-  Result.Add('phone', Self.PhoneNo);
-  Result.Add('other_info', Self.OtherInfo);
-  Result.Add('rating', Self.Rating);
-  Result.Add('key', Self.Key);
-end;
-
-function TDnmpLinkInfo.FromStorage(Storage: TDnmpStorage): boolean;
-begin
-  Result:=False;
-  if not Assigned(Storage) then Exit;
-  if Storage.StorageType <> stDictionary then Exit;
-  Self.GUID:=Storage.GetString('guid');
-  Self.Owner:=Storage.getString('owner');
-  Self.Location:=Storage.getString('location');
-  Self.IpAddr:=Storage.getString('ip_addr');
-  Self.PhoneNo:=Storage.getString('phone');
-  Self.OtherInfo:=Storage.getString('other_info');
-  Self.Rating:=Storage.GetInteger('rating');
-  Self.Key:=Storage.getString('key');
-  Result:=True;
-end;
-
-function TDnmpLinkInfo.FromConf(Conf: TDnmpConf; SectName: string): Boolean;
-begin
-  // TODO: from Storage
-  Result:=False;
-  if not Assigned(Conf) then Exit;
-  //Self.Addr:=StrToAddr(Conf.ReadString(SectName, 'Addr', ''));
-  //Self.GUID:=Conf.ReadString(SectName, 'GUID', Self.Contact.GUID);
-  //Self.SeniorGUID:=Conf.ReadString(SectName, 'SeniorGUID', Self.SeniorGUID);
-  //Self.Name:=Conf.ReadString(SectName, 'Name', Self.Name);
-  Self.Owner:=Conf.ReadString(SectName, 'Owner', Self.Owner);
-  Self.Location:=Conf.ReadString(SectName, 'Location', Self.Location);
-  Self.IpAddr:=Conf.ReadString(SectName, 'IpAddr', Self.IpAddr);
-  Self.PhoneNo:=Conf.ReadString(SectName, 'PhoneNo', Self.PhoneNo);
-  Self.OtherInfo:=Conf.ReadString(SectName, 'OtherInfo', Self.OtherInfo);
-  Self.Rating:=StrToIntDef(Conf.ReadString(SectName, 'Rating', ''), 1);
-  Self.Key:=Conf.ReadString(SectName, 'Key', Self.Key);
-  Result:=True;
-end;
-
-function TDnmpLinkInfo.ToConf(Conf: TDnmpConf; SectName: string): Boolean;
-begin
-  // TODO: from Storage
-  Result:=False;
-  if not Assigned(Conf) then Exit;
-  //Conf.WriteString(SectName, 'Addr', Self.AddrStr());
-  //Conf.WriteString(SectName, 'GUID', Self.GUID);
-  //Conf.WriteString(SectName, 'SeniorGUID', Self.SeniorGUID);
-  //Conf.WriteString(SectName, 'Name', Self.Name);
-  Conf.WriteString(SectName, 'Owner', Self.Owner);
-  Conf.WriteString(SectName, 'Location', Self.Location);
-  Conf.WriteString(SectName, 'IpAddr', Self.IpAddr);
-  Conf.WriteString(SectName, 'PhoneNo', Self.PhoneNo);
-  Conf.WriteString(SectName, 'OtherInfo', Self.OtherInfo);
-  Conf.WriteString(SectName, 'Rating', IntToStr(Self.Rating));
-  Conf.WriteString(SectName, 'Key', Self.Key);
-  Result:=True;
-end;
-
-procedure TDnmpLinkInfo.Assign(Item: TDnmpLinkInfo);
-begin
-  if not Assigned(Item) then Exit;
-  //Self.Addr:=Item.Addr;
-  Self.GUID:=Item.GUID;
-  //Self.SeniorGUID:=Item.SeniorGUID;
-  Self.Name:=Item.Name;
-  Self.Owner:=Item.Owner;
-  Self.Location:=Item.Location;
-  Self.IpAddr:=Item.IpAddr;
-  Self.PhoneNo:=Item.PhoneNo;
-  Self.OtherInfo:=Item.OtherInfo;
-  Self.Key:=Item.Key;
-  Self.Rating:=Item.Rating;
-end;
-
-// === TLinkInfoList ===
-function TLinkInfoList.GetLinkInfo(Index: Integer): TDnmpLinkInfo;
-begin
-  Result:=TDnmpLinkInfo(inherited Items[index]);
-end;
-
-procedure TLinkInfoList.SetLinkInfo(Index: Integer; Value: TDnmpLinkInfo);
-begin
-  inherited Items[Index]:=Value;
-end;
-
-function TLinkInfoList.GetLinkInfoByAddr(FAddr: TAddr): TDnmpLinkInfo;
-var
-  i: Integer;
-begin
-  Result:=nil;
-  for i:=0 to Count-1 do
-  begin
-    if TDnmpLinkInfo(Items[i]).SameAddr(FAddr) then
-    begin
-      Result:=TDnmpLinkInfo(Items[i]);
-      Exit;
-    end;
-  end;
-end;
-
-function TLinkInfoList.GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
-var
-  i: Integer;
-begin
-  Result:=nil;
-  for i:=0 to Count-1 do
-  begin
-    if TDnmpLinkInfo(Items[i]).GUID = SomeGUID then
-    begin
-      Result:=TDnmpLinkInfo(Items[i]);
-      Exit;
-    end;
-  end;
-end;
-
-function TLinkInfoList.ToStorage(): TDnmpStorage;
-var
-  Storage: TDnmpStorage;
-  i: Integer;
-begin
-  Storage:=TDnmpStorage.Create(stDictionary);
-  for i:=0 to Self.Count-1 do
-  begin
-    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
-  end;
-
-  Result:=TDnmpStorage.Create(stDictionary);
-  Result.Add('type', 'DnmpLinkInfoList');
-  Result.Add('items', Storage);
-end;
-
-function TLinkInfoList.FromStorage(Storage: TDnmpStorage): boolean;
-var
-  SubStorage: TDnmpStorage;
-  i: Integer;
-  Item: TDnmpLinkInfo;
-begin
-  Result:=False;
-  if not Assigned(Storage) then Exit;
-  if Storage.StorageType <> stDictionary then Exit;
-  if Storage.GetString('type')<>'DnmpLinkInfoList' then Exit;
-  SubStorage:=Storage.GetObject('items');
-  if SubStorage.StorageType <> stDictionary then Exit;
-  for i:=0 to SubStorage.Count-1 do
-  begin
-    Item:=TDnmpLinkInfo.Create();
-    if not Item.FromStorage(SubStorage.GetObject(i)) then
-    begin
-      Item.Free();
-      Continue;
-    end;
-    self.Add(Item);
-  end;
-  Result:=True;
-end;
-
-function TLinkInfoList.GetFreePointID(): TPointID;
-var
-  i: Integer;
-  LastPointID: TPointID;
-begin
-  LastPointID:=0;
-  for i:=0 to self.Count-1 do
-  begin
-    if Items[i].Addr.Point > LastPointID then LastPointID:=Items[i].Addr.Point;
-  end;
-  Result:=LastPointID+1;
-end;
-
-function TLinkInfoList.GetFreeNodeID(): TNodeID;
-var
-  i: Integer;
-  LastNodeID: TNodeID;
-begin
-  LastNodeID:=0;
-  for i:=0 to self.Count-1 do
-  begin
-    if Items[i].Addr.Node > LastNodeID then LastNodeID:=Items[i].Addr.Node;
-  end;
-  Result:=LastNodeID+1;
-end;
 
 // === TLinkList ===
 function TDnmpLinkList.GetLink(Index: Integer): TDnmpLink;
@@ -1819,7 +1626,7 @@ begin
   Result:=nil;
   for i:=0 to Count-1 do
   begin
-    if TDnmpLink(Items[i]).LinkInfo.SameAddr(FAddr) then
+    if SameAddr(TDnmpLink(Items[i]).RemoteInfo.Addr, FAddr) then
     begin
       Result:=TDnmpLink(Items[i]);
       Exit;
@@ -1899,7 +1706,7 @@ begin
 
   for i:=0 to Links.Count-1 do
   begin
-    if (Links[i] as TDnmpLink).LinkInfo.Addr.Node = GateID then
+    if (Links[i] as TDnmpLink).RemoteInfo.Addr.Node = GateID then
     begin
       Result:=(Links[i] as TDnmpLink);
       Exit;
@@ -1999,14 +1806,14 @@ end;
 
 
 // === TDnmpLink ===
-constructor TDnmpLink.Create(AMgr: TDnmpManager; ALinkInfo: TDnmpLinkInfo);
+constructor TDnmpLink.Create(AMgr: TDnmpManager; ARemoteInfo: TDnmpContact);
 begin
   inherited Create();
   Mgr:=AMgr;
   MyInfo:=Mgr.MyInfo;
   LinkType:=ltTemporary;
-  LinkInfo:=ALinkInfo;
-  if not Assigned(LinkInfo) then LinkInfo:=TDnmpLinkInfo.Create();
+  RemoteInfo:=ARemoteInfo;
+  if not Assigned(RemoteInfo) then RemoteInfo:=TDnmpContact.Create();
 end;
 
 destructor TDnmpLink.Destroy();
@@ -2015,9 +1822,9 @@ begin
   // Если мы ее убьем здесь, то в другом месте может возникнуть ошибка при попытке
   // убить инфу второй раз
   { // больше неактуально
-  if (Mgr.PointList.IndexOf(LinkInfo)=-1) and (Mgr.NodeList.IndexOf(LinkInfo)=-1) then
+  if (Mgr.PointList.IndexOf(RemoteInfo)=-1) and (Mgr.NodeList.IndexOf(RemoteInfo)=-1) then
   begin
-    FreeAndNil(LinkInfo);
+    FreeAndNil(RemoteInfo);
   end;
   }
   inherited Destroy();
@@ -2034,7 +1841,7 @@ begin
   Result:=false;
   if LinkType = ltTemporary then Exit;
   if not Assigned(Mgr) then Exit;
-  Result:=Mgr.Approve(LinkInfo);
+  Result:=Mgr.Approve(RemoteInfo);
 end;
 
 function TDnmpLink.Connect(): boolean;
@@ -2096,23 +1903,20 @@ begin
   DebugText('Config file='+sDataPath+csConfigFileName);
   Conf:=TDnmpConf.Create(sDataPath+csConfigFileName);
 
-  ContactList:=TDnmpContactList.Create();
+  ContactList:=TDnmpContactList.Create(nil);
   ContactList.Filename:=sDataPath+csContactListFileName;
 
-  MyInfo:=TDnmpLinkInfo.Create();
-  MyInfo.ContactList:=ContactList;
+  MyInfo:=TDnmpContact.Create();
+  ContactList.Add(MyInfo);
 
-  NodeList:=TNodeList.Create();
+  NodeList:=TNodeList.Create(ContactList);
   NodeList.Filename:=sDataPath+csNodelistFileName;
-  NodeList.ContactList:=ContactList;
 
-  PointList:=TPointList.Create();
+  PointList:=TPointList.Create(ContactList);
   PointList.Filename:=sDataPath+csPointlistFileName;
-  PointList.ContactList:=ContactList;
 
-  LinkInfoList:=TLinkInfoList.Create();
-  LinkInfoList.Filename:=sDataPath+csLinkInfoFileName;
-  LinkInfoList.ContactList:=ContactList;
+  UnapprovedList:=TDnmpContactList.Create(ContactList);
+  UnapprovedList.Filename:=sDataPath+csUnapprovedFileName;
 
   LinkList:=TDnmpLinkList.Create();
 
@@ -2149,7 +1953,7 @@ begin
   FreeAndNil(RoutingTable);
   FreeAndNil(LinkList);
 
-  FreeAndNil(LinkInfoList);
+  FreeAndNil(UnapprovedList);
   FreeAndNil(PointList);
   FreeAndNil(NodeList);
 
@@ -2193,7 +1997,7 @@ end;
 
 procedure TDnmpManager.StartClient();
 var
-  tmpLinkInfo: TDnmpLinkInfo;
+  tmpLinkInfo: TDnmpContact;
   tmpLink: TDnmpLink;
   n: integer;
   sUplinkAddr, sTcpPort: string;
@@ -2204,7 +2008,7 @@ begin
   // get uplink addr from nodelist
   //sUplinkAddr:=Conf.ReadString('Options', 'UplinkAddr', 'localhost');
   //sTcpPort:=Conf.ReadString('Options', 'TcpPort', '4044');
-  tmpLinkInfo:=NodeList.GetLinkInfoByAddr(NodeAddr(MyInfo.Addr));
+  tmpLinkInfo:=NodeList.GetByAddr(NodeAddr(MyInfo.Addr));
   if not Assigned(tmpLinkInfo) then
   begin
     DebugText('Uplink node not found. Add it to nodelist.');
@@ -2237,7 +2041,7 @@ begin
   DebugText('Client stopped.');
 end;
 
-procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpLinkInfo);
+procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpContact);
 var
   tmpLink: TIpLink;
   sIpHost, sIpPort: string;
@@ -2271,21 +2075,21 @@ begin
 
 end;
 
-procedure TDnmpManager.StopNodeConnection(NodeInfo: TDnmpLinkInfo);
+procedure TDnmpManager.StopNodeConnection(NodeInfo: TDnmpContact);
 var
   i: Integer;
   tmpLink: TDnmpLink;
 begin
-  if Assigned(Uplink) and SameAddr(Uplink.LinkInfo.Addr, NodeInfo.Addr) then
+  if Assigned(Uplink) and SameAddr(Uplink.RemoteInfo.Addr, NodeInfo.Addr) then
   begin
     Uplink:=nil;
   end;
   for i:=0 to LinkList.Count-1 do
   begin
     tmpLink:=LinkList[i];
-    if SameAddr(tmpLink.LinkInfo.Addr, NodeInfo.Addr) then
+    if SameAddr(tmpLink.RemoteInfo.Addr, NodeInfo.Addr) then
     begin
-      DebugText('Removing node link: '+NodeInfo.AddrStr()+' '+NodeInfo.Name);
+      DebugText('Removing node link: '+AddrToStr(NodeInfo.Addr)+' '+NodeInfo.Name);
       tmpLink.OnIncomingMsg:=nil;
       LinkList.Delete(i);
       Event('MGR','REFRESH');
@@ -2332,7 +2136,7 @@ begin
     sLinkInfo:='';
     if Assigned(Link) then
     begin
-      sLinkInfo:=Link.LinkInfo.AddrStr+' '+Link.LinkInfo.Name;
+      sLinkInfo:=AddrToStr(Link.RemoteInfo.Addr)+' '+Link.RemoteInfo.Name;
     end;
     s:='---------------------------------------------'+LineEnding
     +Comment+' '+sLinkInfo+LineEnding
@@ -2411,10 +2215,6 @@ var
 begin
   if not Assigned(Serializer) then Exit;
   Storage:=TDnmpStorage.Create(stUnknown);
-  if (List is TLinkInfoList) then
-  begin
-    if Serializer.StorageFromFile(Storage, (List as TLinkInfoList).Filename) then (List as TLinkInfoList).FromStorage(Storage);
-  end;
   if (List is TDnmpContactList) then
   begin
     if Serializer.StorageFromFile(Storage, (List as TDnmpContactList).Filename) then (List as TDnmpContactList).FromStorage(Storage);
@@ -2425,8 +2225,7 @@ end;
 procedure TDnmpManager.WriteList(List: TObject);
 begin
   if not Assigned(Serializer) then Exit;
-  if (List is TLinkInfoList) then Serializer.StorageToFile((List as TLinkInfoList).ToStorage(), (List as TLinkInfoList).Filename);
-  if (List is TDnmpContactList) then Serializer.StorageToFile((List as TDnmpContactList).ToStorage(), (List as TDnmpContactList).Filename);
+  if (List is TDnmpContactList) then Serializer.StorageToFile((List as TDnmpContactList).ToStorage(ctAll), (List as TDnmpContactList).Filename);
 end;
 
 procedure TDnmpManager.LoadFromFile();
@@ -2437,13 +2236,13 @@ var
 begin
   if Assigned(Serializer) then
   begin
-    // Contact list
-    LoadList(ContactList);
-
     // MyInfo
     Storage:=TDnmpStorage.Create(stUnknown);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
     Storage.Free();
+
+    // Contact list
+    LoadList(ContactList);
 
     // Nodelist
     LoadList(Nodelist);
@@ -2451,8 +2250,8 @@ begin
     // Pointlist
     LoadList(PointList);
 
-    // LinkInfoList
-    LoadList(LinkInfoList);
+    // UnapprovedList
+    LoadList(UnapprovedList);
   end;
 end;
 
@@ -2468,19 +2267,19 @@ begin
   if Assigned(Serializer) then
   begin
     // MyInfo
-    Serializer.StorageToFile(MyInfo.ToStorage(), Self.sDataPath+csMyInfoFileName);
-
-    // Nodelist
-    Serializer.StorageToFile(Nodelist.ToStorage(), Nodelist.Filename);
-
-    // Pointlist
-    Serializer.StorageToFile(PointList.ToStorage(), PointList.Filename);
-
-    // LinkInfoList
-    Serializer.StorageToFile(LinkInfoList.ToStorage(), LinkInfoList.Filename);
+    Serializer.StorageToFile(MyInfo.ToStorage(ctAll), Self.sDataPath+csMyInfoFileName);
 
     // ContactList
-    Serializer.StorageToFile(ContactList.ToStorage(), ContactList.Filename);
+    Serializer.StorageToFile(ContactList.ToStorage(ctAll), ContactList.Filename);
+
+    // Nodelist
+    Serializer.StorageToFile(Nodelist.ToStorage(ctBrief), Nodelist.Filename);
+
+    // Pointlist
+    Serializer.StorageToFile(PointList.ToStorage(ctBrief), PointList.Filename);
+
+    // UnapprovedList
+    Serializer.StorageToFile(UnapprovedList.ToStorage(ctBrief), UnapprovedList.Filename);
   end;
 end;
 
@@ -2510,7 +2309,7 @@ begin
       for i:=0 to LinkList.Count-1 do
       begin
         if not LinkList[i].Active then Continue;
-        if not LinkList[i].LinkInfo.SameAddr(Msg.TargetAddr) then Continue;
+        if not LinkList[i].RemoteInfo.SameAddr(Msg.TargetAddr) then Continue;
         // Отправка сообщения поинту
         LinkList[i].SendMsg(Msg);
         Exit;
@@ -2545,13 +2344,13 @@ begin
       begin
         if not LinkList[i].Active then Continue;
         if LinkList[i].LinkType <> ltNode then Continue;
-        if Msg.HaveSeenBy(LinkList[i].LinkInfo.Addr) then Continue;
+        if Msg.HaveSeenBy(LinkList[i].RemoteInfo.Addr) then Continue;
         LinkList[i].SendMsg(Msg);
       end;
       // Отправка на аплинк
       if Assigned(Uplink) then
       begin
-        if not Msg.HaveSeenBy(Uplink.LinkInfo.Addr) then Uplink.SendMsg(Msg);
+        if not Msg.HaveSeenBy(Uplink.RemoteInfo.Addr) then Uplink.SendMsg(Msg);
       end;
       Exit;
     end;
@@ -2561,8 +2360,8 @@ begin
     begin
       //if LinkList[i].LinkType <> ltNode then Continue;
       if not LinkList[i].Active then Continue;
-      if not LinkList[i].LinkInfo.SameNode(Msg.TargetAddr) then Continue;
-      if Msg.HaveSeenBy(LinkList[i].LinkInfo.Addr) then Continue;
+      if not SameNode(LinkList[i].RemoteInfo.Addr, Msg.TargetAddr) then Continue;
+      if Msg.HaveSeenBy(LinkList[i].RemoteInfo.Addr) then Continue;
       // Отправка сообщения на узел
       LinkList[i].SendMsg(Msg);
       Exit;
@@ -2572,7 +2371,7 @@ begin
     DnmpLink:=RoutingTable.LinkForDestAddr(Msg.TargetAddr);
     if Assigned(DnmpLink) then
     begin
-      if (DnmpLink.Active) and (not Msg.HaveSeenBy(DnmpLink.LinkInfo.Addr)) then
+      if (DnmpLink.Active) and (not Msg.HaveSeenBy(DnmpLink.RemoteInfo.Addr)) then
       begin
         DnmpLink.SendMsg(Msg);
         Exit;
@@ -2583,7 +2382,7 @@ begin
   // Если аплинк существует
   if Assigned(Uplink) then
   begin
-    if (Uplink.Active) and (not Msg.HaveSeenBy(Uplink.LinkInfo.Addr)) then
+    if (Uplink.Active) and (not Msg.HaveSeenBy(Uplink.RemoteInfo.Addr)) then
     begin
       // Отправка на аплинк
       Uplink.SendMsg(Msg);
@@ -2645,7 +2444,7 @@ var
   i: Integer;
   TraceID: Cardinal;
   Msg: TDnmpMsg;
-  li: TDnmpLinkInfo;
+  TmpInfo: TDnmpContact;
 begin
   Result:='';
   sCmd:='';
@@ -2677,8 +2476,8 @@ begin
     // APPROVE <GUID>
     // Подтверждает авторизацию линка с указанным GUID
     if sParams='' then Exit;
-    li:=GetLinkInfoByGUID(sParams);
-    if Assigned(li) then Approve(li);
+    TmpInfo:=GetLinkInfoByGUID(sParams);
+    if Assigned(TmpInfo) then Approve(TmpInfo);
   end
 
   else if sCmd='GET_INFO' then
@@ -2739,46 +2538,41 @@ begin
   Result:=ContactList.GetByGUID(SomeGUID);
 end;
 
-function TDnmpManager.GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpLinkInfo;
+function TDnmpManager.GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpContact;
 begin
   Result:=nil;
   if SameAddr(SomeAddr, MyInfo.Addr) then Result:=MyInfo;
 
   if not Assigned(Result) then
   begin
-    if SomeAddr.Point=0 then Result:=NodeList.GetLinkInfoByAddr(SomeAddr)
-    else Result:=PointList.GetLinkInfoByAddr(SomeAddr);
+    if SomeAddr.Point=0 then Result:=NodeList.GetByAddr(SomeAddr)
+    else Result:=PointList.GetByAddr(SomeAddr);
   end;
 
-  if not Assigned(Result) then Result:=LinkInfoList.GetLinkInfoByAddr(SomeAddr);
+  if not Assigned(Result) then Result:=UnapprovedList.GetByAddr(SomeAddr);
 end;
 
-function TDnmpManager.GetLinkInfoByGUID(SomeGUID: string): TDnmpLinkInfo;
+function TDnmpManager.GetLinkInfoByGUID(SomeGUID: string): TDnmpContact;
 begin
-  Result:=LinkInfoList.GetLinkInfoByGUID(SomeGUID);
-  if not Assigned(Result) then Result:=PointList.GetLinkInfoByGUID(SomeGUID);
-  if not Assigned(Result) then Result:=NodeList.GetLinkInfoByGUID(SomeGUID);
+  Result:=UnapprovedList.GetByGUID(SomeGUID);
+  if not Assigned(Result) then Result:=PointList.GetByGUID(SomeGUID);
+  if not Assigned(Result) then Result:=NodeList.GetByGUID(SomeGUID);
 end;
 
-function TDnmpManager.Approve(ALinkInfo: TDnmpLinkInfo): boolean;
+function TDnmpManager.Approve(ALinkInfo: TDnmpContact): boolean;
 begin
   Result:=false;
   if ServerMode then Exit;
 
-  if not Assigned(ALinkInfo.Contact) then
-  begin
-    ALinkInfo.Contact:=ContactList.AddByGUID(GenerateGUID());
-  end;
-
-  //if ALinkInfo.GUID='' then ALinkInfo.GUID:=GenerateGUID();
-  if ALinkInfo.Contact.SeniorGUID='' then ALinkInfo.Contact.SeniorGUID:=MyInfo.GUID;
+  if ALinkInfo.GUID='' then ALinkInfo.GUID:=GenerateGUID();
+  if ALinkInfo.SeniorGUID='' then ALinkInfo.SeniorGUID:=MyInfo.GUID;
 
   if ALinkInfo.LinkType = ltPoint then
   begin
     // Выделяем новый номер поинта
-    if PointList.IndexOf(ALinkInfo)>=0 then Exit;
-    ALinkInfo.Contact.Addr.Node:=MyInfo.Addr.Node;
-    ALinkInfo.Contact.Addr.Point:=PointList.GetFreePointID();
+    if PointList.IndexOf(ALinkInfo)<>-1 then Exit;
+    ALinkInfo.Addr.Node:=MyInfo.Addr.Node;
+    ALinkInfo.Addr.Point:=Self.GetFreePointID();
     PointList.Add(ALinkInfo);
   end
   else if ALinkInfo.LinkType = ltNode then
@@ -2786,17 +2580,43 @@ begin
     // Выделяем новый номер узла (!!!)
     // { TODO : Нужна проверка незанятости номера узла в сегменте }
     if NodeList.IndexOf(ALinkInfo)>=0 then Exit;
-    ALinkInfo.Contact.Addr.Node:=NodeList.GetFreeNodeID();
+    ALinkInfo.Addr.Node:=Self.GetFreeNodeID();
     { TODO : Нужно учитывать свой адрес в нодлисте }
-    if SameNode(ALinkInfo.Addr, MyInfo.Addr) then Inc(ALinkInfo.Contact.Addr.Node);
-    ALinkInfo.Contact.Addr.Point:=0;
+    if SameNode(ALinkInfo.Addr, MyInfo.Addr) then Inc(ALinkInfo.Addr.Node);
+    ALinkInfo.Addr.Point:=0;
     NodeList.Add(ALinkInfo);
     // TODO : Сообщаем другим узлам данные нового узла
     //Mgr.SendLinkInfo(LinkInfo, EmptyAddr());
   end;
-  if LinkInfoList.IndexOf(ALinkInfo)>=0 then LinkInfoList.Extract(ALinkInfo);
+  if UnapprovedList.IndexOf(ALinkInfo)>=0 then UnapprovedList.Extract(ALinkInfo);
   Result:=true;
   self.Event('MGR','APPROVE');
+end;
+
+function TDnmpManager.GetFreePointID(): TPointID;
+var
+  i: Integer;
+  LastPointID: TPointID;
+begin
+  LastPointID:=0;
+  for i:=0 to PointList.Count-1 do
+  begin
+    if PointList.Items[i].Addr.Point > LastPointID then LastPointID:=PointList.Items[i].Addr.Point;
+  end;
+  Result:=LastPointID+1;
+end;
+
+function TDnmpManager.GetFreeNodeID(): TNodeID;
+var
+  i: Integer;
+  LastNodeID: TNodeID;
+begin
+  LastNodeID:=0;
+  for i:=0 to NodeList.Count-1 do
+  begin
+    if NodeList.Items[i].Addr.Node > LastNodeID then LastNodeID:=NodeList.Items[i].Addr.Node;
+  end;
+  Result:=LastNodeID+1;
 end;
 
 procedure TDnmpManager.RequestInfoByAddr(Addr: TAddr);
@@ -2827,7 +2647,7 @@ begin
   SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr=points', '');
 end;
 
-procedure TDnmpManager.SendLinkInfo(ALinkInfo: TDnmpLinkInfo; TargetAddr: TAddr);
+procedure TDnmpManager.SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr);
 var
   MsgOut: TDnmpMsg;
 begin
@@ -2835,7 +2655,7 @@ begin
   MsgOut.Info.Values['cmd']:='LNKI';
   MsgOut.Info.Values['addr']:=ALinkInfo.AddrStr;
   MsgOut.Info.Values['guid']:=ALinkInfo.GUID;
-  MsgOut.Info.Values['senior_guid']:=ALinkInfo.Contact.SeniorGUID;
+  MsgOut.Info.Values['senior_guid']:=ALinkInfo.SeniorGUID;
   MsgOut.Info.Values['name']:=ALinkInfo.Name;
   MsgOut.Info.Values['owner']:=ALinkInfo.Owner;
   MsgOut.Info.Values['location']:=ALinkInfo.Location;
@@ -2857,65 +2677,65 @@ procedure TDnmpManager.ReadLinkInfo(Msg: TDnmpMsg);
 var
   //i: integer;
   SomeAddr: TAddr;
-  li: TDnmpLinkInfo;
+  TmpInfo: TDnmpContact;
   ReadAllInfo: Boolean;
   s, s2: string;
 begin
-  li:=nil;
+  TmpInfo:=nil;
   ReadAllInfo:=False;
   s:='';
   SomeAddr:=StrToAddr(Msg.Info.Values['addr']);
   if SomeAddr.Point=0 then
   begin
-    li:=NodeList.GetLinkInfoByAddr(SomeAddr);
+    TmpInfo:=NodeList.GetByAddr(SomeAddr);
     ReadAllInfo:=True;
     s:='NODELIST';
   end
   // Server only
   else if ServerMode and SameNode(SomeAddr, MyInfo.Addr) then
   begin
-    li:=PointList.GetLinkInfoByAddr(SomeAddr);
+    TmpInfo:=PointList.GetByAddr(SomeAddr);
     s:='POINTLIST';
-    if not Assigned(li) then Exit; // ???
+    if not Assigned(TmpInfo) then Exit; // ???
   end
   else
   begin
-    li:=LinkInfoList.GetLinkInfoByAddr(SomeAddr);   // !!!
+    TmpInfo:=UnapprovedList.GetByAddr(SomeAddr);   // !!!
     s:='CONTACTS';
     ReadAllInfo:=True;
   end;
 
-  if not Assigned(li) then
+  if not Assigned(TmpInfo) then
   begin
-    li:=TDnmpLinkInfo.Create();
+    TmpInfo:=TDnmpContact.Create();
     if SomeAddr.Point=0 then
     begin
-      NodeList.Add(li);
+      NodeList.Add(TmpInfo);
       s:='NODELIST';
     end
     else
     begin
-      LinkInfoList.Add(li);
+      UnapprovedList.Add(TmpInfo);
       s:='CONTACTS';
     end;
     ReadAllInfo:=True;
   end;
 
-  li.Name:=Msg.Info.Values['name'];
-  li.Owner:=Msg.Info.Values['owner'];
-  li.Location:=Msg.Info.Values['location'];
-  li.IpAddr:=Msg.Info.Values['ip_addr'];
-  li.PhoneNo:=Msg.Info.Values['phone_no'];
-  li.OtherInfo:=Msg.Info.Values['other_info'];
+  TmpInfo.Name:=Msg.Info.Values['name'];
+  TmpInfo.Owner:=Msg.Info.Values['owner'];
+  TmpInfo.Location:=Msg.Info.Values['location'];
+  TmpInfo.IpAddr:=Msg.Info.Values['ip_addr'];
+  TmpInfo.PhoneNo:=Msg.Info.Values['phone_no'];
+  TmpInfo.OtherInfo:=Msg.Info.Values['other_info'];
 
   if ReadAllInfo then
   begin
-    li.Addr:=SomeAddr;
-    li.GUID:=Msg.Info.Values['guid'];
-    li.SeniorGUID:=Msg.Info.Values['senior_guid'];
-    li.Rating:=StrToIntDef(Msg.Info.Values['rating'], 0);
+    TmpInfo.Addr:=SomeAddr;
+    TmpInfo.GUID:=Msg.Info.Values['guid'];
+    TmpInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+    TmpInfo.Rating:=StrToIntDef(Msg.Info.Values['rating'], 0);
     s2:=StreamToStr(Msg.Data);
-    if s2<>'' then li.Key:=s2;
+    if s2<>'' then TmpInfo.Key:=s2;
   end;
 
   AddCmd('EVENT MGR UPDATE '+s);

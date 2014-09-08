@@ -6,8 +6,8 @@ uses SysUtils, Classes, dnmp_unit;
 type
   TDnmpParserClient = class(TDnmpMsgHandler)
   private
-    MyInfo: TDnmpLinkInfo;
-    LinkInfo: TDnmpLinkInfo;
+    MyInfo: TDnmpContact;
+    RemoteInfo: TDnmpContact;
     // some random text
     TestPhrase: AnsiString;
 
@@ -53,7 +53,7 @@ constructor TDnmpParserClient.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
   inherited Create(AMgr, ALink);
   MyInfo:=Link.MyInfo;
-  LinkInfo:=Link.LinkInfo;
+  RemoteInfo:=Link.RemoteInfo;
 end;
 
 //=====================================
@@ -123,18 +123,18 @@ begin
   // Сервер послал нам инфу о себе и свой рандомный ключ
   // Нужно отдать инфу о себе и ключ сервера, хешированный нашим ключом
   TestPhrase:=StreamToStr(Msg.Data);
-  if LinkInfo.Key='' then LinkInfo.Key:=TestPhrase;
-  LinkInfo.GUID:=Msg.Info.Values['guid'];
-  //LinkInfo.Addr:=Msg.SourceAddr;
-  LinkInfo.Name:=Msg.Info.Values['name'];
-  //LinkInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
-  LinkInfo.Owner:=Msg.Info.Values['owner'];
-  LinkInfo.Location:=Msg.Info.Values['location'];
-  LinkInfo.IpAddr:=Msg.Info.Values['ip_addr'];
-  LinkInfo.PhoneNo:=Msg.Info.Values['phone_no'];
-  LinkInfo.OtherInfo:=Msg.Info.Values['other_info'];
+  if RemoteInfo.Key='' then RemoteInfo.Key:=TestPhrase;
+  RemoteInfo.GUID:=Msg.Info.Values['guid'];
+  //RemoteInfo.Addr:=Msg.SourceAddr;
+  RemoteInfo.Name:=Msg.Info.Values['name'];
+  //RemoteInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+  RemoteInfo.Owner:=Msg.Info.Values['owner'];
+  RemoteInfo.Location:=Msg.Info.Values['location'];
+  RemoteInfo.IpAddr:=Msg.Info.Values['ip_addr'];
+  RemoteInfo.PhoneNo:=Msg.Info.Values['phone_no'];
+  RemoteInfo.OtherInfo:=Msg.Info.Values['other_info'];
 
-  sNewCipher:=RC4.RC4EncryptText(TestPhrase, LinkInfo.Key);
+  sNewCipher:=RC4.RC4EncryptText(TestPhrase, RemoteInfo.Key);
   SendAuthReply(sNewCipher);
 end;
 
@@ -145,14 +145,14 @@ var
   MsgOut: TDnmpMsg;
   sMsgBody: AnsiString;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'AUTH', '', sKey);
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'AUTH', '', sKey);
   MsgOut.Info.Values['cmd']:='ARPL';
-  MsgOut.Info.Values['addr']:=MyInfo.AddrStr;
-  MsgOut.Info.Values['name']:=MyInfo.Contact.Name;
+  MsgOut.Info.Values['addr']:=AddrToStr(MyInfo.Addr);
+  MsgOut.Info.Values['name']:=MyInfo.Name;
   MsgOut.Info.Values['owner']:=MyInfo.Owner;
   MsgOut.Info.Values['location']:=MyInfo.Location;
   MsgOut.Info.Values['guid']:=MyInfo.GUID;
-  MsgOut.Info.Values['senior_guid']:=MyInfo.Contact.SeniorGUID;
+  MsgOut.Info.Values['senior_guid']:=MyInfo.SeniorGUID;
   MsgOut.Info.Values['ip_addr']:=MyInfo.IpAddr;
   MsgOut.Info.Values['phone_no']:=MyInfo.PhoneNo;
   MsgOut.Info.Values['other_info']:=MyInfo.OtherInfo;
@@ -176,11 +176,10 @@ begin
   if sResult='OK' then
   begin
     // Опознание успешно
-    MyInfo.TmpAddr:=Msg.TargetAddr;
-    if MyInfo.SameAddr(EmptyAddr()) then
+    //if MyInfo.SameAddr(EmptyAddr()) then
     begin
       // Мой адрес был пустым
-      MyInfo.Contact.Addr:=MyInfo.TmpAddr;
+      MyInfo.Addr:=Msg.TargetAddr;
     end;
     Mgr.AddCmd('AUTH OK');
   end
@@ -188,8 +187,8 @@ begin
   begin
     // Линк не подтвержден
     // Сохраняем ключ сервера как свой
-    LinkInfo.Key:=TestPhrase;
-    //MyInfo.GUID:=Msg.Info.Values['guid'];
+    RemoteInfo.Key:=TestPhrase;
+    MyInfo.GUID:=Msg.Info.Values['guid'];
     //MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
     Mgr.AddCmd('AUTH FAILED');
   end
@@ -205,7 +204,7 @@ procedure TDnmpParserClient.SendNodelistRequest();
 var
   MsgOut: TDnmpMsg;
 begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, LinkInfo.Addr, 'INFO', 'cmd=LNRQ', '');
+  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, RemoteInfo.Addr, 'INFO', 'cmd=LNRQ', '');
 
   SendMsg(MsgOut);
   MsgOut.Free();

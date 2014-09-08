@@ -190,10 +190,8 @@ constructor TDnmpServiceInfo.Create(ParentContactList: TDnmpContactList);
 begin
   inherited Create();
   //Self.Abonents:=TDnmpAbonentList.Create(False);
-  Self.Subscribers:=TDnmpContactList.Create(False);
-  Self.Subscribers.ParentList:=ParentContactList;
-  Self.Owners:=TDnmpContactList.Create(False);
-  Self.Owners.ParentList:=ParentContactList;
+  Self.Subscribers:=TDnmpContactList.Create(ParentContactList);
+  Self.Owners:=TDnmpContactList.Create(ParentContactList);
 end;
 
 destructor TDnmpServiceInfo.Destroy();
@@ -229,9 +227,9 @@ begin
   // Abonents list
   //Result.Add('abonents', self.Abonents.ToStorage());
   // Owners list
-  Result.Add('owners', Self.Owners.ToStorage());
+  Result.Add('owners', Self.Owners.ToStorage(ctBrief));
   // Subscribers
-  Result.Add('subscribers', Self.Subscribers.ToStorage());
+  Result.Add('subscribers', Self.Subscribers.ToStorage(ctBrief));
 end;
 
 function TDnmpServiceInfo.FromStorage(Storage: TDnmpStorage): boolean;
@@ -452,7 +450,7 @@ end;
 
 function TDnmpService.GetAbonentByGUID(sGUID: string): TDnmpContact;
 var
-  li: TDnmpLinkInfo;
+  li: TDnmpContact;
 begin
   Result:=nil;
   if Assigned(Self.ServiceInfo) then
@@ -585,7 +583,7 @@ begin
 
   Self.ServiceList:=TDnmpServiceList.Create(True);
 
-  self.DefaultOwner:=AMgr.MyInfo.Contact;
+  self.DefaultOwner:=AMgr.MyInfo;
   if not Assigned(self.DefaultOwner) then
   begin
     //self.DefaultOwner:=self.AllAbonents.UpdateItem(AMgr.MyInfo.Addr, AMgr.MyInfo.GUID, AMgr.MyInfo.SeniorGUID, AMgr.MyInfo.Name, '', '');
@@ -711,7 +709,7 @@ var
 begin
   if Assigned(Mgr.Uplink) then
   begin
-    addr:=Mgr.Uplink.LinkInfo.Addr;
+    addr:=Mgr.Uplink.RemoteInfo.Addr;
     Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_TYPES', '');
   end;
 end;
@@ -722,7 +720,7 @@ var
 begin
   if Assigned(Mgr.Uplink) then
   begin
-    addr:=Mgr.Uplink.LinkInfo.Addr;
+    addr:=Mgr.Uplink.RemoteInfo.Addr;
     Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_LIST '+sType, '');
   end;
 end;
@@ -733,7 +731,7 @@ var
 begin
   if Assigned(Mgr.Uplink) then
   begin
-    addr:=Mgr.Uplink.LinkInfo.Addr;
+    addr:=Mgr.Uplink.RemoteInfo.Addr;
     Mgr.SendDataMsg(addr, self.ServiceType, 'cmd=GET_INFO '+sType+' '+sName, '');
   end;
 end;
@@ -792,7 +790,6 @@ var
   item: TDnmpServiceInfo;
   srvc: TDnmpService;
   ab: TDnmpContact;
-  li: TDnmpLinkInfo;
 begin
   Result:=False;
   item:=self.ServiceInfoList.GetServiceByTypeName(sType, sName);
@@ -962,7 +959,7 @@ var
   sCmd, s: string;
   Params: TStringArray;
   i, n: Integer;
-  li: TDnmpLinkInfo;
+  li: TDnmpContact;
 begin
   Result:='';
   Params:=ParseStr(Text);

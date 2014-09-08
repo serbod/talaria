@@ -114,7 +114,7 @@ procedure ShowForm(AFrame: TFrame; ACaption: string);
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
 procedure ShowContactList(AContactList: TDnmpContactList);
-procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
+procedure ShowLinkInfo(ALinkInfo: TDnmpContact);
 
 const
   ciIconFolder = 9;
@@ -260,7 +260,7 @@ begin
   ShowForm(Frame, 'Contact list');
 end;
 
-procedure ShowLinkInfo(ALinkInfo: TDnmpLinkInfo);
+procedure ShowLinkInfo(ALinkInfo: TDnmpContact);
 var
   Frame: TFrameLinkInfo;
 begin

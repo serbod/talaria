@@ -31,7 +31,7 @@ type
     procedure pgcLinksChange(Sender: TObject);
   private
     { private declarations }
-    function GetSelectedInfo(): TDnmpLinkInfo;
+    function GetSelectedInfo(): TDnmpContact;
   public
     { public declarations }
     Mgr: TDnmpManager;
@@ -75,21 +75,21 @@ begin
   UpdateSelectedInfo();
 end;
 
-function TFrameLinkList.GetSelectedInfo(): TDnmpLinkInfo;
+function TFrameLinkList.GetSelectedInfo(): TDnmpContact;
 begin
   Result:=nil;
   if pgcLinks.ActivePage=tsLinkInfoList then
   begin
     if not Assigned(lvLinkInfoList.Selected) then Exit;
     if not Assigned(lvLinkInfoList.Selected.Data) then Exit;
-    Result:=TDnmpLinkInfo(lvLinkInfoList.Selected.Data);
+    Result:=TDnmpContact(lvLinkInfoList.Selected.Data);
   end;
 
   if pgcLinks.ActivePage=tsActiveLinks then
   begin
     if not Assigned(lvLinkList.Selected) then Exit;
     if not Assigned(lvLinkList.Selected.Data) then Exit;
-    Result:=TDnmpLink(lvLinkList.Selected.Data).LinkInfo;
+    Result:=TDnmpLink(lvLinkList.Selected.Data).RemoteInfo;
   end;
 end;
 
@@ -97,7 +97,7 @@ procedure TFrameLinkList.UpdateLinkInfoList();
 var
   lv: TListView;
   i: integer;
-  Item: TDnmpLinkInfo;
+  Item: TDnmpContact;
   lvItem: TListItem;
 begin
   if not Assigned(Mgr) then Exit;
@@ -105,9 +105,9 @@ begin
   lv.BeginUpdate();
 
   lv.Clear();
-  for i:=0 to Mgr.LinkInfoList.Count-1 do
+  for i:=0 to Mgr.UnapprovedList.Count-1 do
   begin
-    Item:=Mgr.LinkInfoList.Items[i];
+    Item:=Mgr.UnapprovedList.Items[i];
     lvItem:=lv.Items.Add();
     lvItem.Data:=Item;
     // addr
@@ -139,11 +139,11 @@ begin
     lvItem.Data:=Item;
     if Item.Active then lvItem.StateIndex:=ciIconUserBlue else lvItem.StateIndex:=ciIconUserRed;
     // addr
-    lvItem.Caption:=Item.LinkInfo.AddrStr();
+    lvItem.Caption:=Item.RemoteInfo.AddrStr();
     // name
-    lvItem.SubItems.Append(Item.LinkInfo.Name);
+    lvItem.SubItems.Append(Item.RemoteInfo.Name);
     // state
-    lvItem.SubItems.Append(BoolToStr(Item.LinkInfo.Online, 'Online', 'Offline'));
+    lvItem.SubItems.Append(BoolToStr(Item.RemoteInfo.Online, 'Online', 'Offline'));
     // info
     lvItem.SubItems.Append(LinkTypeToStr(Item.LinkType));
   end;
@@ -153,7 +153,7 @@ end;
 procedure TFrameLinkList.UpdateSelectedInfo();
 var
   n: integer;
-  LinkInfo: TDnmpLinkInfo;
+  LinkInfo: TDnmpContact;
   sg: TStringGrid;
 
   procedure SetRow(RowNum: integer; Name, Value: string);

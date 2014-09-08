@@ -52,12 +52,12 @@ type
     procedure actUpdateInfoExecute(Sender: TObject);
   private
     { private declarations }
-    FLinkInfo: TDnmpLinkInfo;
-    procedure FSetLinkInfo(Value: TDnmpLinkInfo);
+    FLinkInfo: TDnmpContact;
+    procedure FSetLinkInfo(Value: TDnmpContact);
     procedure ShrinkPhoto(img: TImage);
   public
     { public declarations }
-    property LinkInfo: TDnmpLinkInfo read FLinkInfo write FSetLinkInfo;
+    property LinkInfo: TDnmpContact read FLinkInfo write FSetLinkInfo;
     procedure LinkInfoToForm();
     procedure LinkInfoFromForm();
   end;
@@ -87,7 +87,7 @@ begin
   ShrinkPhoto(imgPicture);
 end;
 
-procedure TFrameLinkInfo.FSetLinkInfo(Value: TDnmpLinkInfo);
+procedure TFrameLinkInfo.FSetLinkInfo(Value: TDnmpContact);
 begin
   FLinkInfo:=Value;
   LinkInfoToForm();
@@ -134,21 +134,18 @@ begin
   //imgPicture.Picture.Assign(imgDefault.Picture);
   imgPicture.Picture.Clear();
 
-  if Assigned(LinkInfo.Contact) then
+  edAddr.Text:=AddrToStr(LinkInfo.Addr);
+  edName.Text:=LinkInfo.Name;
+  edGUID.Text:=LinkInfo.GUID;
+  edSGUID.Text:=LinkInfo.SeniorGUID;
+  edStatusMessage.Text:=LinkInfo.StatusMessage;
+  if Length(LinkInfo.Picture)>4 then
   begin
-    edAddr.Text:=AddrToStr(LinkInfo.Contact.Addr);
-    edName.Text:=LinkInfo.Contact.Name;
-    edGUID.Text:=LinkInfo.Contact.GUID;
-    edSGUID.Text:=LinkInfo.Contact.SeniorGUID;
-    edStatusMessage.Text:=LinkInfo.Contact.StatusMessage;
-    if Length(LinkInfo.Contact.Picture)>4 then
-    begin
-      ss:=TStringStream.Create(LinkInfo.Contact.Picture);
-      try
-        imgPicture.Picture.LoadFromStream(ss);
-      finally
-        ss.Free();
-      end;
+    ss:=TStringStream.Create(LinkInfo.Picture);
+    try
+      imgPicture.Picture.LoadFromStream(ss);
+    finally
+      ss.Free();
     end;
   end;
 
@@ -165,23 +162,20 @@ procedure TFrameLinkInfo.LinkInfoFromForm();
 var
   ss: TStringStream;
 begin
-  if Assigned(LinkInfo.Contact) then
-  begin
-    LinkInfo.Contact.Addr:=StrToAddr(Trim(edAddr.Text));
-    LinkInfo.Contact.Name:=Trim(edName.Text);
-    LinkInfo.Contact.GUID:=Trim(edGUID.Text);
-    LinkInfo.Contact.SeniorGUID:=Trim(edSGUID.Text);
-    LinkInfo.Contact.StatusMessage:=Trim(edStatusMessage.Text);
+  LinkInfo.Addr:=StrToAddr(Trim(edAddr.Text));
+  LinkInfo.Name:=Trim(edName.Text);
+  LinkInfo.GUID:=Trim(edGUID.Text);
+  LinkInfo.SeniorGUID:=Trim(edSGUID.Text);
+  LinkInfo.StatusMessage:=Trim(edStatusMessage.Text);
 
-    // picture
-    ss:=TStringStream.Create('');
-    //imgPicture.Picture.Jpeg.SaveToStream(ss);
-    imgPicture.Picture.PNG.SaveToStream(ss);
-    //imgPicture.Picture.SaveToStreamWithFileExt(ss, 'jpg');
-    LinkInfo.Contact.Picture:=ss.DataString;
-    ss.Free;
-    if Length(LinkInfo.Contact.Picture)<4 then LinkInfo.Contact.Picture:='';
-  end;
+  // picture
+  ss:=TStringStream.Create('');
+  //imgPicture.Picture.Jpeg.SaveToStream(ss);
+  imgPicture.Picture.PNG.SaveToStream(ss);
+  //imgPicture.Picture.SaveToStreamWithFileExt(ss, 'jpg');
+  LinkInfo.Picture:=ss.DataString;
+  ss.Free;
+  if Length(LinkInfo.Picture)<4 then LinkInfo.Picture:='';
 
   LinkInfo.Owner:=Trim(edOwner.Text);
   LinkInfo.Location:=Trim(edLocation.Text);
