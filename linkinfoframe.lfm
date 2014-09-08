@@ -7,8 +7,8 @@ object FrameLinkInfo: TFrameLinkInfo
   ClientWidth = 615
   PopupMenu = pmLinkInfo
   TabOrder = 0
-  DesignLeft = 659
-  DesignTop = 314
+  DesignLeft = 401
+  DesignTop = 232
   object gbContact: TGroupBox
     Left = 8
     Height = 168

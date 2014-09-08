@@ -123,8 +123,6 @@ type
     RemoteServiceInfoList: TDnmpServiceInfoList;
     // All abonents
     //AllAbonents: TDnmpContactList;
-    // Default owner
-    DefaultOwner: TDnmpContact;
     constructor Create(AMgr: TDnmpManager);
     destructor Destroy; override;
     { Service type. For example, 'SRVD' }
@@ -166,6 +164,8 @@ type
     procedure RequestTypes();
     procedure RequestList(sType: string);
     procedure RequestInfo(sType, sName: string);
+    // Default owner
+    function DefaultOwner(): TDnmpContact;
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
   end;
 
@@ -582,12 +582,6 @@ begin
   self.RemoteServiceInfoList.ParentContactList:=AMgr.ContactList;
 
   Self.ServiceList:=TDnmpServiceList.Create(True);
-
-  self.DefaultOwner:=AMgr.MyInfo;
-  if not Assigned(self.DefaultOwner) then
-  begin
-    //self.DefaultOwner:=self.AllAbonents.UpdateItem(AMgr.MyInfo.Addr, AMgr.MyInfo.GUID, AMgr.MyInfo.SeniorGUID, AMgr.MyInfo.Name, '', '');
-  end;
 end;
 
 destructor TDnmpServiceManager.Destroy();
@@ -624,6 +618,7 @@ end;
 
 function TDnmpServiceManager.Start(): boolean;
 var
+  i: integer;
   si: TDnmpServiceInfo;
 begin
   Result:=inherited Start();
@@ -632,6 +627,12 @@ begin
   si:=ServiceInfoList.UpdateServiceInfo(csMAIL, '', '', '', '', '', 'Mailer');
   if Assigned(si) then self.CreateService(si);
 
+  // local services
+  for i:=0 to Self.ServiceInfoList.Count-1 do
+  begin
+    si:=Self.ServiceInfoList.Items[i];
+    Self.CreateService(si);
+  end;
   Result:=True;
 end;
 
@@ -736,6 +737,11 @@ begin
   end;
 end;
 
+function TDnmpServiceManager.DefaultOwner(): TDnmpContact;
+begin
+  Result:=Mgr.MyInfo;
+end;
+
 function TDnmpServiceManager.AddService(AService: TDnmpService): string;
 begin
   Result:='';
@@ -759,7 +765,6 @@ begin
       Result:=TDnmpGrpcServer.Create(Mgr, Self, ServiceInfo)
     else
       Result:=TDnmpGrpcClient.Create(Mgr, Self, ServiceInfo);
-    (Result as TDnmpGrpc).Author:=self.DefaultOwner;
   end;
 
   if ServiceInfo.ServiceType=csMAIL then
@@ -768,10 +773,13 @@ begin
       Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo)
     else
       Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo);
-    (Result as TDnmpMail).Author:=self.DefaultOwner;
   end;
 
-  if Assigned(Result) then Self.ServiceList.Add(Result);
+  if Assigned(Result) then
+  begin
+    Mgr.DebugText('Created service: '+Result.ServiceInfo.ServiceType+' '+Result.ServiceInfo.Name);
+    Self.ServiceList.Add(Result);
+  end;
 end;
 
 function TDnmpServiceManager.GetService(AServiceType, AServiceName: string;

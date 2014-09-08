@@ -437,7 +437,7 @@ type
     procedure LoadList(List: TObject);
     procedure WriteList(List: TObject);
     procedure LoadFromFile();
-    procedure WriteToFile();
+    procedure SaveToFile();
     // ==== Base functions
     // Send message, autodetect link for sending
     function SendMsg(Msg: TDnmpMsg): boolean;
@@ -1924,9 +1924,7 @@ begin
 
   CmdQueue:=TStringList.Create;
 
-  DebugText('MsgQueue file='+sDataPath+csMsgQueueFileName);
   MsgQueue:=TDnmpMsgQueue.Create(true);
-  MsgQueue.LoadFromFile(sDataPath+csMsgQueueFileName);
 
   MsgHandlers:=TObjectList.Create(true);
 
@@ -1935,7 +1933,7 @@ end;
 
 destructor TDnmpManager.Destroy();
 begin
-  WriteToFile();
+  SaveToFile();
   // remove events
   Self.OnLog:=nil;
   Self.OnCmd:=nil;
@@ -1945,7 +1943,6 @@ begin
   // ServiceDirectory created not in constructor
   if Assigned(MsgHandlers) then FreeAndNil(MsgHandlers);
 
-  MsgQueue.SaveToFile(sDataPath+csMsgQueueFileName);
   FreeAndNil(MsgQueue);
 
   FreeAndNil(CmdQueue);
@@ -2165,7 +2162,10 @@ begin
     begin
       if Assigned(MsgHandlers) then
       begin
-        for i:=0 to MsgHandlers.Count-1 do (MsgHandlers[i] as TDnmpMsgHandler).ParseMsg(Msg);
+        for i:=0 to MsgHandlers.Count-1 do
+        begin
+          if (MsgHandlers[i] as TDnmpMsgHandler).ParseMsg(Msg) then Break;
+        end;
       end;
     end;
   end;
@@ -2212,20 +2212,31 @@ end;
 procedure TDnmpManager.LoadList(List: TObject);
 var
   Storage: TDnmpStorage;
+  AContactList: TDnmpContactList;
 begin
   if not Assigned(Serializer) then Exit;
   Storage:=TDnmpStorage.Create(stUnknown);
   if (List is TDnmpContactList) then
   begin
-    if Serializer.StorageFromFile(Storage, (List as TDnmpContactList).Filename) then (List as TDnmpContactList).FromStorage(Storage);
+    AContactList:=(List as TDnmpContactList);
+    DebugText('Load list from '+AContactList.Filename);
+    if Serializer.StorageFromFile(Storage, AContactList.Filename) then AContactList.FromStorage(Storage);
+    DebugText(IntToStr(AContactList.Count)+' items loaded');
   end;
   Storage.Free();
 end;
 
 procedure TDnmpManager.WriteList(List: TObject);
+var
+  AContactList: TDnmpContactList;
 begin
   if not Assigned(Serializer) then Exit;
-  if (List is TDnmpContactList) then Serializer.StorageToFile((List as TDnmpContactList).ToStorage(ctAll), (List as TDnmpContactList).Filename);
+  if (List is TDnmpContactList) then
+  begin
+    AContactList:=(List as TDnmpContactList);
+    DebugText('Save '+IntToStr(AContactList.Count)+' items to '+AContactList.Filename);
+    Serializer.StorageToFile(AContactList.ToStorage(ctAll), AContactList.Filename);
+  end;
 end;
 
 procedure TDnmpManager.LoadFromFile();
@@ -2253,16 +2264,18 @@ begin
     // UnapprovedList
     LoadList(UnapprovedList);
   end;
+
+  DebugText('Read MsgQueue file='+sDataPath+csMsgQueueFileName);
+  MsgQueue.LoadFromFile(sDataPath+csMsgQueueFileName);
 end;
 
-procedure TDnmpManager.WriteToFile();
+procedure TDnmpManager.SaveToFile();
 var
   Sect: string;
   i: Integer;
 begin
-  // MyInfo
-  //MyInfo.ToConf(Conf, 'MyInfo');
-  //Conf.UpdateFile();
+  DebugText('Write '+IntToStr(MsgQueue.Count)+' items to file '+sDataPath+csMsgQueueFileName);
+  MsgQueue.SaveToFile(sDataPath+csMsgQueueFileName);
 
   if Assigned(Serializer) then
   begin

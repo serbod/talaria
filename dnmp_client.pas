@@ -42,6 +42,7 @@ type
     // Запуск парсера
     function Start(): Boolean; override;
     // Разбор сообщения в контексте линка
+    // AUTH, INFO
     function ParseMsg(Msg: TDnmpMsg): Boolean; override;
   end;
 

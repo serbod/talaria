@@ -99,6 +99,8 @@ type
     function ChatRoomCount(): integer;
     function GetChatRoom(Index: integer): TChatRoom;
     procedure ShowChatRoomList();
+    procedure LoadData();
+    procedure SaveData();
   end;
 
 
@@ -143,6 +145,7 @@ begin
   ServiceDnmpNode.Frame:=frame;
   (frame as TFrameDnmp).Serv:=ServiceDnmpNode;
   Core.AddPage(frame, 'Node '+ConfigName);
+  ServiceDnmpNode.LoadData();
 
   // status page
   AddPage(TFrameStatus.Create(nil), 'Status');
@@ -164,6 +167,7 @@ begin
   ServiceDnmpPoint.Frame:=frame;
   (frame as TFrameDnmp).Serv:=ServiceDnmpPoint;
   Core.AddPage(frame, 'Point 1.2');
+  ServiceDnmpPoint.LoadData();
 end;
 
 procedure AddPage(AFrame: TFrame; ACaption: string);
@@ -514,13 +518,13 @@ begin
   Mgr.OnIncomingMsg:=@MsgHandler;
   //Mgr.Serializer:=TDnmpSerializerJson.Create();
   Mgr.Serializer:=TDnmpSerializerBencode.Create();
-  Mgr.LoadFromFile();
+  //Mgr.LoadFromFile();
   //Mgr.Serializer:=TDnmpSerializerIni.Create();
   //Mgr.Serializer:=TDnmpSerializerBencode.Create();
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
-  ServMgr.LoadFromFile();
-  ServMgr.Start();
+  //ServMgr.LoadFromFile();
+  //ServMgr.Start();
 end;
 
 destructor TServiceDnmp.Destroy();
@@ -631,6 +635,19 @@ begin
   TmpFrame.Serv:=self;
   TmpFrame.Update();
   ShowForm(TmpFrame, 'Chat room list');
+end;
+
+procedure TServiceDnmp.LoadData();
+begin
+  Mgr.LoadFromFile();
+  ServMgr.LoadFromFile();
+  ServMgr.Start();
+end;
+
+procedure TServiceDnmp.SaveData();
+begin
+  ServMgr.SaveToFile();
+  Mgr.SaveToFile();
 end;
 
 initialization
