@@ -13,26 +13,30 @@ object FrameDnmp: TFrameDnmp
     Height = 26
     Top = 0
     Width = 813
-    Caption = 'ToolBarNode'
+    ButtonHeight = 24
     Images = FormMain.ImageList16
+    List = True
+    ParentShowHint = False
+    ShowCaptions = True
+    ShowHint = True
     TabOrder = 0
     object ToolButton1: TToolButton
-      Left = 24
+      Left = 76
       Top = 2
       Action = actTest
     end
     object ToolButton2: TToolButton
-      Left = 70
+      Left = 225
       Top = 2
       Action = actContactList
     end
     object ToolButton3: TToolButton
-      Left = 93
+      Left = 311
       Top = 2
       Action = actServer
     end
     object ToolButton4: TToolButton
-      Left = 116
+      Left = 369
       Top = 2
       Action = actClient
     end
@@ -43,7 +47,7 @@ object FrameDnmp: TFrameDnmp
       Style = tbsCheck
     end
     object ToolButton6: TToolButton
-      Left = 47
+      Left = 124
       Top = 2
       Action = actChatRoomList
     end

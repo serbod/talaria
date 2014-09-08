@@ -265,6 +265,8 @@ var
   Item: TDnmpMailbox;
 begin
   inherited Create(AMgr, AServiceMgr, AServiceInfo);
+  Self.Author:=AMgr.MyInfo;
+
   Self.MailboxList:=TStringList.Create();
   Self.MailboxList.OwnsObjects:=True;
 

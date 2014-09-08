@@ -60,6 +60,7 @@ type
     property LinkInfo: TDnmpContact read FLinkInfo write FSetLinkInfo;
     procedure LinkInfoToForm();
     procedure LinkInfoFromForm();
+    procedure Update(); override;
   end;
 
 implementation
@@ -183,6 +184,12 @@ begin
   LinkInfo.PhoneNo:=Trim(edPhoneNo.Text);
   LinkInfo.OtherInfo:=Trim(edOtherInfo.Text);
   LinkInfo.Key:=Trim(edKey.Text);
+end;
+
+procedure TFrameLinkInfo.Update();
+begin
+  LinkInfoToForm();
+  inherited Update();
 end;
 
 end.

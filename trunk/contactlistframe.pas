@@ -188,9 +188,11 @@ end;
 
 procedure TFrameContactList.UpdateList();
 var
-  i: integer;
+  i, n: integer;
+  Item: TDnmpContact;
 begin
   if not Assigned(ContactList) then Exit;
+  n:=tcGroups.TabIndex;
 
   // clear list
   for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
@@ -198,7 +200,31 @@ begin
 
   for i:=0 to ContactList.Count-1 do
   begin
-    AddVisualItem(ContactList.Items[i]);
+    Item:=ContactList.Items[i];
+
+    if n=0 then // all
+
+    else if n=1 then // favorites
+    begin
+      Continue;
+    end
+
+    else if n=2 then // nodes
+    begin
+      if Mgr.NodeList.IndexOf(Item)=-1 then Continue;
+    end
+
+    else if n=3 then // points
+    begin
+      if Mgr.PointList.IndexOf(Item)=-1 then Continue;
+    end
+
+    else if n=4 then // guests
+    begin
+      if Mgr.UnapprovedList.IndexOf(Item)=-1 then Continue;
+    end;
+
+    AddVisualItem(Item);
   end;
 end;
 

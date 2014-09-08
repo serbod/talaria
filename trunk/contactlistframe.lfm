@@ -14,7 +14,7 @@ object FrameContactList: TFrameContactList
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 1
+    VertScrollBar.Increment = 0
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True
@@ -32,6 +32,9 @@ object FrameContactList: TFrameContactList
     Tabs.Strings = (
       'All contacts'
       'Favorites'
+      'Nodes'
+      'Points'
+      'Guests'
     )
     Align = alTop
     PopupMenu = pmContactList

@@ -303,6 +303,7 @@ begin
     if Assigned(FrameNodesList) then FrameNodesList.Update();
     if Assigned(FramePointsList) then FramePointsList.Update();
     if Assigned(FrameContactsList) then FrameContactsList.Update();
+    if Assigned(FrameMyInfo) then FrameMyInfo.Update();
   end;
   inherited Update();
 end;
