@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="75">
+    <Units Count="79">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -20,7 +20,7 @@
         <EditorIndex Value="10"/>
         <WindowIndex Value="1"/>
         <TopLine Value="56"/>
-        <CursorPos X="1" Y="69"/>
+        <CursorPos Y="69"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -46,7 +46,7 @@
         <EditorIndex Value="6"/>
         <WindowIndex Value="1"/>
         <TopLine Value="55"/>
-        <CursorPos X="1" Y="71"/>
+        <CursorPos Y="71"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -57,7 +57,6 @@
         <ComponentName Value="FrameLinkInfoList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="LinkInfoListFrame"/>
         <WindowIndex Value="1"/>
         <TopLine Value="252"/>
         <CursorPos X="54" Y="252"/>
@@ -73,6 +72,7 @@
         <CursorPos X="26" Y="2262"/>
         <ExtraEditorCount Value="1"/>
         <ExtraEditor1>
+          <IsVisibleTab Value="True"/>
           <TopLine Value="1604"/>
           <CursorPos Y="1610"/>
         </ExtraEditor1>
@@ -86,7 +86,7 @@
         <EditorIndex Value="5"/>
         <WindowIndex Value="1"/>
         <TopLine Value="779"/>
-        <CursorPos X="1" Y="776"/>
+        <CursorPos Y="776"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -96,8 +96,8 @@
         <UnitName Value="Core"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="155"/>
-        <CursorPos X="1" Y="171"/>
+        <TopLine Value="152"/>
+        <CursorPos X="22" Y="163"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit7>
@@ -122,7 +122,6 @@
         <UnitName Value="Misc"/>
         <EditorIndex Value="9"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="1"/>
         <CursorPos X="35" Y="4"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
@@ -136,7 +135,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="128"/>
         <CursorPos X="32" Y="137"/>
-        <UsageCount Value="189"/>
+        <UsageCount Value="191"/>
       </Unit10>
       <Unit11>
         <Filename Value="configframe.pas"/>
@@ -146,7 +145,7 @@
         <ResourceBaseClass Value="Frame"/>
         <TopLine Value="83"/>
         <CursorPos X="45" Y="107"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="186"/>
       </Unit11>
       <Unit12>
         <Filename Value="grpcserviceframe.pas"/>
@@ -154,11 +153,10 @@
         <ComponentName Value="FrameGrpcService"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="GrpcServiceFrame"/>
         <WindowIndex Value="1"/>
         <TopLine Value="213"/>
         <CursorPos X="33" Y="219"/>
-        <UsageCount Value="178"/>
+        <UsageCount Value="180"/>
       </Unit12>
       <Unit13>
         <Filename Value="mailboxframe.pas"/>
@@ -168,23 +166,22 @@
         <ResourceBaseClass Value="Frame"/>
         <WindowIndex Value="1"/>
         <CursorPos X="131" Y="168"/>
-        <UsageCount Value="139"/>
+        <UsageCount Value="141"/>
       </Unit13>
       <Unit14>
         <Filename Value="dnmp_mail.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_mail"/>
         <WindowIndex Value="1"/>
         <TopLine Value="259"/>
-        <CursorPos X="1" Y="269"/>
-        <UsageCount Value="139"/>
+        <CursorPos Y="269"/>
+        <UsageCount Value="141"/>
       </Unit14>
       <Unit15>
         <Filename Value="adapters.pas"/>
         <IsPartOfProject Value="True"/>
         <TopLine Value="4"/>
         <CursorPos X="49" Y="25"/>
-        <UsageCount Value="125"/>
+        <UsageCount Value="127"/>
       </Unit15>
       <Unit16>
         <Filename Value="contactlistframe.pas"/>
@@ -193,11 +190,12 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="ContactListFrame"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="161"/>
-        <CursorPos X="28" Y="172"/>
-        <UsageCount Value="116"/>
+        <TopLine Value="87"/>
+        <CursorPos X="58" Y="99"/>
+        <UsageCount Value="118"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit16>
@@ -207,11 +205,10 @@
         <ComponentName Value="FrameLinkList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="LinkListFrame"/>
         <WindowIndex Value="1"/>
         <TopLine Value="140"/>
         <CursorPos X="25" Y="156"/>
-        <UsageCount Value="112"/>
+        <UsageCount Value="114"/>
       </Unit17>
       <Unit18>
         <Filename Value="linkinfoframe.pas"/>
@@ -220,12 +217,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="LinkInfoFrame"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="53"/>
-        <CursorPos X="20" Y="191"/>
-        <UsageCount Value="104"/>
+        <TopLine Value="65"/>
+        <CursorPos X="47" Y="77"/>
+        <UsageCount Value="106"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit18>
@@ -235,16 +231,15 @@
         <WindowIndex Value="1"/>
         <TopLine Value="83"/>
         <CursorPos X="24" Y="92"/>
-        <UsageCount Value="94"/>
+        <UsageCount Value="96"/>
       </Unit19>
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_grpc"/>
         <WindowIndex Value="1"/>
         <TopLine Value="535"/>
         <CursorPos X="3" Y="529"/>
-        <UsageCount Value="105"/>
+        <UsageCount Value="107"/>
       </Unit20>
       <Unit21>
         <Filename Value="chatroomlistframe.pas"/>
@@ -253,11 +248,10 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="ChatRoomListFrame"/>
-        <EditorIndex Value="0"/>
         <WindowIndex Value="1"/>
         <TopLine Value="157"/>
-        <CursorPos X="1" Y="165"/>
-        <UsageCount Value="53"/>
+        <CursorPos Y="165"/>
+        <UsageCount Value="55"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit21>
@@ -270,7 +264,6 @@
       </Unit22>
       <Unit23>
         <Filename Value="dnmp_server.pas"/>
-        <UnitName Value="dnmp_server"/>
         <WindowIndex Value="1"/>
         <TopLine Value="730"/>
         <CursorPos X="35" Y="745"/>
@@ -329,9 +322,8 @@
         <UnitName Value="dnmp_client"/>
         <EditorIndex Value="8"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="1"/>
         <CursorPos X="18" Y="45"/>
-        <UsageCount Value="60"/>
+        <UsageCount Value="61"/>
         <Loaded Value="True"/>
       </Unit32>
       <Unit33>
@@ -365,7 +357,6 @@
       </Unit37>
       <Unit38>
         <Filename Value="dnmp_ip.pas"/>
-        <UnitName Value="dnmp_ip"/>
         <WindowIndex Value="1"/>
         <TopLine Value="415"/>
         <CursorPos X="23" Y="433"/>
@@ -594,130 +585,162 @@
         <CursorPos X="28" Y="936"/>
         <UsageCount Value="10"/>
       </Unit74>
+      <Unit75>
+        <Filename Value="C:\development\fpc\rtl\objpas\types.pp"/>
+        <UnitName Value="types"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="280"/>
+        <UsageCount Value="10"/>
+      </Unit75>
+      <Unit76>
+        <Filename Value="C:\development\fpc\rtl\win\wininc\func.inc"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="602"/>
+        <CursorPos X="10" Y="618"/>
+        <UsageCount Value="10"/>
+      </Unit76>
+      <Unit77>
+        <Filename Value="C:\development\lazarus\lcl\include\mouse.inc"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="19"/>
+        <CursorPos Y="37"/>
+        <UsageCount Value="10"/>
+      </Unit77>
+      <Unit78>
+        <Filename Value="C:\development\lazarus\lcl\include\control.inc"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="1467"/>
+        <CursorPos Y="1484"/>
+        <UsageCount Value="10"/>
+      </Unit78>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="1"/>
     </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="core.pas"/>
-        <Caret Line="151" Column="1" TopLine="141"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="233" TopLine="215"/>
       </Position1>
       <Position2>
-        <Filename Value="core.pas"/>
-        <Caret Line="154" Column="1" TopLine="144"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="234" TopLine="215"/>
       </Position2>
       <Position3>
-        <Filename Value="core.pas"/>
-        <Caret Line="157" Column="1" TopLine="144"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="128" TopLine="112"/>
       </Position3>
       <Position4>
-        <Filename Value="core.pas"/>
-        <Caret Line="158" Column="1" TopLine="144"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="233" Column="5" TopLine="217"/>
       </Position4>
       <Position5>
-        <Filename Value="core.pas"/>
-        <Caret Line="159" Column="1" TopLine="144"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="128" TopLine="112"/>
       </Position5>
       <Position6>
-        <Filename Value="core.pas"/>
-        <Caret Line="160" Column="1" TopLine="144"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="231" TopLine="215"/>
       </Position6>
       <Position7>
-        <Filename Value="core.pas"/>
-        <Caret Line="164" Column="1" TopLine="146"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="234" TopLine="215"/>
       </Position7>
       <Position8>
-        <Filename Value="core.pas"/>
-        <Caret Line="165" Column="1" TopLine="147"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="236" TopLine="215"/>
       </Position8>
       <Position9>
-        <Filename Value="core.pas"/>
-        <Caret Line="166" Column="1" TopLine="148"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="237" TopLine="215"/>
       </Position9>
       <Position10>
-        <Filename Value="core.pas"/>
-        <Caret Line="167" Column="1" TopLine="149"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="236" TopLine="215"/>
       </Position10>
       <Position11>
-        <Filename Value="core.pas"/>
-        <Caret Line="168" Column="1" TopLine="150"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="233" Column="5" TopLine="215"/>
       </Position11>
       <Position12>
-        <Filename Value="core.pas"/>
-        <Caret Line="169" Column="1" TopLine="151"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="128" TopLine="112"/>
       </Position12>
       <Position13>
-        <Filename Value="core.pas"/>
-        <Caret Line="170" Column="1" TopLine="152"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="232" TopLine="216"/>
       </Position13>
       <Position14>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2256" Column="1" TopLine="2246"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="215" Column="5" TopLine="74"/>
       </Position14>
       <Position15>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2259" Column="1" TopLine="2246"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="226" Column="38" TopLine="214"/>
       </Position15>
       <Position16>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2262" Column="1" TopLine="2246"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="98" TopLine="82"/>
       </Position16>
       <Position17>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2265" Column="1" TopLine="2247"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="230" TopLine="214"/>
       </Position17>
       <Position18>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2268" Column="1" TopLine="2250"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="232" TopLine="214"/>
       </Position18>
       <Position19>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2269" Column="1" TopLine="2251"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="233" TopLine="214"/>
       </Position19>
       <Position20>
-        <Filename Value="dnmp_unit.pas"/>
-        <Caret Line="2270" Column="1" TopLine="2252"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="216" Column="17" TopLine="82"/>
       </Position20>
       <Position21>
-        <Filename Value="core.pas"/>
-        <Caret Line="643" Column="1" TopLine="631"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="98" TopLine="82"/>
       </Position21>
       <Position22>
-        <Filename Value="core.pas"/>
-        <Caret Line="644" Column="1" TopLine="631"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="231" TopLine="215"/>
       </Position22>
       <Position23>
-        <Filename Value="core.pas"/>
-        <Caret Line="645" Column="1" TopLine="631"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="233" TopLine="215"/>
       </Position23>
       <Position24>
-        <Filename Value="core.pas"/>
-        <Caret Line="171" Column="1" TopLine="161"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="234" TopLine="215"/>
       </Position24>
       <Position25>
-        <Filename Value="mainform.pas"/>
-        <Caret Line="68" Column="1" TopLine="56"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="237" TopLine="215"/>
       </Position25>
       <Position26>
-        <Filename Value="mainform.pas"/>
-        <Caret Line="69" Column="1" TopLine="56"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="99" TopLine="83"/>
       </Position26>
       <Position27>
-        <Filename Value="dnmpnodeframe.pas"/>
-        <Caret Line="71" Column="46" TopLine="199"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="72" TopLine="56"/>
       </Position27>
       <Position28>
-        <Filename Value="linkinfoframe.pas"/>
-        <Caret Line="60" Column="14" TopLine="79"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="73" TopLine="56"/>
       </Position28>
       <Position29>
-        <Filename Value="dnmpnodeframe.pas"/>
-        <Caret Line="330" Column="6" TopLine="187"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="75" TopLine="56"/>
       </Position29>
       <Position30>
-        <Filename Value="linkinfoframe.pas"/>
-        <Caret Line="63" Column="19" TopLine="53"/>
+        <Filename Value="contactlistframe.pas"/>
+        <Caret Line="78" TopLine="56"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
@@ -729,5 +752,4 @@
       </Item1>
     </Watches>
   </Debugging>
-  <EditorMacros Count="0"/>
 </CONFIG>
