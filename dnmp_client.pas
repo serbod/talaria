@@ -4,6 +4,9 @@ interface
 uses SysUtils, Classes, dnmp_unit;
 
 type
+
+  { TDnmpParserClient }
+
   TDnmpParserClient = class(TDnmpMsgHandler)
   private
     MyInfo: TDnmpContact;
@@ -34,6 +37,9 @@ type
     procedure SendNodelistRequest();
     //procedure OnNodelistRequest(Msg: TDnmpMsg);
 
+    // Запрос списка контактов
+    //procedure OnContactListRequest(Msg: TDnmpMsg); // [S]
+    procedure OnContactListResponse(Msg: TDnmpMsg); // [SC]
     //=====================================
     function SendMsg(Msg: TDnmpMsg): boolean;
 
@@ -65,7 +71,7 @@ begin
 end;
 
 //=====================================
-function TDnmpParserClient.ParseMsg(Msg: TDnmpMsg): boolean;
+function TDnmpParserClient.ParseMsg(Msg: TDnmpMsg): Boolean;
 var
   MsgType: string;
   sCmd: string;
@@ -98,6 +104,10 @@ begin
     if sCmd='LNRQ' then // Nodelist request
     begin
       //OnNodelistRequest(Msg);
+    end
+    else if sCmd='CLST' then // Contact list response
+    begin
+      OnContactListResponse(Msg); // [SC]
     end
     else if sCmd='LNKI' then // Node info
     begin
@@ -209,6 +219,17 @@ begin
 
   SendMsg(MsgOut);
   MsgOut.Free();
+end;
+
+procedure TDnmpParserClient.OnContactListResponse(Msg: TDnmpMsg);
+var
+  Storage: TDnmpStorage;
+begin
+  Storage:=Mgr.MsgDataToStorage(Msg);
+  if not Assigned(Storage) then Exit;
+  Mgr.TmpContactList.FromStorage(Storage);
+  Storage.Free();
+  Mgr.AddCmd('EVENT MGR UPDATE TMP_CONTACTS');
 end;
 
 function TDnmpParserClient.SendMsg(Msg: TDnmpMsg): boolean;

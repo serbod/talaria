@@ -14,7 +14,7 @@ object FrameContactList: TFrameContactList
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 1
+    VertScrollBar.Increment = 0
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True
@@ -35,6 +35,7 @@ object FrameContactList: TFrameContactList
       'Nodes'
       'Points'
       'Guests'
+      'Found'
     )
     Align = alTop
     PopupMenu = pmContactList
@@ -135,12 +136,19 @@ object FrameContactList: TFrameContactList
       Caption = 'Delete contact'
       OnExecute = actDeleteContactExecute
     end
+    object actFindContacts: TAction
+      Caption = 'Find contacts'
+      OnExecute = actFindContactsExecute
+    end
   end
   object pmContactList: TPopupMenu
     left = 100
     top = 240
+    object MenuItem2: TMenuItem
+      Action = actFindContacts
+    end
     object MenuItem1: TMenuItem
-      Action = actTest1
+      Action = actDeleteContact
     end
   end
 end

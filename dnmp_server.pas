@@ -60,7 +60,9 @@ type
     procedure SendLocalNodeLinksList(); // [S]
     procedure OnNodeLinksList(Msg: TDnmpMsg); // [S]
     //procedure OnLinkInfo(Msg: TDnmpMsg); // [SC]
-
+    // Запрос списка контактов
+    procedure OnContactListRequest(Msg: TDnmpMsg); // [S]
+    procedure OnContactListResponse(Msg: TDnmpMsg); // [SC]
     //=====================================
     // Server -> Client
     // Сообщение об ошибке (!! NOT USED)
@@ -240,6 +242,14 @@ begin
         if sCmd='NLRQ' then // Nodelist request
         begin
           OnNodelistRequest(Msg); // [S]
+        end
+        else if sCmd='CLRQ' then // Contact list request
+        begin
+          OnContactListRequest(Msg); // [S]
+        end
+        else if sCmd='CLST' then // Contact list response
+        begin
+          OnContactListResponse(Msg); // [SC]
         end
         else if sCmd='LNKI' then // Link info
         begin
@@ -764,6 +774,67 @@ var
 begin
 
   //Mgr.RoutingTable.AddItem();
+end;
+
+procedure TDnmpParserServer.OnContactListRequest(Msg: TDnmpMsg);
+var
+  i, iDepth: integer;
+  SomeName: string;
+  TmpItemList: TDnmpContactList;
+  sInfo, sData: string;
+begin
+  TmpItemList:=TDnmpContactList.Create(nil);
+  // Поиск по имени
+  SomeName:=LowerCase(Trim(Msg.Info.Values['name']));
+  if Length(SomeName)=0 then
+  begin
+    // Имя не указано
+    Mgr.DebugText('Empty name in contacts request');
+    Exit;
+  end;
+
+  // Добавляем инфо о себе
+  if Pos(SomeName, LowerCase(MyInfo.Name))>0 then TmpItemList.Add(MyInfo);
+
+  // Pointlist
+  for i:=0 to Mgr.PointList.Count-1 do
+  begin
+    if Pos(SomeName, LowerCase(Mgr.PointList[i].Name))>0 then TmpItemList.Add(Mgr.PointList[i]);
+  end;
+
+  // готовим ответ
+  if TmpItemList.Count>0 then
+  begin;
+    sInfo:='cmd=CLST'+CRLF
+      +'name='+Msg.Info.Values['name']+CRLF
+      +'format='+Mgr.Serializer.GetName();
+    sData:=Mgr.Serializer.StorageToString(TmpItemList.ToStorage(ctPublic));
+    TmpItemList.Clear();
+
+    // шлем ответ отправителю
+    Mgr.SendDataMsg(Msg.SourceAddr, 'INFO', sInfo, sData);
+
+    // рассылка другим линкам, если глубина > 0
+    iDepth:=StrToIntDef(Msg.Info.Values['depth'], 0);
+    if iDepth>0 then
+    begin
+      iDepth:=iDepth-1;
+      Msg.Info.Values['depth']:=IntToStr(iDepth);
+      Mgr.SendBroadcastMsg(Msg, 'nodes');
+    end;
+  end;
+  TmpItemList.Free();
+end;
+
+procedure TDnmpParserServer.OnContactListResponse(Msg: TDnmpMsg);
+var
+  Storage: TDnmpStorage;
+begin
+  Storage:=Mgr.MsgDataToStorage(Msg);
+  if not Assigned(Storage) then Exit;
+  Mgr.TmpContactList.FromStorage(Storage);
+  Storage.Free();
+  Mgr.AddCmd('EVENT MGR UPDATE TMP_CONTACTS');
 end;
 
 //=====================================

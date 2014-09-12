@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, Core, dnmp_unit,
-  dnmp_services, ExtCtrls, StdCtrls, ActnList, Menus, Graphics, Types;
+  dnmp_services, ExtCtrls, StdCtrls, ActnList, Menus, Graphics, Types, Dialogs;
 
 type
 
@@ -15,7 +15,9 @@ type
   TVisualItem = class(TCollectionItem)
   private
     FSelected: boolean;
+    FActive: boolean;
     procedure FSetSelected(Value: boolean);
+    procedure FSetActive(Value: boolean);
   public
     Item: TDnmpContact;
     Rect: TRect;
@@ -23,20 +25,24 @@ type
     lbName: TStaticText;
     Background: TShape;
     property Selected: boolean read FSelected write FSetSelected;
+    property Active: boolean read FActive write FSetActive;
   end;
 
   { TFrameContactList }
 
   TFrameContactList = class(TFrame)
     actDeleteContact: TAction;
+    actFindContacts: TAction;
     actTest1: TAction;
     alContactList: TActionList;
     imgDefault: TImage;
     MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
     procedure actDeleteContactExecute(Sender: TObject);
+    procedure actFindContactsExecute(Sender: TObject);
     procedure actTest1Execute(Sender: TObject);
     procedure tcGroupsChange(Sender: TObject);
   private
@@ -50,6 +56,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     function AddVisualItem(Item: TDnmpContact): TVisualItem;
     function VisualItemAtPos(pos: TPoint): TVisualItem;
+    function VisualItemBySender(Sender: TObject): TVisualItem;
     function SelectedItem(): TDnmpContact;
   public
     { public declarations }
@@ -73,6 +80,18 @@ begin
   if Assigned(Background) then
   begin
     if FSelected then Background.Brush.Color:=clSkyBlue
+    else if FActive then Background.Brush.Color:=clActiveCaption
+    else Background.Brush.Color:=clDefault;
+  end;
+end;
+
+procedure TVisualItem.FSetActive(Value: boolean);
+begin
+  FActive:=Value;
+  if Assigned(Background) then
+  begin
+    if FSelected then Background.Brush.Color:=clSkyBlue
+    else if FActive then Background.Brush.Color:=clActiveCaption
     else Background.Brush.Color:=clDefault;
   end;
 end;
@@ -95,13 +114,27 @@ procedure TFrameContactList.OnMouseDownHandler(Sender: TObject;
 var
   Item: TVisualItem;
 begin
-  Item:=VisualItemAtPos(Point(X,Y));
-  if Assigned(Item) then Item.Selected:=not Item.Selected;
+  //Item:=VisualItemAtPos(Point(X,Y));
+  //if Assigned(Item) then Item.Selected:=not Item.Selected;
+  OnClickHandler(Sender);
 end;
 
 procedure TFrameContactList.actDeleteContactExecute(Sender: TObject);
 begin
   //
+end;
+
+procedure TFrameContactList.actFindContactsExecute(Sender: TObject);
+var
+  s: string;
+begin
+  // ask for name
+  s:='';
+  if not InputQuery('Find contacts', 'Enter name:', s) then Exit;
+  s:=Trim(s);
+  if Length(s)<3 then Exit;
+  // request
+  Mgr.RequestContactsByName(s);
 end;
 
 procedure TFrameContactList.AddTestContacts();
@@ -123,20 +156,34 @@ end;
 
 procedure TFrameContactList.OnClickHandler(Sender: TObject);
 var
-  Item: TVisualItem;
+  Item, Item2: TVisualItem;
+  i: integer;
 begin
   //Item:=VisualItemAtMousePos();
-  //if Assigned(Item) then Item.Selected:=True;
+  Item:=VisualItemBySender(Sender);
+  if not Assigned(Item) then Exit;
+  for i:=0 to VisualItems.Count-1 do
+  begin
+    Item2:=(VisualItems.Items[i] as TVisualItem);
+    if (Item2<>Item) and (Item2.Selected) then Item2.Selected:=False;
+  end;
+  Item.Selected:=True;
 end;
 
 procedure TFrameContactList.OnMouseEnterHandler(Sender: TObject);
+var
+  Item: TVisualItem;
 begin
-
+  Item:=VisualItemBySender(Sender);
+  if Assigned(Item) then Item.Active:=True;
 end;
 
 procedure TFrameContactList.OnMouseLeaveHandler(Sender: TObject);
+var
+  Item: TVisualItem;
 begin
-
+  Item:=VisualItemBySender(Sender);
+  if Assigned(Item) then Item.Active:=False;
 end;
 
 function TFrameContactList.AddVisualItem(Item: TDnmpContact): TVisualItem;
@@ -212,8 +259,14 @@ begin
   lb.Caption:=Item.Name;
   lb.ShowHint:=True;
   lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  lb.Transparent:=True;
+  //lb.Brush.Color:=clNone;
+  lb.Color:=clNone;
   //lb.OnClick:=@OnClickHandler;
   lb.OnMouseDown:=@OnMouseDownHandler;
+  lb.OnMouseEnter:=@OnMouseEnterHandler;
+  lb.OnMouseLeave:=@OnMouseLeaveHandler;
+  lb.PopupMenu:=pmContactList;
   Result.lbName:=lb;
   x:=x+lb.Width+2;
 
@@ -234,6 +287,22 @@ begin
     if PtInRect(Result.Rect, pos) then Exit;
   end;
   Result:=nil;
+end;
+
+function TFrameContactList.VisualItemBySender(Sender: TObject): TVisualItem;
+var
+  i: integer;
+begin
+  Result:=nil;
+  if (Sender is TStaticText) then
+  begin
+    for i:=0 to VisualItems.Count-1 do
+    begin
+      Result:=(VisualItems.Items[i] as TVisualItem);
+      if Sender=Result.lbName then Exit;
+    end;
+    Result:=nil;
+  end;
 end;
 
 function TFrameContactList.SelectedItem(): TDnmpContact;
@@ -264,6 +333,16 @@ begin
   // clear list
   for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
   VisualItems.Clear();
+
+  if n=5 then // found
+  begin
+    for i:=0 to Mgr.TmpContactList.Count-1 do
+    begin
+      Item:=Mgr.TmpContactList.Items[i];
+      AddVisualItem(Item);
+    end;
+    Exit;
+  end;
 
   for i:=0 to ContactList.Count-1 do
   begin
