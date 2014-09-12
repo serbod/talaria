@@ -99,6 +99,7 @@ type
     function ChatRoomCount(): integer;
     function GetChatRoom(Index: integer): TChatRoom;
     procedure ShowChatRoomList();
+    procedure ShowContactList();
     procedure LoadData();
     procedure SaveData();
   end;
@@ -115,7 +116,6 @@ procedure AddPage(AFrame: TFrame; ACaption: string);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
-procedure ShowContactList(AContactList: TDnmpContactList);
 procedure ShowLinkInfo(ALinkInfo: TDnmpContact);
 
 const
@@ -252,16 +252,6 @@ begin
     // activate page
     FormMain.ActivatePage(PageItem);
   end;
-end;
-
-procedure ShowContactList(AContactList: TDnmpContactList);
-var
-  Frame: TFrameContactList;
-begin
-  Frame:=TFrameContactList.Create(nil);
-  Frame.ContactList:=AContactList;
-  Frame.Update();
-  ShowForm(Frame, 'Contact list');
 end;
 
 procedure ShowLinkInfo(ALinkInfo: TDnmpContact);
@@ -635,6 +625,17 @@ begin
   TmpFrame.Serv:=self;
   TmpFrame.Update();
   ShowForm(TmpFrame, 'Chat room list');
+end;
+
+procedure TServiceDnmp.ShowContactList();
+var
+  TmpFrame: TFrameContactList;
+begin
+  TmpFrame:=TFrameContactList.Create(nil);
+  TmpFrame.Mgr:=Self.Mgr;
+  TmpFrame.ContactList:=Self.Mgr.ContactList;
+  TmpFrame.Update();
+  ShowForm(TmpFrame, 'Contact list');
 end;
 
 procedure TServiceDnmp.LoadData();
