@@ -135,7 +135,7 @@ type
 
   TDnmpContactState = (asUnknown, asOnline, asOffline, asBusy);
   TDnmpContactInfoType = (ctBrief, ctPublic, ctPrivate, ctAll);
-  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener);
+  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener, ltIncoming, ltOutcoming);
 
   { TDnmpContact }
 
@@ -609,6 +609,8 @@ begin
     ltNode:  Result:='node';
     ltTemporary: Result:='temp';
     ltListener: Result:='listen';
+    ltIncoming: Result:='in';
+    ltOutcoming: Result:='out';
   end;
 end;
 
@@ -618,7 +620,9 @@ begin
   if s='point' then Result:=ltPoint
   else if s='node' then Result:=ltNode
   else if s='temp' then Result:=ltTemporary
-  else if s='listen' then Result:=ltListener;
+  else if s='listen' then Result:=ltListener
+  else if s='in' then Result:=ltIncoming
+  else if s='out' then Result:=ltOutcoming;
 end;
 
 function TimestampToStr(dt: TDateTime): string;
@@ -2069,11 +2073,13 @@ begin
   if self.ServerMode then
   begin
     tmpLink.LinkType:=ltNode;
+    //tmpLink.LinkType:=ltOutcoming;
     tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
   end
   else
   begin
     tmpLink.LinkType:=ltPoint;
+    //tmpLink.LinkType:=ltOutcoming;
     tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
   end;
 

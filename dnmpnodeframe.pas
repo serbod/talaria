@@ -118,7 +118,8 @@ end;
 
 procedure TFrameDnmp.actContactListExecute(Sender: TObject);
 begin
-  ShowContactList(Mgr.ContactList);
+  if not Assigned(Serv) then Exit;
+  Serv.ShowContactList();
 end;
 
 procedure TFrameDnmp.actClientExecute(Sender: TObject);

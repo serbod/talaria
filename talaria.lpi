@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="22">
+    <Units Count="23">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -177,6 +177,11 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="ChatRoomListFrame"/>
       </Unit21>
+      <Unit22>
+        <Filename Value="dnmp_auth.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_auth"/>
+      </Unit22>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
