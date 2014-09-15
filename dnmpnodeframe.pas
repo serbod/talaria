@@ -125,7 +125,7 @@ end;
 procedure TFrameDnmp.actClientExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
-  if Mgr.Active then Mgr.StopClient() else Mgr.StartClient();
+  if Mgr.Active then Mgr.Stop() else Mgr.StartClient();
   Update();
 end;
 
@@ -138,7 +138,7 @@ end;
 procedure TFrameDnmp.actServerExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
-  if Mgr.Active then Mgr.StopServer() else Mgr.StartServer();
+  if Mgr.Active then Mgr.Stop() else Mgr.StartServer();
   Update();
 end;
 

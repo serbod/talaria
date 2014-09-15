@@ -14,7 +14,7 @@ object FrameContactList: TFrameContactList
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 0
+    VertScrollBar.Increment = 1
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True
@@ -140,6 +140,14 @@ object FrameContactList: TFrameContactList
       Caption = 'Find contacts'
       OnExecute = actFindContactsExecute
     end
+    object actAddToFavorites: TAction
+      Caption = 'Add to favorites'
+      OnExecute = actAddToFavoritesExecute
+    end
+    object actEditContact: TAction
+      Caption = 'Edit contact'
+      OnExecute = actEditContactExecute
+    end
   end
   object pmContactList: TPopupMenu
     left = 100
@@ -149,6 +157,12 @@ object FrameContactList: TFrameContactList
     end
     object MenuItem1: TMenuItem
       Action = actDeleteContact
+    end
+    object MenuItem3: TMenuItem
+      Action = actAddToFavorites
+    end
+    object MenuItem4: TMenuItem
+      Action = actEditContact
     end
   end
 end

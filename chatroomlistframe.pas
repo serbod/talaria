@@ -9,7 +9,8 @@ uses
   Buttons, Core, Graphics;
 
 type
-  TVisualItem = class(TObject)
+  TVisualItem = class(TCollectionItem)
+  public
     Item: TChatRoom;
     Rect: TRect;
     Image: TImage;
@@ -35,10 +36,13 @@ type
     procedure actUpdateViewExecute(Sender: TObject);
   private
     { private declarations }
-    VisualItems: TStringList;
+    VisualItems: TCollection;
     function AddVisualItem(Item: TChatRoom): TVisualItem;
     procedure OnMouseEnterHandler(Sender: TObject);
     procedure OnMouseLeaveHandler(Sender: TObject);
+    procedure OnMouseDownHandler(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    function SelectedItem(): TChatRoom;
   public
     { public declarations }
     Serv: TServiceDnmp;
@@ -78,7 +82,7 @@ begin
   i:=VisualItems.Count;
   y:=(h+2)*i;
 
-  Result:=TVisualItem.Create();
+  Result:=(VisualItems.Add() as TVisualItem);
   Result.Item:=Item;
   Result.Rect.Top:=y;
   Result.Rect.Left:=x;
@@ -119,7 +123,7 @@ begin
   lb.Height:=h;
   lb.Width:=30;
   lb.Alignment:=taRightJustify;
-  lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
+  //lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
   lb.Font.Height:=h-2;
   lb.Caption:=IntToStr(Item.ContactCount);
   Result.lbUsers:=lb;
@@ -134,12 +138,13 @@ begin
   lb.Top:=y;
   lb.Height:=h;
   lb.Width:=100;
-  lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
+  //lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
   lb.Font.Height:=h-2;
   lb.Caption:=Item.Name;
   lb.OnMouseEnter:=@OnMouseEnterHandler;
   lb.OnMouseLeave:=@OnMouseLeaveHandler;
   OnMouseLeaveHandler(lb);
+  lb.OnMouseDown:=@OnMouseDownHandler;
   Result.lbName:=lb;
   x:=x+lb.Width+4;
 
@@ -152,7 +157,7 @@ begin
   lb.Top:=y;
   lb.Height:=h;
   lb.Width:=300;
-  lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
+  //lb.BorderStyle:=TStaticBorderStyle.sbsSingle;
   lb.Font.Height:=h-2;
   //lb.WordWrap:=True;
   lb.Caption:=Item.Topic;
@@ -163,7 +168,6 @@ begin
   Result.Rect.Right:=x;
   Result.Rect.Bottom:=y+h;
 
-  VisualItems.AddObject(Item.Name, Result);
 end;
 
 procedure TFrameChatRoomList.OnMouseEnterHandler(Sender: TObject);
@@ -180,11 +184,34 @@ begin
   (Sender as TStaticText).Font.Color:=clHotLight;
 end;
 
+procedure TFrameChatRoomList.OnMouseDownHandler(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  i: integer;
+begin
+  // open room
+  if (Sender is TStaticText) then
+  begin
+    for i:=0 to VisualItems.Count-1 do
+    begin
+      if (VisualItems.Items[i] as TVisualItem).lbName=Sender then
+      begin
+        Serv.OpenChatRoom((VisualItems.Items[i] as TVisualItem).Item.Name);
+        Exit;
+      end;
+    end;
+  end;
+end;
+
+function TFrameChatRoomList.SelectedItem(): TChatRoom;
+begin
+
+end;
+
 procedure TFrameChatRoomList.AfterConstruction();
 begin
   inherited AfterConstruction;
-  VisualItems:=TStringList.Create();
-  VisualItems.OwnsObjects:=True;
+  VisualItems:=TCollection.Create(TVisualItem);
 end;
 
 procedure TFrameChatRoomList.BeforeDestruction();

@@ -21,6 +21,7 @@ type
     actGetLastMessages: TAction;
     actGetAll: TAction;
     actGetMode: TAction;
+    actJoin: TAction;
     actUpdateAll: TAction;
     actSay: TAction;
     actLeaveUser: TAction;
@@ -51,12 +52,14 @@ type
     MenuItem6: TMenuItem;
     MenuItem7: TMenuItem;
     MenuItem8: TMenuItem;
+    MenuItem9: TMenuItem;
     panSay: TPanel;
     pmUsersList: TPopupMenu;
     pmBanList: TPopupMenu;
     pmAbonentList: TPopupMenu;
     pmMessagesList: TPopupMenu;
     procedure actBanUserExecute(Sender: TObject);
+    procedure actJoinExecute(Sender: TObject);
     procedure actJoinUserExecute(Sender: TObject);
     procedure actKickUserExecute(Sender: TObject);
     procedure actSayExecute(Sender: TObject);
@@ -107,6 +110,11 @@ begin
     s:=Grpc.BanUser(Abonent.GUID);
     if s='' then Update();
   end;
+end;
+
+procedure TFrameGrpcService.actJoinExecute(Sender: TObject);
+begin
+  Grpc.Join();
 end;
 
 procedure TFrameGrpcService.actJoinUserExecute(Sender: TObject);

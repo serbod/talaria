@@ -203,6 +203,7 @@ type
     // Search only in this list
     function GetByGUID(sGUID: string): TDnmpContact;
     // Add in this list and parent list
+    procedure AddItem(Item: TDnmpContact);
     function AddByGUID(sGUID: string): TDnmpContact;
     function DelByGUID(sGUID: string): TDnmpContact;
     function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName, sState, sStatus: string): TDnmpContact; overload;
@@ -228,13 +229,18 @@ type
 
   TDnmpPassport = class(TInterfacedObject)
   public
+    { Owner contact }
     Contact: TDnmpContact;
+    { Owner favorites contacts }
     ContactsList: TDnmpContactList;
+    { Subscribed services }
     ServicesList: TStringList;
     MsgInbox: TDnmpMsgQueue;
     MsgOutbox: TDnmpMsgQueue;
-    constructor Create(AContact: TDnmpContact);
+    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList);
     destructor Destroy; override;
+    function ToStorage(): TDnmpStorage;
+    function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
   TNodeList = class(TDnmpContactList);
@@ -454,10 +460,10 @@ type
     // points - to all points
     // nodes - to all nodes
     function SendBroadcastMsg(Msg: TDnmpMsg; Destinations: string): boolean;
+    procedure Start();
+    procedure Stop();
     procedure StartServer();
-    procedure StopServer();
     procedure StartClient();
-    procedure StopClient();
     procedure StartNodeConnection(NodeInfo: TDnmpContact);
     procedure StopNodeConnection(NodeInfo: TDnmpContact);
     property OnLog: TLogEvent read FOnLog write FOnLog;
@@ -542,6 +548,7 @@ type
 const
   csConfigFileName = 'settings.ini';
   csMyInfoFileName = 'MyInfo';
+  csMyPassportFileName = 'MyPassport';
   csPointlistFileName = 'PointList';
   csNodelistFileName = 'NodeList';
   csUnapprovedFileName = 'UnapprovedList';
@@ -756,11 +763,12 @@ end;
 
 { TDnmpPassport }
 
-constructor TDnmpPassport.Create(AContact: TDnmpContact);
+constructor TDnmpPassport.Create(AContact: TDnmpContact;
+  AParentContactsList: TDnmpContactList);
 begin
   inherited Create();
   Contact:=AContact;
-  ContactsList:=TDnmpContactList.Create(nil); // !!! parent contact list
+  ContactsList:=TDnmpContactList.Create(AParentContactsList);
   ServicesList:=TStringList.Create();
   MsgInbox:=TDnmpMsgQueue.Create();
   MsgOutbox:=TDnmpMsgQueue.Create();
@@ -773,6 +781,37 @@ begin
   FreeAndNil(ServicesList);
   FreeAndNil(ContactsList);
   inherited Destroy;
+end;
+
+function TDnmpPassport.ToStorage(): TDnmpStorage;
+begin
+  Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpPassport');
+  Result.Add('contact', Self.Contact.ToStorage(ctAll));
+  Result.Add('contacts_list', Self.ContactsList.ToStorage(ctBrief));
+
+end;
+
+function TDnmpPassport.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  SubStorage: TDnmpStorage;
+begin
+  Result:=False;
+  if not Assigned(Storage) then Exit;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpPassport' then Exit;
+
+  // Contact
+  SubStorage:=Storage.GetObject('contact');
+  if Assigned(SubStorage) then Self.Contact.FromStorage(SubStorage);
+  //if Assigned(SubStorage) then SubStorage.Free();
+
+  // ContactsList
+  SubStorage:=Storage.GetObject('contacts_list');
+  if Assigned(SubStorage) then Self.ContactsList.FromStorage(SubStorage);
+  //if Assigned(SubStorage) then SubStorage.Free();
+
+  Result:=True;
 end;
 
 { TDnmpContactList }
@@ -817,6 +856,16 @@ begin
     if Result.GUID=sGUID then Exit;
   end;
   Result:=nil;
+end;
+
+procedure TDnmpContactList.AddItem(Item: TDnmpContact);
+begin
+  if Self.IndexOf(Item)<>-1 then Exit;
+  if Assigned(ParentList) then
+  begin
+    if ParentList.IndexOf(Item)=-1 then ParentList.Add(Item);
+  end;
+  Self.Add(Item);
 end;
 
 function TDnmpContactList.AddByGUID(sGUID: string): TDnmpContact;
@@ -1928,6 +1977,8 @@ begin
   MyInfo:=TDnmpContact.Create();
   ContactList.Add(MyInfo);
 
+  MyPassport:=TDnmpPassport.Create(MyInfo, ContactList);
+
   NodeList:=TNodeList.Create(ContactList);
   NodeList.Filename:=sDataPath+csNodelistFileName;
 
@@ -1973,6 +2024,7 @@ begin
   FreeAndNil(PointList);
   FreeAndNil(NodeList);
 
+  FreeAndNil(MyPassport);
   FreeAndNil(MyInfo);
   FreeAndNil(TmpContactList);
   FreeAndNil(ContactList);
@@ -1981,81 +2033,83 @@ begin
 end;
 
 procedure TDnmpManager.StartServer();
-var
-  tmpLink: TDnmpLink;
-  sTcpPort: string;
 begin
-  if not Self.FServerMode and Self.Active then StopClient();
-
+  if Self.Active then Stop();
   self.FServerMode:=True;
-
-  //sTcpPort:=Conf.ReadString('Options', 'ListenTcpPort', '4044');
-  // get port from my info
-  sTcpPort:='';
-  if Pos(':', MyInfo.IpAddr)>0 then sTcpPort:=Trim(Copy(MyInfo.IpAddr, Pos(':', MyInfo.IpAddr)+1, MaxInt));
-  if sTcpPort='' then sTcpPort:='4044';
-
-  // Create server listener link
-  // {TODO: remove TIpLink, get it from outside}
-  tmpLink:=TIpLink.Create(self, nil);
-  (tmpLink as TIpLink).LinkPort:=sTcpPort;
-  tmpLink.LinkType:=ltTemporary;
-  tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
-  tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
-  if tmpLink.Listen() then
-  begin
-    ListenerLink:=tmpLink;
-    LinkList.Add(tmpLink);
-    DebugText('Server started. '+TIpLink(tmpLink).LinkHost+':'+TIpLink(tmpLink).LinkPort);
-    Event('MGR','REFRESH');
-  end
-  else FreeAndNil(tmpLink);
+  Start();
 end;
 
 procedure TDnmpManager.StartClient();
+begin
+  if Self.Active then Stop();
+  self.FServerMode:=False;
+  Start();
+end;
+
+procedure TDnmpManager.Start();
 var
   tmpLinkInfo: TDnmpContact;
   tmpLink: TDnmpLink;
-  n: integer;
-  sUplinkAddr, sTcpPort: string;
+  sTcpPort: string;
 begin
-  if Self.FServerMode and Self.Active then StopServer();
-  self.FServerMode:=false;
-
-  // get uplink addr from nodelist
-  //sUplinkAddr:=Conf.ReadString('Options', 'UplinkAddr', 'localhost');
-  //sTcpPort:=Conf.ReadString('Options', 'TcpPort', '4044');
-  tmpLinkInfo:=NodeList.GetByAddr(NodeAddr(MyInfo.Addr));
-  if not Assigned(tmpLinkInfo) then
+  if ServerMode then
   begin
-    DebugText('Uplink node not found. Add it to nodelist.');
-    Exit;
+    //sTcpPort:=Conf.ReadString('Options', 'ListenTcpPort', '4044');
+    // get port from my info
+    sTcpPort:='';
+    if Pos(':', MyInfo.IpAddr)>0 then sTcpPort:=Trim(Copy(MyInfo.IpAddr, Pos(':', MyInfo.IpAddr)+1, MaxInt));
+    if sTcpPort='' then sTcpPort:='4044';
+
+    // Create server listener link
+    // {TODO: remove TIpLink, get it from outside}
+    tmpLink:=TIpLink.Create(self, nil);
+    (tmpLink as TIpLink).LinkPort:=sTcpPort;
+    tmpLink.LinkType:=ltTemporary;
+    tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
+    tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
+    if tmpLink.Listen() then
+    begin
+      ListenerLink:=tmpLink;
+      LinkList.Add(tmpLink);
+      DebugText('Server started. '+TIpLink(tmpLink).LinkHost+':'+TIpLink(tmpLink).LinkPort);
+      Event('MGR','REFRESH');
+    end
+    else FreeAndNil(tmpLink);
+  end
+
+  else // not ServerMode
+  begin
+    // get uplink addr from nodelist
+    tmpLinkInfo:=NodeList.GetByAddr(NodeAddr(MyInfo.Addr));
+    if not Assigned(tmpLinkInfo) then
+    begin
+      DebugText('Uplink node not found. Add it to nodelist.');
+      Exit;
+    end;
+
+    // Create connection to uplink server
+    StartNodeConnection(tmpLinkInfo);
   end;
-
-  // Create connection to uplink server
-  StartNodeConnection(tmpLinkInfo);
 end;
 
-procedure TDnmpManager.StopServer();
+procedure TDnmpManager.Stop();
 begin
-  if not Assigned(ListenerLink) then Exit;
-  ListenerLink.OnIncomingMsg:=nil;
-  //LinkList.Remove(ListenerLink);
+  if Assigned(ListenerLink) then
+  begin
+    ListenerLink.OnIncomingMsg:=nil;
+    //FreeAndNil(ListenerLink);
+    ListenerLink:=nil;
+    DebugText('Server stopped.');
+  end;
+  if Assigned(Uplink) then
+  begin
+    UpLink.OnIncomingMsg:=nil;
+    //if Uplink.Disconnect() then LinkList.Remove(Uplink);
+    //FreeAndNil(Uplink);
+    DebugText('Uplink stopped.');
+  end;
+  Uplink:=nil;
   LinkList.Clear();
-  //FreeAndNil(ListenerLink);
-  ListenerLink:=nil;
-  Uplink:=nil;
-  DebugText('Server stopped.');
-end;
-
-procedure TDnmpManager.StopClient();
-begin
-  if not Assigned(Uplink) then Exit;
-  UpLink.OnIncomingMsg:=nil;
-  if Uplink.Disconnect() then LinkList.Remove(Uplink);
-  //FreeAndNil(Uplink);
-  Uplink:=nil;
-  DebugText('Client stopped.');
 end;
 
 procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpContact);
@@ -2274,6 +2328,11 @@ begin
     if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
     Storage.Free();
 
+    // MyPassport
+    Storage:=TDnmpStorage.Create(stUnknown);
+    if Serializer.StorageFromFile(Storage, sDataPath+csMyPassportFileName) then MyPassport.FromStorage(Storage);
+    Storage.Free();
+
     // Contact list
     LoadList(ContactList);
 
@@ -2303,6 +2362,9 @@ begin
   begin
     // MyInfo
     Serializer.StorageToFile(MyInfo.ToStorage(ctAll), Self.sDataPath+csMyInfoFileName);
+
+    // MyPassport
+    Serializer.StorageToFile(MyPassport.ToStorage(), Self.sDataPath+csMyPassportFileName);
 
     // ContactList
     Serializer.StorageToFile(ContactList.ToStorage(ctAll), ContactList.Filename);

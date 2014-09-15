@@ -128,6 +128,7 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean; override;
     { Add abonent to users list }
     function JoinAbonent(AbonentGUID: string): string;
+    function Join(): string;
     { Remove abonent from users list }
     function LeaveAbonent(AbonentGUID: string): string;
     { Kick abonent from users list }
@@ -714,6 +715,13 @@ begin
 
   if Assigned(OnUsersChange) then OnUsersChange(self);
   if Assigned(OnAbonentsChange) then OnAbonentsChange(self);
+end;
+
+function TDnmpGrpc.Join(): string;
+begin
+  //Result:=JoinAbonent(Author.GUID);
+  //if Result='' then SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
+  SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
 end;
 
 function TDnmpGrpc.LeaveAbonent(AbonentGUID: string): string;
