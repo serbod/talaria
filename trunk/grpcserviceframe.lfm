@@ -235,6 +235,10 @@ object FrameGrpcService: TFrameGrpcService
       Caption = 'Update all info'
       OnExecute = actUpdateAllExecute
     end
+    object actJoin: TAction
+      Caption = 'Join'
+      OnExecute = actJoinExecute
+    end
   end
   object pmUsersList: TPopupMenu
     left = 74
@@ -262,6 +266,9 @@ object FrameGrpcService: TFrameGrpcService
   object pmAbonentList: TPopupMenu
     left = 480
     top = 159
+    object MenuItem9: TMenuItem
+      Action = actJoin
+    end
     object MenuItem3: TMenuItem
       Action = actJoinUser
     end

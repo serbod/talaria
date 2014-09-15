@@ -44,6 +44,7 @@ object FrameChat: TFrameChat
       Width = 170
       Align = alClient
       DefaultItemHeight = 18
+      PopupMenu = pmContactlist
       StateImages = FormMain.ImageList16
       TabOrder = 2
     end
@@ -209,6 +210,28 @@ object FrameChat: TFrameChat
       Category = 'UserList'
       Caption = 'Info about user'
       ImageIndex = 19
+    end
+    object actUpdateContactList: TAction
+      Category = 'UserList'
+      Caption = 'Update list'
+      OnExecute = actUpdateContactListExecute
+    end
+  end
+  object pmContactlist: TPopupMenu
+    Images = FormMain.ImageList16
+    left = 614
+    top = 135
+    object MenuItem1: TMenuItem
+      Action = actUpdateContactList
+    end
+    object MenuItem2: TMenuItem
+      Action = actInsertNick
+    end
+    object MenuItem3: TMenuItem
+      Action = actInsertPrivate
+    end
+    object MenuItem4: TMenuItem
+      Action = actInfoAboutUser
     end
   end
 end

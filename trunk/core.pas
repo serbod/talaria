@@ -112,7 +112,7 @@ var
   ServiceDnmpPoint: TServiceDnmp;
 
 procedure Init(ConfigName: string);
-procedure AddPage(AFrame: TFrame; ACaption: string);
+procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
@@ -144,21 +144,22 @@ begin
   frame:=TFrameDnmp.Create(nil);
   ServiceDnmpNode.Frame:=frame;
   (frame as TFrameDnmp).Serv:=ServiceDnmpNode;
-  Core.AddPage(frame, 'Node '+ConfigName);
+  Core.AddPage(frame, 'Node '+ConfigName, ServiceDnmpNode);
   ServiceDnmpNode.LoadData();
 
   // status page
-  AddPage(TFrameStatus.Create(nil), 'Status');
+  //AddPage(TFrameStatus.Create(nil), 'Status', nil);
 
   // chat page
-  ServiceDnmpNode.OpenChatRoom('#test');
+  //ServiceDnmpNode.OpenChatRoom('#test');
 
   // mail page
+  {
   frame:=TFrameMailbox.Create(nil);
   (frame as TFrameMailbox).MailRoom:=(ServiceDnmpNode.ServMgr.GetService(csMAIL,'') as TDnmpMail);
   (frame as TFrameMailbox).Update();
   AddPage(frame, 'Mail');
-
+  }
 
   // point
   if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
@@ -166,14 +167,14 @@ begin
   frame:=TFrameDnmp.Create(nil);
   ServiceDnmpPoint.Frame:=frame;
   (frame as TFrameDnmp).Serv:=ServiceDnmpPoint;
-  Core.AddPage(frame, 'Point 1.2');
+  Core.AddPage(frame, 'Point 1.2', ServiceDnmpPoint);
   ServiceDnmpPoint.LoadData();
 end;
 
-procedure AddPage(AFrame: TFrame; ACaption: string);
+procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 begin
   if not Assigned(MainFormPages) then Exit;
-  MainFormPages.AddPage(AFrame, ACaption);
+  MainFormPages.AddPage(AFrame, ACaption, ADataObject);
   FormMain.UpdatePages();
 end;
 
@@ -219,7 +220,7 @@ begin
       // create new page
       TmpFrame:=TFrameGrpcService.Create(nil);
       (TmpFrame as TFrameGrpcService).Grpc:=(AService as TDnmpGrpc);
-      AddPage(TmpFrame, AService.ServiceInfo.Name);
+      AddPage(TmpFrame, AService.ServiceInfo.Name, AService);
     end;
   end;
 
@@ -243,7 +244,7 @@ begin
       // create new page
       TmpFrame:=TFrameMailbox.Create(nil);
       (TmpFrame as TFrameMailbox).MailRoom:=(AService as TDnmpMail);
-      AddPage(TmpFrame, AService.ServiceInfo.Name);
+      AddPage(TmpFrame, AService.ServiceInfo.Name, AService);
     end;
   end;
 
@@ -506,7 +507,7 @@ begin
   Mgr.OnLog:=@LogHandler;
   Mgr.OnEvent:=@EventHandler;
   Mgr.OnIncomingMsg:=@MsgHandler;
-  //Mgr.Serializer:=TDnmpSerializerJson.Create();
+  //Mgr.Serializer:=TDnmpSerializerFpJson.Create();
   Mgr.Serializer:=TDnmpSerializerBencode.Create();
   //Mgr.LoadFromFile();
   //Mgr.Serializer:=TDnmpSerializerIni.Create();
@@ -552,13 +553,14 @@ begin
   end;
   // create new chat room
   Grpc:=(self.ServMgr.GetService(csGRPC, AChatRoomName, True) as TDnmpGrpc);
+  Grpc.JoinAbonent(Mgr.MyInfo.GUID);
   ChatRoom:=TChatRoom.Create();
   ChatRoom.DataObject:=Grpc;
   // chat page
   NewFrame:=TFrameChat.Create(nil);
   NewFrame.ChatRoom:=ChatRoom;
   ChatRoom.Frame:=NewFrame;
-  AddPage(NewFrame, AChatRoomName);
+  AddPage(NewFrame, AChatRoomName, ChatRoom);
 end;
 
 function TServiceDnmp.ChatRoomCount(): integer;

@@ -55,7 +55,7 @@ object FrameChatRoomList: TFrameChatRoomList
     Top = 0
     Width = 496
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 0
+    VertScrollBar.Increment = 1
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True

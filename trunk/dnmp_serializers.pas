@@ -9,9 +9,9 @@ uses
 
 type
 
-  { TDnmpSerializerJson }
+  { TDnmpSerializerFpJson }
 
-  TDnmpSerializerJson = class(TDnmpSerializer)
+  TDnmpSerializerFpJson = class(TDnmpSerializer)
   public
     function GetName(): string; override;
     function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
@@ -411,14 +411,14 @@ begin
   Result:=inherited StorageFromFile(AStorage, AFileName);
 end;
 
-{ TDnmpSerializerJson }
+{ TDnmpSerializerFpJson }
 
-function TDnmpSerializerJson.GetName: string;
+function TDnmpSerializerFpJson.GetName: string;
 begin
   Result:='JSON';
 end;
 
-function TDnmpSerializerJson.StorageToString(AStorage: TDnmpStorage
+function TDnmpSerializerFpJson.StorageToString(AStorage: TDnmpStorage
   ): AnsiString;
 var
   jj: TJSONData;
@@ -486,7 +486,7 @@ begin
   jj.Free();
 end;
 
-function TDnmpSerializerJson.StorageFromString(AStorage: TDnmpStorage;
+function TDnmpSerializerFpJson.StorageFromString(AStorage: TDnmpStorage;
   AString: AnsiString): boolean;
 var
   parser: TJSONParser;
@@ -558,7 +558,7 @@ begin
 
 end;
 
-function TDnmpSerializerJson.StorageToFile(AStorage: TDnmpStorage;
+function TDnmpSerializerFpJson.StorageToFile(AStorage: TDnmpStorage;
   AFileName: string): boolean;
 begin
   Result:=False;
@@ -567,7 +567,7 @@ begin
   Result:=StrToFile(AFileName+'.json', Self.StorageToString(AStorage));
 end;
 
-function TDnmpSerializerJson.StorageFromFile(AStorage: TDnmpStorage;
+function TDnmpSerializerFpJson.StorageFromFile(AStorage: TDnmpStorage;
   AFileName: string): boolean;
 begin
   Result:=False;

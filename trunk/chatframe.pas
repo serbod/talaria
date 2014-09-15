@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, ComCtrls,
-  StdCtrls, ActnList, LCLType, Core;
+  StdCtrls, ActnList, LCLType, Menus, Core;
 
 type
 
@@ -20,11 +20,17 @@ type
     actInsertNick: TAction;
     actInsertPrivate: TAction;
     actInfoAboutUser: TAction;
+    actUpdateContactList: TAction;
     actSmiles: TAction;
     actUnderline: TAction;
     actItalic: TAction;
     alChat: TActionList;
     MemoText: TMemo;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
+    pmContactlist: TPopupMenu;
     TextToSend: TMemo;
     panAvatar: TPanel;
     panMessage: TPanel;
@@ -43,6 +49,7 @@ type
     ToolButton2: TToolButton;
     tbFreezeScrolling: TToolButton;
     tvUserList: TTreeView;
+    procedure actUpdateContactListExecute(Sender: TObject);
     procedure TextToSendKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
   private
@@ -72,6 +79,11 @@ begin
     TextToSend.Text:='';
     Key:=0;
   end;
+end;
+
+procedure TFrameChat.actUpdateContactListExecute(Sender: TObject);
+begin
+  UpdateContactList();
 end;
 
 procedure TFrameChat.AddText(AText: string);

@@ -33,15 +33,21 @@ type
   TFrameContactList = class(TFrame)
     actDeleteContact: TAction;
     actFindContacts: TAction;
+    actAddToFavorites: TAction;
+    actEditContact: TAction;
     actTest1: TAction;
     alContactList: TActionList;
     imgDefault: TImage;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
+    procedure actAddToFavoritesExecute(Sender: TObject);
     procedure actDeleteContactExecute(Sender: TObject);
+    procedure actEditContactExecute(Sender: TObject);
     procedure actFindContactsExecute(Sender: TObject);
     procedure actTest1Execute(Sender: TObject);
     procedure tcGroupsChange(Sender: TObject);
@@ -58,6 +64,7 @@ type
     function VisualItemAtPos(pos: TPoint): TVisualItem;
     function VisualItemBySender(Sender: TObject): TVisualItem;
     function SelectedItem(): TDnmpContact;
+    function SelectedList(): TDnmpContactList;
   public
     { public declarations }
     Mgr: TDnmpManager;
@@ -121,7 +128,17 @@ end;
 
 procedure TFrameContactList.actDeleteContactExecute(Sender: TObject);
 begin
-  //
+  if MessageDlg('Delete item', 'Are you sure?', mtConfirmation, mbYesNo, 0)<>mrYes then Exit;
+end;
+
+procedure TFrameContactList.actEditContactExecute(Sender: TObject);
+begin
+  if Assigned(SelectedItem()) then Core.ShowLinkInfo(SelectedItem());
+end;
+
+procedure TFrameContactList.actAddToFavoritesExecute(Sender: TObject);
+begin
+  if Assigned(SelectedItem()) then Mgr.MyPassport.ContactsList.AddItem(SelectedItem());
 end;
 
 procedure TFrameContactList.actFindContactsExecute(Sender: TObject);
@@ -306,8 +323,51 @@ begin
 end;
 
 function TFrameContactList.SelectedItem(): TDnmpContact;
+var
+  i: integer;
 begin
-  //
+  Result:=nil;
+  for i:=0 to VisualItems.Count-1 do
+  begin
+    if (VisualItems.Items[i] as TVisualItem).Selected then
+    begin
+      Result:=(VisualItems.Items[i] as TVisualItem).Item;
+      Exit;
+    end;
+  end;
+end;
+
+function TFrameContactList.SelectedList(): TDnmpContactList;
+var
+  n: integer;
+begin
+  Result:=nil;
+  n:=tcGroups.TabIndex;
+
+  if n=0 then // all
+  begin
+    Result:=Mgr.ContactList;
+  end
+  else if n=1 then // favorites
+  begin
+    Result:=Mgr.MyPassport.ContactsList;
+  end
+  else if n=2 then // nodes
+  begin
+    Result:=Mgr.NodeList;
+  end
+  else if n=3 then // points
+  begin
+    Result:=Mgr.PointList;
+  end
+  else if n=4 then // guests
+  begin
+    Result:=Mgr.UnapprovedList;
+  end
+  else if n=5 then // found
+  begin
+    Result:=Mgr.TmpContactList;
+  end;
 end;
 
 procedure TFrameContactList.AfterConstruction();
@@ -326,6 +386,7 @@ procedure TFrameContactList.UpdateList();
 var
   i, n: integer;
   Item: TDnmpContact;
+  ItemList: TDnmpContactList;
 begin
   if not Assigned(ContactList) then Exit;
   n:=tcGroups.TabIndex;
@@ -334,43 +395,14 @@ begin
   for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
   VisualItems.Clear();
 
-  if n=5 then // found
+  ItemList:=SelectedList();
+  if Assigned(ItemList) then
   begin
-    for i:=0 to Mgr.TmpContactList.Count-1 do
+    for i:=0 to ItemList.Count-1 do
     begin
-      Item:=Mgr.TmpContactList.Items[i];
+      Item:=ItemList.Items[i];
       AddVisualItem(Item);
     end;
-    Exit;
-  end;
-
-  for i:=0 to ContactList.Count-1 do
-  begin
-    Item:=ContactList.Items[i];
-
-    if n=0 then // all
-
-    else if n=1 then // favorites
-    begin
-      Continue;
-    end
-
-    else if n=2 then // nodes
-    begin
-      if Mgr.NodeList.IndexOf(Item)=-1 then Continue;
-    end
-
-    else if n=3 then // points
-    begin
-      if Mgr.PointList.IndexOf(Item)=-1 then Continue;
-    end
-
-    else if n=4 then // guests
-    begin
-      if Mgr.UnapprovedList.IndexOf(Item)=-1 then Continue;
-    end;
-
-    AddVisualItem(Item);
   end;
 end;
 
