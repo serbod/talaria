@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="23">
+    <Units Count="24">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -100,7 +100,6 @@
       <Unit9>
         <Filename Value="Misc.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Misc"/>
       </Unit9>
       <Unit10>
         <Filename Value="dnmpservicesframe.pas"/>
@@ -165,7 +164,6 @@
       <Unit19>
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_serializers"/>
       </Unit19>
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
@@ -183,8 +181,14 @@
       <Unit22>
         <Filename Value="dnmp_auth.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_auth"/>
       </Unit22>
+      <Unit23>
+        <Filename Value="dnmpwizardframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FormDnmpWizard"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DnmpWizardFrame"/>
+      </Unit23>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
