@@ -11,7 +11,7 @@ uses
   dnmp_services, Core, DnmpNodeFrame, Misc, DnmpServicesFrame, laz_synapse,
   ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters,
   ContactListFrame, LinkListFrame, LinkInfoFrame, dnmp_serializers, dnmp_grpc,
-  ChatRoomListFrame, dnmp_auth;
+  ChatRoomListFrame, dnmp_auth, DnmpWizardFrame;
 
 {$R *.res}
 
@@ -19,6 +19,7 @@ begin
   RequireDerivedFormResource := True;
   Application.Initialize;
   Application.CreateForm(TFormMain, FormMain);
+  Application.CreateForm(TFormDnmpWizard, FormDnmpWizard);
   Application.Run;
 end.
 
