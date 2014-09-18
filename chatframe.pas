@@ -25,6 +25,7 @@ type
     actUnderline: TAction;
     actItalic: TAction;
     alChat: TActionList;
+    imgAvatar: TImage;
     MemoText: TMemo;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
@@ -52,6 +53,7 @@ type
     procedure actUpdateContactListExecute(Sender: TObject);
     procedure TextToSendKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure tvUserListSelectionChanged(Sender: TObject);
   private
     { private declarations }
   public
@@ -79,6 +81,16 @@ begin
     TextToSend.Text:='';
     Key:=0;
   end;
+end;
+
+procedure TFrameChat.tvUserListSelectionChanged(Sender: TObject);
+var
+  Item: TContactItem;
+begin
+  if not Assigned(tvUserList.Selected) then Exit;
+  if not Assigned(tvUserList.Selected.Data) then Exit;
+  Item:=TContactItem(tvUserList.Selected.Data);
+  Core.PictureFromString(imgAvatar.Picture, Item.Picture);
 end;
 
 procedure TFrameChat.actUpdateContactListExecute(Sender: TObject);
@@ -111,6 +123,7 @@ begin
   begin
     Item:=ChatRoom.GetContact(i);
     tvItem:=tv.Items.AddChild(nil, Item.Caption);
+    tvItem.Data:=Item;
     tvItem.StateIndex:=Item.StateIcon();
     //if Item.IsGroup then tvItem.StateIndex:=ciIconFolder
     //else tvItem.StateIndex:=ciIconUserBlue;

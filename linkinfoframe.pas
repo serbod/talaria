@@ -65,6 +65,8 @@ type
 
 implementation
 
+uses Core;
+
 {$R *.lfm}
 
 { TFrameLinkInfo }
@@ -128,8 +130,6 @@ begin
 end;
 
 procedure TFrameLinkInfo.LinkInfoToForm();
-var
-  ss: TStringStream;
 begin
   if not Assigned(LinkInfo) then Exit;
   //imgPicture.Picture.Assign(imgDefault.Picture);
@@ -140,15 +140,7 @@ begin
   edGUID.Text:=LinkInfo.GUID;
   edSGUID.Text:=LinkInfo.SeniorGUID;
   edStatusMessage.Text:=LinkInfo.StatusMessage;
-  if Length(LinkInfo.Picture)>4 then
-  begin
-    ss:=TStringStream.Create(LinkInfo.Picture);
-    try
-      imgPicture.Picture.LoadFromStream(ss);
-    finally
-      ss.Free();
-    end;
-  end;
+  Core.PictureFromString(imgPicture.Picture, LinkInfo.Picture);
 
   edOwner.Text:=LinkInfo.Owner;
   edLocation.Text:=LinkInfo.Location;

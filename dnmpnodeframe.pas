@@ -93,6 +93,10 @@ procedure TFrameDnmp.actTestExecute(Sender: TObject);
 var
   s: string;
 begin
+  Serv.ShowSetupWizard();
+  Exit;
+
+
   if not Assigned(ServMgr) then Exit;
   ServMgr.ModService('GRPC','#test', 'add', '');
   ServMgr.ModService('GRPC','#test', 'set_descr', 'test description');
