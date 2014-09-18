@@ -12,7 +12,7 @@ object FormDnmpWizard: TFormDnmpWizard
     Height = 276
     Top = 0
     Width = 485
-    PageIndex = 1
+    PageIndex = 0
     Align = alClient
     TabOrder = 0
     TabStop = True
@@ -167,6 +167,19 @@ object FormDnmpWizard: TFormDnmpWizard
       end
     end
     object PageFinish: TPage
+      OnBeforeShow = PageFinishBeforeShow
+      object lbFinishInfo: TLabel
+        Left = 7
+        Height = 111
+        Top = 8
+        Width = 465
+        AutoSize = False
+        Caption = 'Начальная настройка завершена. Вы можете изменить настройки позже.'
+        Font.Height = -16
+        ParentColor = False
+        ParentFont = False
+        WordWrap = True
+      end
     end
   end
   object panBottom: TPanel
@@ -185,7 +198,6 @@ object FormDnmpWizard: TFormDnmpWizard
       Width = 272
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
-      Caption = 'Page info'
       ParentColor = False
       WordWrap = True
     end

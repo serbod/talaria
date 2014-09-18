@@ -186,6 +186,7 @@
         <Filename Value="dnmpwizardframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormDnmpWizard"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="DnmpWizardFrame"/>
       </Unit23>

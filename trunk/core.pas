@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, LinkInfoListFrame,
-  Misc, dnmp_mail, Controls, dnmp_serializers;
+  Misc, dnmp_mail, Controls, dnmp_serializers, Graphics;
 
 type
 
@@ -33,12 +33,14 @@ type
   protected
     function FGetCaption(): string; virtual;
     function FGetHint(): string; virtual;
+    function FGetPicture(): AnsiString; virtual;
   public
     DataObject: TObject;
     IsGroup: boolean;
     ParentItem: TContactItem;
     property Caption: string read FGetCaption;
     property Hint: string read FGetHint;
+    property Picture: AnsiString read FGetPicture;
     function StateIcon(): integer; virtual;
   end;
 
@@ -100,6 +102,7 @@ type
     function GetChatRoom(Index: integer): TChatRoom;
     procedure ShowChatRoomList();
     procedure ShowContactList();
+    procedure ShowSetupWizard();
     procedure LoadData();
     procedure SaveData();
   end;
@@ -114,6 +117,9 @@ var
 procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
+procedure PictureFromString(Picture: TPicture; sPic: AnsiString);
+procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
+
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
 procedure ShowLinkInfo(ALinkInfo: TDnmpContact);
@@ -127,7 +133,8 @@ const
 implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
-  MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame;
+  MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame,
+  DnmpWizardFrame;
 
 procedure Init(ConfigName: string);
 var
@@ -191,6 +198,54 @@ begin
   AFrame.Parent:=Form;
   AFrame.Align:=alClient;
   Form.ShowModal();
+end;
+
+procedure PictureFromString(Picture: TPicture; sPic: AnsiString);
+var
+  ss: TStringStream;
+begin
+  if Length(sPic)>4 then
+  begin
+    ss:=TStringStream.Create(sPic);
+    try
+      Picture.LoadFromStream(ss);
+    finally
+      ss.Free();
+    end;
+  end;
+end;
+
+procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
+var
+  bmp: TBitmap;
+  r: TRect;
+  k, kx, ky: Real;
+begin
+  if (Picture.Height > y)
+  or (Picture.Width > x) then
+  begin
+    bmp:=TBitmap.Create();
+    { Variant 1 }
+    //bmp.Canvas.Assign(img.Canvas);
+
+    { Variant 2 }
+    kx:=Picture.Height / (x);
+    ky:=Picture.Width / (y);
+    k:=kx;
+    if ky>k then k:=ky;
+    if k<0 then Exit;
+
+    r.Left:=0;
+    r.Top:=0;
+    r.BottomRight.x:=Round(Picture.Width / k);
+    r.BottomRight.y:=Round(Picture.Height / k);
+    bmp.Width:=r.BottomRight.x;
+    bmp.Height:=r.BottomRight.y;
+    bmp.Canvas.StretchDraw(r, Picture.Bitmap);
+
+    Picture.Bitmap.Assign(bmp);
+    bmp.Free();
+  end;
 end;
 
 procedure AddServicePage(AService: TDnmpService);
@@ -381,6 +436,13 @@ begin
     Result:=Result+LineEnding+AddrToStr((DataObject as TDnmpContact).Addr);
     Result:=Result+LineEnding+(DataObject as TDnmpContact).GUID;
   end;
+end;
+
+function TContactItem.FGetPicture(): AnsiString;
+begin
+  Result:='';
+  if not Assigned(DataObject) then Exit;
+  if (DataObject is TDnmpContact) then Result:=(DataObject as TDnmpContact).Picture;
 end;
 
 function TContactItem.StateIcon(): integer;
@@ -638,6 +700,17 @@ begin
   TmpFrame.ContactList:=Self.Mgr.ContactList;
   TmpFrame.Update();
   ShowForm(TmpFrame, 'Contact list');
+end;
+
+procedure TServiceDnmp.ShowSetupWizard();
+var
+  Form: TFormDnmpWizard;
+begin
+  Form:=TFormDnmpWizard.Create(FormMain);
+  Form.Serv:=Self;
+  Form.Start();
+  Form.ShowModal();
+  Form.Free();
 end;
 
 procedure TServiceDnmp.LoadData();

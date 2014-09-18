@@ -35,6 +35,7 @@ type
     actFindContacts: TAction;
     actAddToFavorites: TAction;
     actEditContact: TAction;
+    actRequestInfo: TAction;
     actTest1: TAction;
     alContactList: TActionList;
     imgDefault: TImage;
@@ -42,6 +43,7 @@ type
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
@@ -49,6 +51,7 @@ type
     procedure actDeleteContactExecute(Sender: TObject);
     procedure actEditContactExecute(Sender: TObject);
     procedure actFindContactsExecute(Sender: TObject);
+    procedure actRequestInfoExecute(Sender: TObject);
     procedure actTest1Execute(Sender: TObject);
     procedure tcGroupsChange(Sender: TObject);
   private
@@ -152,6 +155,14 @@ begin
   if Length(s)<3 then Exit;
   // request
   Mgr.RequestContactsByName(s);
+end;
+
+procedure TFrameContactList.actRequestInfoExecute(Sender: TObject);
+var
+  Item: TDnmpContact;
+begin
+  Item:=SelectedItem();
+  if Assigned(Item) then Mgr.RequestInfoByAddr(Item.Addr);
 end;
 
 procedure TFrameContactList.AddTestContacts();

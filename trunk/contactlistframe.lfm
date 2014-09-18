@@ -148,6 +148,10 @@ object FrameContactList: TFrameContactList
       Caption = 'Edit contact'
       OnExecute = actEditContactExecute
     end
+    object actRequestInfo: TAction
+      Caption = 'Request contact info'
+      OnExecute = actRequestInfoExecute
+    end
   end
   object pmContactList: TPopupMenu
     left = 100
@@ -163,6 +167,9 @@ object FrameContactList: TFrameContactList
     end
     object MenuItem4: TMenuItem
       Action = actEditContact
+    end
+    object MenuItem5: TMenuItem
+      Action = actRequestInfo
     end
   end
 end
