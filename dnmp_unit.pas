@@ -41,6 +41,7 @@ type
     procedure Add(AName, AValue: string); overload;
     procedure Add(AName: string; AValue: Integer); overload;
     procedure Add(AName: string; AValue: Real); overload;
+    procedure Add(AName: string; AValue: boolean); overload;
     { Get storage item by name }
     function GetObject(AName: string): TDnmpStorage;
     { Get storage item by index }
@@ -52,6 +53,7 @@ type
     function GetInteger(AName: string = ''): Integer;
     function GetCardinal(AName: string = ''): Cardinal;
     function GetReal(AName: string = ''): Real;
+    function GetBool(AName: string = ''): boolean;
     function HaveName(AName: string): boolean;
   end;
 
@@ -1258,6 +1260,11 @@ begin
   else Self.Value:=FloatToStr(AValue);
 end;
 
+procedure TDnmpStorage.Add(AName: string; AValue: boolean);
+begin
+  Self.Add(AName, BoolToStr(AValue, '1', '0'));
+end;
+
 function TDnmpStorage.GetObject(AName: string): TDnmpStorage;
 var
   n: integer;
@@ -1319,6 +1326,11 @@ end;
 function TDnmpStorage.GetReal(AName: string): Real;
 begin
   Result:=StrToFloatDef(GetString(AName), 0);
+end;
+
+function TDnmpStorage.GetBool(AName: string): boolean;
+begin
+  Result:=(GetString(AName)='1');
 end;
 
 function TDnmpStorage.HaveName(AName: string): boolean;

@@ -169,6 +169,7 @@ object FrameChat: TFrameChat
       Top = 0
       Width = 559
       Align = alClient
+      PopupMenu = pmChatText
       TabOrder = 2
     end
   end
@@ -229,6 +230,12 @@ object FrameChat: TFrameChat
       Caption = 'Update list'
       OnExecute = actUpdateContactListExecute
     end
+    object actUpdateChatText: TAction
+      Category = 'ChatText'
+      Caption = 'Update chat text'
+      ImageIndex = 29
+      OnExecute = actUpdateChatTextExecute
+    end
   end
   object pmContactlist: TPopupMenu
     Images = FormMain.ImageList16
@@ -281,6 +288,20 @@ object FrameChat: TFrameChat
         FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00F4F4F4FFD4D4D4FFC3C3
         C3FFBCBCBCFFC3C3C3FFD4D4D4FFF4F4F4FFFFFFFF00FFFFFF00
       }
+    end
+  end
+  object pmChatText: TPopupMenu
+    Images = FormMain.ImageList16
+    left = 344
+    top = 135
+    object MenuItem7: TMenuItem
+      Action = actUpdateChatText
+    end
+    object MenuItem5: TMenuItem
+      Action = actClearText
+    end
+    object MenuItem6: TMenuItem
+      Action = actFreezeScrolling
     end
   end
 end

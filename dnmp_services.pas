@@ -176,13 +176,14 @@ var
 const
   csGRPC = 'GRPC';
   csMAIL = 'MAIL';
+  csCHAT = 'CHAT';
   csSRVDInfoFileName = 'SRVD_info_list';
   csSRVDAbonFileName = 'SRVD_abon_list';
   csSRVDKnownFileName = 'SRVD_known_list';
 
 
 implementation
-uses Misc, dnmp_grpc, dnmp_mail;
+uses Misc, dnmp_grpc, dnmp_mail, dnmp_chat;
 
 
 // === TDnmpServiceInfo ===
@@ -573,6 +574,7 @@ begin
   ServiceTypes.Add(ServiceType);
   ServiceTypes.Add(csGRPC);
   ServiceTypes.Add(csMAIL);
+  ServiceTypes.Add(csCHAT);
 
   // local services
   self.ServiceInfoList:=TDnmpServiceInfoList.Create(True);
@@ -625,6 +627,10 @@ begin
   // default services
   // Mail
   si:=ServiceInfoList.UpdateServiceInfo(csMAIL, '', '', '', '', '', 'Mailer');
+  if Assigned(si) then self.CreateService(si);
+
+  // Chat
+  si:=ServiceInfoList.UpdateServiceInfo(csCHAT, '', '', '', '', '', 'Private chat');
   if Assigned(si) then self.CreateService(si);
 
   // local services
@@ -775,6 +781,14 @@ begin
       Result:=TDnmpMail.Create(Mgr, Self, ServiceInfo);
   end;
 
+  if ServiceInfo.ServiceType=csChat then
+  begin
+    if Mgr.ServerMode then
+      Result:=TDnmpChat.Create(Mgr, Self, ServiceInfo)
+    else
+      Result:=TDnmpChat.Create(Mgr, Self, ServiceInfo);
+  end;
+
   if Assigned(Result) then
   begin
     Mgr.DebugText('Created service: '+Result.ServiceInfo.ServiceType+' '+Result.ServiceInfo.Name);
@@ -912,32 +926,6 @@ begin
   Result:=False;
   if not Assigned(ServiceInfoList) then Exit;
   sFilter:=Trim(Filter);
-
-  {
-  // CSV list (deprecated)
-  slData:=TStringList.Create();
-  sl:=TStringList.Create();
-  for i:=0 to ServiceInfoList.Count-1 do
-  begin
-    si:=ServiceInfoList[i];
-
-    if Length(sFilter)>0 then
-      if not AnsiContainsText(si.Name, Filter) then Continue;
-    sl.Clear();
-    // Compose service info
-    sl.Add(si.ServiceType);
-    sl.Add(si.Name);
-    sl.Add(si.ParentName);
-    sl.Add(IntToStr(si.AbonentsCount));
-    sl.Add(AddrToStr(si.HostAddr));
-    sl.Add(IntToStr(si.Rating));
-    slData.Add(sl.DelimitedText);
-  end;
-  Result:=True;
-  sl.Free();
-  Mgr.SendDataMsg(Addr, ServiceType, 'data=SERVICES_LIST', slData.Text);
-  slData.Free();
-  }
 
   // default serializer
   TmpList:=TDnmpServiceInfoList.Create(False);
@@ -1126,69 +1114,6 @@ begin
   if Assigned(OnEvent) then OnEvent('SERVICE_INFO', si);
   Result:=True;
 end;
-
-{
-// CSV list version (deprecated)
-// SERVICES_LIST
-// Содержит список сервисов в формате CSV.
-// type - тип сервиса
-// name - название сервиса
-// parent - имя вышестоящего сервиса-родителя
-// abonent_count - число абонентов
-// provider - адрес узла для подписки
-// rating - рейтинг сервиса
-//
-function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Boolean;
-var
-  sl, slData: TStringList;
-  i: Integer;
-  Abonent: TDnmpContact;
-  //si: TDnmpServiceInfo;
-
-procedure UpdateServiceInfoList(siList: TDnmpServiceInfoList; sl: TStrings);
-begin
-  siList.UpdateServiceInfo(sl[0], sl[1], sl[2], sl[4], sl[5], sl[3], '');
-end;
-
-begin
-  Result:=False;
-  sl:=TStringList.Create();
-  slData:=TStringList.Create();
-  slData.Text:=sDataList;
-  for i:=0 to slData.Count-1 do
-  begin
-    sl.Clear();
-    sl.DelimitedText:=slData[i];
-    if sl.Count<6 then Continue;
-
-    if sListType='SERVICES_LIST_LOCAL' then
-    begin
-      //Self.UsersList.UpdateAbonent(sl[0], sl[1], sl[2], sl[4], sl[5], StrToAddr(sl[3]));
-      UpdateServiceInfoList(self.RemoteServiceInfoList, sl);
-      if Assigned(OnEvent) then OnEvent(sListType, self.RemoteServiceInfoList);
-      Result:=True;
-    end
-
-    else if sListType='SERVICES_LIST' then
-    begin
-      //Self.ServiceInfo.Abonents.UpdateAbonent(sl[0], sl[1], sl[2], sl[4], sl[5], StrToAddr(sl[3]));
-      UpdateServiceInfoList(self.RemoteServiceInfoList, sl);
-      if Assigned(OnEvent) then OnEvent(sListType, self.RemoteServiceInfoList);
-      Result:=True;
-    end
-
-    else if sListType='SERVICES_LIST_SUBSCRIBED' then
-    begin
-      //Self.BanList.UpdateAbonent(sl[0], sl[1], sl[2], sl[4], sl[5], StrToAddr(sl[3]));
-      UpdateServiceInfoList(self.ServiceInfoList, sl);
-      if Assigned(OnEvent) then OnEvent(sListType, self.ServiceInfoList);
-      Result:=True;
-    end;
-  end;
-  FreeAndNil(slData);
-  FreeAndNil(sl);
-end;
-}
 
 function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Boolean;
 var

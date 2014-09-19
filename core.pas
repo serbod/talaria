@@ -103,6 +103,7 @@ type
     procedure ShowChatRoomList();
     procedure ShowContactList();
     procedure ShowSetupWizard();
+    procedure ShowPrivateChatRoom(Contact: TDnmpContact);
     procedure LoadData();
     procedure SaveData();
   end;
@@ -134,7 +135,7 @@ implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
   MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame,
-  DnmpWizardFrame;
+  DnmpWizardFrame, DnmpChatFrame, dnmp_chat;
 
 procedure Init(ConfigName: string);
 var
@@ -696,8 +697,8 @@ var
   TmpFrame: TFrameContactList;
 begin
   TmpFrame:=TFrameContactList.Create(nil);
+  TmpFrame.Serv:=Self;
   TmpFrame.Mgr:=Self.Mgr;
-  TmpFrame.ContactList:=Self.Mgr.ContactList;
   TmpFrame.Update();
   ShowForm(TmpFrame, 'Contact list');
 end;
@@ -711,6 +712,17 @@ begin
   Form.Start();
   Form.ShowModal();
   Form.Free();
+end;
+
+procedure TServiceDnmp.ShowPrivateChatRoom(Contact: TDnmpContact);
+var
+  TmpFrame: TFrameDnmpChat;
+begin
+  if not Assigned(Contact) then Exit;
+  TmpFrame:=TFrameDnmpChat.Create(nil);
+  TmpFrame.Contact:=Contact;
+  TmpFrame.Chat:=(ServMgr.GetService(csCHAT, '') as TDnmpChat);
+  ShowForm(TmpFrame, 'Chat: '+Contact.Name);
 end;
 
 procedure TServiceDnmp.LoadData();
