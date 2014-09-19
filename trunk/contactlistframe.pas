@@ -35,6 +35,7 @@ type
     actFindContacts: TAction;
     actAddToFavorites: TAction;
     actEditContact: TAction;
+    actChat: TAction;
     actRequestInfo: TAction;
     actTest1: TAction;
     alContactList: TActionList;
@@ -44,10 +45,12 @@ type
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
     procedure actAddToFavoritesExecute(Sender: TObject);
+    procedure actChatExecute(Sender: TObject);
     procedure actDeleteContactExecute(Sender: TObject);
     procedure actEditContactExecute(Sender: TObject);
     procedure actFindContactsExecute(Sender: TObject);
@@ -70,6 +73,7 @@ type
     function SelectedList(): TDnmpContactList;
   public
     { public declarations }
+    Serv: TServiceDnmp;
     Mgr: TDnmpManager;
     ContactList: TDnmpContactList;
     procedure AfterConstruction(); override;
@@ -141,13 +145,21 @@ end;
 
 procedure TFrameContactList.actAddToFavoritesExecute(Sender: TObject);
 begin
+  if not Assigned(Mgr) then Exit;
   if Assigned(SelectedItem()) then Mgr.MyPassport.ContactsList.AddItem(SelectedItem());
+end;
+
+procedure TFrameContactList.actChatExecute(Sender: TObject);
+begin
+  if not Assigned(Serv) then Exit;
+  if Assigned(SelectedItem()) then Serv.ShowPrivateChatRoom(SelectedItem());
 end;
 
 procedure TFrameContactList.actFindContactsExecute(Sender: TObject);
 var
   s: string;
 begin
+  if not Assigned(Mgr) then Exit;
   // ask for name
   s:='';
   if not InputQuery('Find contacts', 'Enter name:', s) then Exit;
@@ -161,6 +173,7 @@ procedure TFrameContactList.actRequestInfoExecute(Sender: TObject);
 var
   Item: TDnmpContact;
 begin
+  if not Assigned(Mgr) then Exit;
   Item:=SelectedItem();
   if Assigned(Item) then Mgr.RequestInfoByAddr(Item.Addr);
 end;

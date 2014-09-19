@@ -20,6 +20,7 @@ type
     actInsertNick: TAction;
     actInsertPrivate: TAction;
     actInfoAboutUser: TAction;
+    actUpdateChatText: TAction;
     actUpdateContactList: TAction;
     actSmiles: TAction;
     actUnderline: TAction;
@@ -31,7 +32,11 @@ type
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
     MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
     pmContactlist: TPopupMenu;
+    pmChatText: TPopupMenu;
     TextToSend: TMemo;
     panAvatar: TPanel;
     panMessage: TPanel;
@@ -50,19 +55,23 @@ type
     ToolButton2: TToolButton;
     tbFreezeScrolling: TToolButton;
     tvUserList: TTreeView;
+    procedure actUpdateChatTextExecute(Sender: TObject);
     procedure actUpdateContactListExecute(Sender: TObject);
     procedure TextToSendKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure tvUserListSelectionChanged(Sender: TObject);
   private
     { private declarations }
+    FChatRoom: TChatRoom;
+    procedure FSetChatRoom(Value: TChatRoom);
   public
     { public declarations }
-    ChatRoom: TChatRoom;
+    property ChatRoom: TChatRoom read FChatRoom write FSetChatRoom;
     procedure AddText(AText: string);
     procedure AddBBCode(AText: string);
     procedure UpdateContactList();
     procedure UpdateText();
+    procedure Update(); override;
   end;
 
 implementation
@@ -93,9 +102,20 @@ begin
   Core.PictureFromString(imgAvatar.Picture, Item.Picture);
 end;
 
+procedure TFrameChat.FSetChatRoom(Value: TChatRoom);
+begin
+  FChatRoom:=Value;
+  Update();
+end;
+
 procedure TFrameChat.actUpdateContactListExecute(Sender: TObject);
 begin
   UpdateContactList();
+end;
+
+procedure TFrameChat.actUpdateChatTextExecute(Sender: TObject);
+begin
+  UpdateText();
 end;
 
 procedure TFrameChat.AddText(AText: string);
@@ -143,6 +163,13 @@ begin
     ChatText:=ChatRoom.GetText(i);
     MemoText.Lines.AddObject(FormatDateTime('[hh:nn:ss]', ChatText.Timestamp)+'<'+ChatText.AuthorName+'> '+ChatText.Text, nil);
   end;
+end;
+
+procedure TFrameChat.Update();
+begin
+  UpdateContactList();
+  UpdateText();
+  inherited Update();
 end;
 
 end.
