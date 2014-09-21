@@ -1,7 +1,7 @@
 object FormMain: TFormMain
-  Left = 453
+  Left = 170
   Height = 460
-  Top = 209
+  Top = 83
   Width = 678
   Caption = 'Talaria'
   ClientHeight = 460
@@ -455,6 +455,7 @@ object FormMain: TFormMain
     Top = 0
     Width = 620
     Align = alClient
+    PopupMenu = pmTabs
     TabOrder = 1
   end
   object ImageList24: TImageList
@@ -774,6 +775,16 @@ object FormMain: TFormMain
       Hint = 'Close program'
       ImageIndex = 2
       OnExecute = actExitExecute
+    end
+    object actCloseTab: TAction
+      Category = 'Tabs'
+      Caption = 'Close tab'
+      ImageIndex = 34
+    end
+    object actDetachTab: TAction
+      Category = 'Tabs'
+      Caption = 'Detach tab'
+      ImageIndex = 33
     end
   end
   object ImageList16: TImageList
@@ -2094,5 +2105,13 @@ object FormMain: TFormMain
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000
     }
+  end
+  object pmTabs: TPopupMenu
+    Images = ImageList16
+    left = 230
+    top = 149
+    object MenuItem1: TMenuItem
+      Action = actCloseTab
+    end
   end
 end

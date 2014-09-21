@@ -46,7 +46,7 @@ type
   public
     { public declarations }
     Contact: TDnmpContact;
-    MessagesList: TDnmpChatMessagesList;
+    ChatSession: TDnmpChatSession;
     LastY: integer;
     property Chat: TDnmpChat read FChat write FSetChat;
     procedure AfterConstruction(); override;
@@ -91,12 +91,12 @@ end;
 procedure TFrameDnmpChat.FSetChat(Value: TDnmpChat);
 begin
   FChat:=Value;
-  if Assigned(MessagesList) then MessagesList.DelObserver(Self);
-  MessagesList:=nil;
+  if Assigned(ChatSession) then ChatSession.MessagesList.DelObserver(Self);
+  ChatSession:=nil;
   if Assigned(Chat) and Assigned(Contact) then
   begin
-    MessagesList:=Chat.GetMessagesListForContact(Contact);
-    MessagesList.AddObserver(Self);
+    ChatSession:=Chat.GetChatSessionForContact(Contact);
+    ChatSession.MessagesList.AddObserver(Self);
   end;
   Update();
 end;
@@ -267,11 +267,11 @@ begin
   VisualItems.Clear();
 
   LastY:=0;
-  if Assigned(MessagesList) then
+  if Assigned(ChatSession) then
   begin
-    for i:=0 to MessagesList.Count-1 do
+    for i:=0 to ChatSession.MessagesList.Count-1 do
     begin
-      AddVisualItem(MessagesList.Items[i]);
+      AddVisualItem(ChatSession.MessagesList.Items[i]);
     end;
   end;
   inherited Update();

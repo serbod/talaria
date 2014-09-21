@@ -429,6 +429,7 @@ begin
   NewIpLink.Socket.Socket:=Sock;
   //NewIpLink.OnIncomingMsg:=Mgr.OnIncomingMsg;
   NewIpLink.Incoming:=True;
+  NewIpLink.LinkType:=ltIncoming;
   NewIpLink.FActive:=NewIpLink.StartReader();
   NewIpLink.RemoteInfo.Online:=NewIpLink.Active;
 

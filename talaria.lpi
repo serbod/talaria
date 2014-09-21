@@ -39,7 +39,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="26">
+    <Units Count="27">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -183,6 +183,7 @@
       <Unit22>
         <Filename Value="dnmp_auth.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_auth"/>
       </Unit22>
       <Unit23>
         <Filename Value="dnmpwizardframe.pas"/>
@@ -201,9 +202,15 @@
         <Filename Value="dnmpchatframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmpChat"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpChatFrame"/>
       </Unit25>
+      <Unit26>
+        <Filename Value="dnmp_info.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_info"/>
+      </Unit26>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -223,6 +230,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">
