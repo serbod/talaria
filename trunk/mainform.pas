@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
-  ExtCtrls, ActnList, Core;
+  ExtCtrls, ActnList, Menus, Core;
 
 type
 
@@ -15,14 +15,18 @@ type
   TFormMain = class(TForm)
     actAbout: TAction;
     actExit: TAction;
+    actCloseTab: TAction;
+    actDetachTab: TAction;
     actOptions: TAction;
     alMain: TActionList;
     ImageList16: TImageList;
     imgSidebarBottom: TImage;
     imgSidebarTop: TImage;
     ImageList24: TImageList;
+    MenuItem1: TMenuItem;
     pgcMain: TPageControl;
     panSidebar: TPanel;
+    pmTabs: TPopupMenu;
     ToolBarMain: TToolBar;
     tbAbout: TToolButton;
     tbExit: TToolButton;

@@ -42,12 +42,6 @@ type
     panBottom: TPanel;
     procedure btnBackClick(Sender: TObject);
     procedure btnNextClick(Sender: TObject);
-    procedure PageFinishBeforeShow(ASender: TObject; ANewPage: TPage;
-      ANewIndex: Integer);
-    procedure PageLanguageBeforeShow(ASender: TObject; ANewPage: TPage;
-      ANewIndex: Integer);
-    procedure PageUplinkBeforeShow(ASender: TObject; ANewPage: TPage;
-      ANewIndex: Integer);
   private
     { private declarations }
   public
@@ -74,12 +68,6 @@ const
 
 { TFormDnmpWizard }
 
-procedure TFormDnmpWizard.PageLanguageBeforeShow(ASender: TObject;
-  ANewPage: TPage; ANewIndex: Integer);
-begin
-
-end;
-
 procedure TFormDnmpWizard.btnNextClick(Sender: TObject);
 begin
   if nbPages.PageIndex=ciPageLanguage then nbPages.PageIndex:=ciPageUser
@@ -88,24 +76,12 @@ begin
   else if nbPages.PageIndex=ciPageFinish then Finish();
 end;
 
-procedure TFormDnmpWizard.PageFinishBeforeShow(ASender: TObject;
-  ANewPage: TPage; ANewIndex: Integer);
-begin
-
-end;
-
 procedure TFormDnmpWizard.btnBackClick(Sender: TObject);
 begin
   if nbPages.PageIndex=ciPageLanguage then nbPages.PageIndex:=ciPageLanguage
   else if nbPages.PageIndex=ciPageUser then nbPages.PageIndex:=ciPageLanguage
   else if nbPages.PageIndex=ciPageUplink then nbPages.PageIndex:=ciPageUser
   else if nbPages.PageIndex=ciPageFinish then nbPages.PageIndex:=ciPageUplink;
-end;
-
-procedure TFormDnmpWizard.PageUplinkBeforeShow(ASender: TObject;
-  ANewPage: TPage; ANewIndex: Integer);
-begin
-
 end;
 
 procedure TFormDnmpWizard.Start();

@@ -722,7 +722,8 @@ begin
   TmpFrame:=TFrameDnmpChat.Create(nil);
   TmpFrame.Contact:=Contact;
   TmpFrame.Chat:=(ServMgr.GetService(csCHAT, '') as TDnmpChat);
-  ShowForm(TmpFrame, 'Chat: '+Contact.Name);
+  //ShowForm(TmpFrame, 'Chat: '+Contact.Name);
+  AddPage(TmpFrame, 'Chat: '+Contact.Name, TmpFrame.Chat);
 end;
 
 procedure TServiceDnmp.LoadData();

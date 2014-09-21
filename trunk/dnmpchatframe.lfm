@@ -6,8 +6,8 @@ object FrameDnmpChat: TFrameDnmpChat
   ClientHeight = 354
   ClientWidth = 414
   TabOrder = 0
-  DesignLeft = 745
-  DesignTop = 254
+  DesignLeft = 592
+  DesignTop = 224
   object ScrollBox: TScrollBox
     Left = 0
     Height = 312

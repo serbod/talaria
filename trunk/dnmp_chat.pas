@@ -76,7 +76,7 @@ type
   TDnmpChat = class(TDnmpService)
   protected
     FOnSay: TNotifyEvent;
-    procedure UpdateChatSession(Addr: TAddr);
+    procedure AddChatMessage(AContact: TDnmpContact; IsIncoming: boolean; sText: string);
   public
     Author: TDnmpContact;
     MessagesList: TDnmpChatMessagesList;
@@ -89,7 +89,7 @@ type
     //function SayText(AbonentGUID: string; sText: string): string;
     function SayToContact(Contact: TDnmpContact; sText: string): string;
     { return messages list for contact }
-    function GetMessagesListForContact(AContact: TDnmpContact): TDnmpChatMessagesList;
+    function GetChatSessionForContact(AContact: TDnmpContact): TDnmpChatSession;
     //function Msg(Msg: TDnmpMsg): string; override;
     property OnSay: TNotifyEvent read FOnSay write FOnSay;
     function ParseMsg(AMsg: TDnmpMsg): string; override;
@@ -229,6 +229,8 @@ end;
 function TDnmpChatMessagesList.AddItem(Timestamp: TDateTime;
   IsIncoming: boolean; Text: string; RemoteAddr: TAddr;
   RemoteContact: TDnmpContact): TDnmpChatMessage;
+var
+  TmpContact: TDnmpContact;
 begin
   Result:=nil;
   if not Assigned(ParentList) then
@@ -239,12 +241,17 @@ begin
     Result.Timestamp:=Timestamp;
     Result.IsIncoming:=IsIncoming;
     Result.Text:=Text;
-    Result.RemoteAddr:=RemoteAddr;
     if Assigned(RemoteContact) then
     begin
       Result.RemoteGUID:=RemoteContact.GUID;
       Result.RemoteName:=RemoteContact.Name;
       Result.RemoteAddr:=RemoteContact.Addr;
+    end
+    else
+    begin
+      Result.RemoteAddr:=RemoteAddr;
+      Result.RemoteName:='';
+      Result.RemoteGUID:='';
     end;
   end
 
@@ -325,23 +332,16 @@ end;
 
 { TDnmpChat }
 
-procedure TDnmpChat.UpdateChatSession(Addr: TAddr);
+procedure TDnmpChat.AddChatMessage(AContact: TDnmpContact; IsIncoming: boolean;
+  sText: string);
 var
   i: integer;
-  Contact: TDnmpContact;
   ChatSession: TDnmpChatSession;
 begin
-  Contact:=Mgr.GetContactByAddr(Addr);
-  if not Assigned(Contact) then Exit;
-  for i:=0 to ChatSessions.Count-1 do
-  begin
-    ChatSession:=(ChatSessions.Items[i] as TDnmpChatSession);
-    if ChatSession.Contact=Contact then
-    begin
-      ChatSession.MessagesList.UpdateView();
-      Exit;
-    end;
-  end;
+  ChatSession:=Self.GetChatSessionForContact(AContact);
+  if not Assigned(ChatSession) then Exit;
+  ChatSession.MessagesList.AddItem(Now(), IsIncoming, sText, AContact.Addr, AContact);
+  ChatSession.MessagesList.UpdateView();
 end;
 
 constructor TDnmpChat.Create(AMgr: TDnmpManager;
@@ -396,58 +396,60 @@ end;
 function TDnmpChat.SayToContact(Contact: TDnmpContact; sText: string): string;
 begin
   // add to local messages list
-  MessagesList.AddItem(Now(), False, sText, Contact.Addr, Contact);
-  MessagesList.UpdateView();
+  AddChatMessage(Contact, False, sText);
   // send message to remote contact
   Mgr.SendDataMsg(Contact.Addr, 'CHAT', 'cmd=MSG', sText);
 end;
 
-function TDnmpChat.GetMessagesListForContact(AContact: TDnmpContact
-  ): TDnmpChatMessagesList;
+function TDnmpChat.GetChatSessionForContact(AContact: TDnmpContact
+  ): TDnmpChatSession;
 var
   i: integer;
-  Item: TDnmpChatSession;
 begin
   Result:=nil;
   if not Assigned(AContact) then Exit;
   // find chat session
-  Item:=nil;
   for i:=0 to ChatSessions.Count-1 do
   begin
-    Item:=(ChatSessions.Items[i] as TDnmpChatSession);
-    if Item.Contact=AContact then Break;
-    Item:=nil;
+    Result:=(ChatSessions.Items[i] as TDnmpChatSession);
+    if Result.Contact=AContact then Exit;
   end;
+  Result:=nil;
 
-  if not Assigned(Item) then // create new session
+  if not Assigned(Result) then // create new session
   begin
-    Item:=(ChatSessions.Add() as TDnmpChatSession);
-    Item.CreationTime:=Now();
-    Item.Contact:=AContact;
-    Item.MessagesList:=TDnmpChatMessagesList.Create();
-    Item.MessagesList.ParentList:=Self.MessagesList;
-    Item.MessagesList.Contact:=AContact;
+    Result:=(ChatSessions.Add() as TDnmpChatSession);
+    Result.CreationTime:=Now();
+    Result.Contact:=AContact;
+    Result.MessagesList:=TDnmpChatMessagesList.Create();
+    Result.MessagesList.ParentList:=Self.MessagesList;
+    Result.MessagesList.Contact:=AContact;
   end;
-  Result:=Item.MessagesList;
 end;
 
 function TDnmpChat.ParseMsg(AMsg: TDnmpMsg): string;
 var
   sCmd: string;
+  RemoteContact: TDnmpContact;
 begin
   Result:='';
   if not Assigned(AMsg) then Exit;
   if AMsg.MsgType <> Self.ServiceInfo.ServiceType then Exit;
 
+  RemoteContact:=Mgr.GetContactByAddr(AMsg.SourceAddr);
+  if not Assigned(RemoteContact) then
+  begin
+    Mgr.DebugText('CHAT message from uncnown addr: '+AddrToStr(AMsg.SourceAddr));
+    Exit;
+  end;
+
   sCmd:=Trim(AMsg.Info.Values['cmd']);
 
   if sCmd = 'MSG' then // Это сообщение
   begin
-    Self.MessagesList.AddItem(Now(), True, StreamToStr(AMsg.Data), AMsg.SourceAddr);
-    Self.MessagesList.UpdateView();
-    if Assigned(OnEvent) then OnEvent('MSG', Self);
     // update chat session
-    UpdateChatSession(AMsg.SourceAddr);
+    AddChatMessage(RemoteContact, True, StreamToStr(AMsg.Data));
+    if Assigned(OnEvent) then OnEvent('MSG', Self);
   end
 
   else if sCmd = 'INVITE' then // Это приглашение

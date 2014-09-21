@@ -361,7 +361,7 @@ type
     // for links only
     property Link: TDnmpLink read FLink;
     { Add self to Mgr.MsgHandlers }
-    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil);
+    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil); virtual;
     { Remove self from Mgr.MsgHandlers }
     destructor Destroy(); override;
     // Запуск запуск обработчика
@@ -496,16 +496,12 @@ type
     function GetFreePointID(): TPointID;
     // Return maximum node ID +1
     function GetFreeNodeID(): TNodeID;
-    // ==== Сервисные функции
-    procedure SendChatMsg(DestAddr: TAddr; Text: string);
-    procedure RequestInfoByAddr(Addr: TAddr);
-    procedure RequestPointlist(Addr: TAddr);
-    procedure SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr); // [S]
-    procedure RequestContactsByName(AName: string);
-    // !! not used
-    procedure ReadLinkInfo(Msg: TDnmpMsg); // [SC]
     // De-serialize data from message body to storage
     function MsgDataToStorage(Msg: TDnmpMsg): TDnmpStorage;
+    // ==== Сервисные функции
+    procedure RequestInfoByAddr(Addr: TAddr);
+    procedure RequestPointlist(Addr: TAddr);
+    procedure RequestContactsByName(AName: string);
   end;
 
   // Return addr 0.0
@@ -563,7 +559,7 @@ var
   sDnmpDataDir: string = 'data';
 
 implementation
-uses RC4, dnmp_client, dnmp_server, dnmp_ip, Misc;
+uses RC4, dnmp_ip, Misc, dnmp_info, dnmp_auth;
 
 // === Functions ===
 {
@@ -1948,14 +1944,17 @@ end;
 constructor TDnmpMsgHandler.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
   inherited Create();
-  self.FMgr:=AMgr;
-  self.FLink:=ALink;
-  if Assigned(Mgr) and (not Assigned(Link)) then AMgr.MsgHandlers.Add(self);
+  Self.FMgr:=AMgr;
+  Self.FLink:=ALink;
+  if Assigned(Mgr) and (not Assigned(Link)) then
+  begin
+    AMgr.MsgHandlers.Add(Self);
+  end;
 end;
 
 destructor TDnmpMsgHandler.Destroy();
 begin
-  if Assigned(Mgr) and (not Assigned(Link)) then Mgr.MsgHandlers.Extract(self);
+  if Assigned(Mgr) and (not Assigned(Link)) then Mgr.MsgHandlers.Extract(Self);
   inherited Destroy();
 end;
 
@@ -2006,14 +2005,19 @@ begin
 
   CmdQueue:=TStringList.Create;
 
-  MsgQueue:=TDnmpMsgQueue.Create(true);
+  MsgQueue:=TDnmpMsgQueue.Create(True);
 
-  MsgHandlers:=TObjectList.Create(true);
+  MsgHandlers:=TObjectList.Create(True);
 
   //self.Parser:=
+
+  // default handlers, they added to MsgHandlers on Create()
+  TDnmpInfoService.Create(Self, nil); // INFO
 end;
 
 destructor TDnmpManager.Destroy();
+var
+  i: integer;
 begin
   SaveToFile();
   // remove events
@@ -2023,7 +2027,13 @@ begin
   Self.OnIncomingMsg:=nil;
 
   // ServiceDirectory created not in constructor
-  if Assigned(MsgHandlers) then FreeAndNil(MsgHandlers);
+  // delete handlers
+  if Assigned(MsgHandlers) then
+  begin
+    // handlers remove themselves from list on Destroy()
+    for i:=MsgHandlers.Count-1 downto 0 do MsgHandlers.Items[i].Free();
+    FreeAndNil(MsgHandlers);
+  end;
 
   FreeAndNil(MsgQueue);
 
@@ -2064,6 +2074,7 @@ var
   tmpLink: TDnmpLink;
   sTcpPort: string;
 begin
+
   if ServerMode then
   begin
     //sTcpPort:=Conf.ReadString('Options', 'ListenTcpPort', '4044');
@@ -2076,8 +2087,8 @@ begin
     // {TODO: remove TIpLink, get it from outside}
     tmpLink:=TIpLink.Create(self, nil);
     (tmpLink as TIpLink).LinkPort:=sTcpPort;
-    tmpLink.LinkType:=ltTemporary;
-    tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
+    tmpLink.LinkType:=ltListener;
+    tmpLink.MsgHandler:=TDnmpAuthService.Create(Self, tmpLink);
     tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
     if tmpLink.Listen() then
     begin
@@ -2135,19 +2146,21 @@ begin
   // {TODO: remove TIpLink, get it from outside}
   tmpLink:=TIpLink.Create(Self, NodeInfo);
   tmpLink.OnIncomingMsg:=@IncomingMsgHandler;
+  tmpLink.LinkType:=ltOutcoming;
+  tmpLink.MsgHandler:=TDnmpAuthService.Create(Self, tmpLink);
 
+  {
   if self.ServerMode then
   begin
     tmpLink.LinkType:=ltNode;
-    //tmpLink.LinkType:=ltOutcoming;
     tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
   end
   else
   begin
     tmpLink.LinkType:=ltPoint;
-    //tmpLink.LinkType:=ltOutcoming;
     tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
   end;
+  }
 
   if tmpLink.Connect() then
   begin
@@ -2186,6 +2199,8 @@ end;
 function TDnmpManager.AddLink(Link: TDnmpLink): integer;
 begin
   Result:=self.LinkList.Add(Link);
+  Link.MsgHandler:=TDnmpAuthService.Create(Self, Link);
+  {
   if ServerMode then
   begin
     Link.MsgHandler:=TDnmpParserServer.Create(Self, Link);
@@ -2194,6 +2209,7 @@ begin
   begin
     Link.MsgHandler:=TDnmpParserClient.Create(Self, Link);
   end;
+  }
   if Assigned(Link.MsgHandler) then Link.MsgHandler.Start();
 end;
 
@@ -2550,11 +2566,6 @@ begin
   end;
 end;
 
-procedure TDnmpManager.SendChatMsg(DestAddr: TAddr; Text: string);
-begin
-  SendDataMsg(DestAddr, 'CHAT', '', Text);
-end;
-
 procedure TDnmpManager.FSetUplink(Value: TDnmpLink);
 begin
   if Assigned(FUplink) then FUplink.OnIncomingMsg:=nil;
@@ -2669,6 +2680,7 @@ end;
 
 function TDnmpManager.GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
 begin
+  Result:=ContactList.GetByAddr(SomeAddr);
 end;
 
 function TDnmpManager.GetContactByGUID(SomeGUID: string): TDnmpContact;
@@ -2766,8 +2778,17 @@ begin
     Exit;
   end;
 
-  TmpAddr.Node:=Addr.Node;
-  TmpAddr.Point:=0;
+  // node request from his point
+  if SameNode(Addr, MyInfo.Addr) and (MyInfo.Addr.Point=0) then
+  begin
+    TmpAddr.Node:=Addr.Node;
+    TmpAddr.Point:=Addr.Point;
+  end
+  else
+  begin
+    TmpAddr.Node:=Addr.Node;
+    TmpAddr.Point:=0;
+  end;
   SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr='+AddrToStr(Addr), '');
 end;
 
@@ -2785,32 +2806,6 @@ begin
   SendDataMsg(TmpAddr, 'INFO', 'cmd=GINF'+CRLF+'addr=points', '');
 end;
 
-procedure TDnmpManager.SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr);
-var
-  MsgOut: TDnmpMsg;
-  sData: AnsiString;
-begin
-  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, TargetAddr, 'INFO','','');
-  MsgOut.Info.Values['cmd']:='LNKI';
-  MsgOut.Info.Values['addr']:=ALinkInfo.AddrStr;
-  MsgOut.Info.Values['guid']:=ALinkInfo.GUID;
-
-  if (TargetAddr.Point=0) and (ALinkInfo.Addr.Point=0) then
-  begin
-    // node to node
-    sData:=Self.Serializer.StorageToString(ALinkInfo.ToStorage(ctPrivate));
-  end
-  else
-  begin
-    sData:=Self.Serializer.StorageToString(ALinkInfo.ToStorage(ctPublic));
-  end;
-
-  StrToStream(sData, MsgOut.Data);
-
-  SendMsg(MsgOut);
-  MsgOut.Free();
-end;
-
 procedure TDnmpManager.RequestContactsByName(AName: string);
 var
   sInfo: string;
@@ -2820,55 +2815,6 @@ begin
   msg:=TDnmpMsg.Create(MyInfo.Addr, EmptyAddr(), 'INFO', sInfo, '');
   Self.SendBroadcastMsg(msg, 'nodes');
   msg.Free();
-end;
-
-procedure TDnmpManager.ReadLinkInfo(Msg: TDnmpMsg);
-var
-  //i: integer;
-  SomeAddr: TAddr;
-  TmpInfo: TDnmpContact;
-  Storage: TDnmpStorage;
-  s, s2: string;
-begin
-  TmpInfo:=nil;
-  s:='';
-  SomeAddr:=StrToAddr(Msg.Info.Values['addr']);
-  if SomeAddr.Point=0 then
-  begin
-    s:='NODELIST';
-    TmpInfo:=NodeList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then
-    begin
-      TmpInfo:=TDnmpContact.Create();
-      NodeList.Add(TmpInfo);
-    end;
-  end
-  // Server only
-  else if ServerMode and SameNode(SomeAddr, MyInfo.Addr) then
-  begin
-    s:='POINTLIST';
-    TmpInfo:=PointList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then Exit; // ???
-  end
-  else
-  begin
-    s:='CONTACTS';
-    TmpInfo:=ContactList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then
-    begin
-      TmpInfo:=TDnmpContact.Create();
-      ContactList.Add(TmpInfo);
-    end;
-  end;
-
-  Storage:=MsgDataToStorage(Msg);
-  if Assigned(Storage) then
-  begin
-    TmpInfo.FromStorage(Storage);
-    Storage.Free();
-  end;
-
-  AddCmd('EVENT MGR UPDATE '+s);
 end;
 
 function TDnmpManager.MsgDataToStorage(Msg: TDnmpMsg): TDnmpStorage;

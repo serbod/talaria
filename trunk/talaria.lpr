@@ -11,7 +11,8 @@ uses
   dnmp_services, Core, DnmpNodeFrame, Misc, DnmpServicesFrame, laz_synapse,
   ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters,
   ContactListFrame, LinkListFrame, LinkInfoFrame, dnmp_serializers, dnmp_grpc,
-  ChatRoomListFrame, dnmp_auth, DnmpWizardFrame, dnmp_chat, DnmpChatFrame;
+  ChatRoomListFrame, dnmp_auth, DnmpWizardFrame, dnmp_chat, DnmpChatFrame,
+  dnmp_info;
 
 {$R *.res}
 
