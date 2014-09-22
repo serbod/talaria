@@ -182,7 +182,7 @@ begin
     while lvi.SubItems.Count < 3 do lvi.SubItems.Add('');
     lvi.SubItems[0]:=Item.Name;
     //lvi.SubItems[1]:=LinkTypeToStr(Item.LinkType);
-    if Item.Online then lvi.SubItems[1]:='Online' else lvi.SubItems[2]:='Offline';
+    lvi.SubItems[1]:=Item.StateStr();
   end;
   if si < lv.Items.Count then lv.ItemIndex:=si;
   lv.Items.EndUpdate();

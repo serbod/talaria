@@ -255,7 +255,7 @@ begin
     Exit;
   end;
   FActive:=StartReader();
-  RemoteInfo.Online:=Active;
+  RemoteInfo.State:=TDnmpContactState.asOnline;
   Result:=true;
 end;
 
@@ -302,7 +302,7 @@ begin
   Mgr.DebugText('IpLink.Disconnect()');
   if not Active then Exit;
   FActive:=false;
-  RemoteInfo.Online:=Active;
+  RemoteInfo.State:=asOffline;
   IdleTimestamp:=Now();
   if Assigned(Reader) then
   begin
@@ -431,7 +431,10 @@ begin
   NewIpLink.Incoming:=True;
   NewIpLink.LinkType:=ltIncoming;
   NewIpLink.FActive:=NewIpLink.StartReader();
-  NewIpLink.RemoteInfo.Online:=NewIpLink.Active;
+  if NewIpLink.Active then
+    NewIpLink.RemoteInfo.State:=asOnline
+  else
+    NewIpLink.RemoteInfo.State:=asOffline;
 
 //  { TODO : Это для отладки, можно убрать }
 //  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, NewIpLink.LinkInfo.Addr, 'INFO', 'CMD=Hello', 'Hello!');
