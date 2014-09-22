@@ -137,11 +137,26 @@ type
 
   TDnmpContactState = (asUnknown, asOnline, asOffline, asBusy);
   TDnmpContactInfoType = (ctBrief, ctPublic, ctPrivate, ctAll);
-  TDnmpLinkType = (ltPoint, ltNode, ltTemporary, ltListener, ltIncoming, ltOutcoming);
+  TDnmpLinkType = (ltTemporary, ltListener, ltIncoming, ltOutcoming);
+
+
+  { Generic contact info }
+  TDnmpContactInfo = class(TCollectionItem)
+  public
+    Name: string;
+    Value: AnsiString;
+    ValueType: TDnmpStorageType;
+    InfoType: TDnmpContactInfoType;
+    ParentName: string;
+  end;
 
   { TDnmpContact }
 
   TDnmpContact = class(TInterfacedObject)
+  private
+    InfoList: TCollection;
+    function GetInfo(AName: string): string;
+    procedure SetInfo(AName: string; AValue: string);
   public
     { === Brief info === }
     { Contact name }
@@ -174,11 +189,14 @@ type
     OtherInfo: string;
     { Private key }
     Key: AnsiString;
-    { === Temporary info === }
+    { === Extra info === }
     { Online state }
-    Online: boolean;
+    //Online: boolean;
     { ltPoint, ltNode, ltTemporary }
-    LinkType: TDnmpLinkType;
+    //LinkType: TDnmpLinkType;
+    constructor Create();
+    destructor Destroy(); override;
+    property Info[AName: string]: string read GetInfo write SetInfo;
     function AddrStr(): string;
     function SameAddr(AAddr: TAddr): boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
@@ -610,8 +628,6 @@ function LinkTypeToStr(lt: TDnmpLinkType): string;
 begin
   result:='';
   case lt of
-    ltPoint: Result:='point';
-    ltNode:  Result:='node';
     ltTemporary: Result:='temp';
     ltListener: Result:='listen';
     ltIncoming: Result:='in';
@@ -622,9 +638,7 @@ end;
 function StrToLinkType(s: string): TDnmpLinkType;
 begin
   Result:=ltTemporary;
-  if s='point' then Result:=ltPoint
-  else if s='node' then Result:=ltNode
-  else if s='temp' then Result:=ltTemporary
+  if s='temp' then Result:=ltTemporary
   else if s='listen' then Result:=ltListener
   else if s='in' then Result:=ltIncoming
   else if s='out' then Result:=ltOutcoming;
@@ -1054,6 +1068,56 @@ end;
 
 { TDnmpContact }
 
+function TDnmpContact.GetInfo(AName: string): string;
+var
+  i: integer;
+  Item: TDnmpContactInfo;
+begin
+  Result:='';
+  for i:=0 to InfoList.Count-1 do
+  begin
+    Item:=(InfoList.Items[i] as TDnmpContactInfo);
+    if Item.Name=Name then
+    begin
+      Result:=Item.Value;
+      Exit;
+    end;
+  end;
+end;
+
+procedure TDnmpContact.SetInfo(AName: string; AValue: string);
+var
+  i: integer;
+  Item: TDnmpContactInfo;
+begin
+  if AName='' then Exit;
+  Item:=nil;
+  for i:=0 to InfoList.Count-1 do
+  begin
+    Item:=(InfoList.Items[i] as TDnmpContactInfo);
+    if Item.Name=Name then Break;
+    Item:=nil;
+  end;
+  if not Assigned(Item) then
+  begin
+    Item:=(InfoList.Add() as TDnmpContactInfo);
+    Item.Name:=AName;
+  end;
+  Item.Value:=AValue;
+end;
+
+constructor TDnmpContact.Create();
+begin
+  inherited Create();
+  Self.InfoList:=TCollection.Create(TDnmpContactInfo);
+end;
+
+destructor TDnmpContact.Destroy();
+begin
+  FreeAndNil(Self.InfoList);
+  inherited Destroy();
+end;
+
 function TDnmpContact.AddrStr(): string;
 begin
   Result:=AddrToStr(Self.Addr);
@@ -1065,6 +1129,10 @@ begin
 end;
 
 function TDnmpContact.ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
+var
+  i: integer;
+  InfoItem: TDnmpContactInfo;
+  SubStorage: TDnmpStorage;
 begin
   Result:=TDnmpStorage.Create(stDictionary);
   // Brief info
@@ -1088,14 +1156,27 @@ begin
   Result.Add('phone_no', Self.PhoneNo);
   Result.Add('other_info', Self.OtherInfo);
   Result.Add('key', Self.Key);
+
+  SubStorage:=TDnmpStorage.Create(stDictionary);
+  for i:=0 to InfoList.Count-1 do
+  begin
+    InfoItem:=(InfoList.Items[i] as TDnmpContactInfo);
+    SubStorage.Add(InfoItem.Name, InfoItem.Value);
+  end;
+  Result.Add('info', SubStorage);
   if InfoType=ctPrivate then Exit;
 
   // Temporary info
-  Result.Add('online', BoolToStr(Self.Online, '1', '0'));
-  Result.Add('link_type', LinkTypeToStr(Self.LinkType));
+  //Result.Add('online', BoolToStr(Self.Online, '1', '0'));
+  //Result.Add('link_type', LinkTypeToStr(Self.LinkType));
 end;
 
 function TDnmpContact.FromStorage(Storage: TDnmpStorage): boolean;
+var
+  i: integer;
+  //InfoItem: TDnmpContactInfo;
+  SubStorage: TDnmpStorage;
+  sName: string;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -1125,14 +1206,26 @@ begin
     Self.PhoneNo:=Storage.GetString('phone_no');
     Self.OtherInfo:=Storage.GetString('other_info');
     Self.Key:=Storage.GetString('key');
+    // info
+    SubStorage:=Storage.GetObject('info');
+    if Assigned(SubStorage) then
+    begin
+      for i:=0 to SubStorage.Count()-1 do
+      begin
+        sName:=SubStorage.GetObjectName(i);
+        Self.Info[sName]:=SubStorage.GetString(sName);
+      end;
+    end;
   end;
 
   // Temporary info
+  {
   if Storage.HaveName('link_type') then
   begin
-    Self.LinkType:=StrToLinkType(Storage.GetString('link_type'));
-    Self.Online:=(Storage.GetString('online')='1');
+    //Self.LinkType:=StrToLinkType(Storage.GetString('link_type'));
+    //Self.Online:=(Storage.GetString('online')='1');
   end;
+  }
 
   Result:=True;
 end;
@@ -1159,6 +1252,9 @@ begin
 end;
 
 procedure TDnmpContact.Assign(Item: TDnmpContact);
+var
+  i: integer;
+  InfoItem1, InfoItem2: TDnmpContactInfo;
 begin
   if not Assigned(Item) then Exit;
   // Brief
@@ -1178,9 +1274,15 @@ begin
   Self.PhoneNo:=Item.PhoneNo;
   Self.OtherInfo:=Item.OtherInfo;
   Self.Key:=Item.Key;
+  // Info
+  for i:=0 to Item.InfoList.Count-1 do
+  begin
+    InfoItem1:=(Item.InfoList.Items[i] as TDnmpContactInfo);
+    Self.Info[InfoItem1.Name]:=InfoItem1.Value;
+  end;
   // Temp
-  Self.Online:=Item.Online;
-  Self.LinkType:=Item.LinkType;
+  //Self.Online:=Item.Online;
+  //Self.LinkType:=Item.LinkType;
 end;
 
 
@@ -2472,7 +2574,7 @@ begin
       for i:=0 to LinkList.Count-1 do
       begin
         if not LinkList[i].Active then Continue;
-        if LinkList[i].LinkType <> ltNode then Continue;
+        if LinkList[i].RemoteInfo.Addr.Point <> 0 then Continue;
         if Msg.HaveSeenBy(LinkList[i].RemoteInfo.Addr) then Continue;
         LinkList[i].SendMsg(Msg);
       end;
@@ -2717,7 +2819,7 @@ begin
   if ALinkInfo.GUID='' then ALinkInfo.GUID:=GenerateGUID();
   if ALinkInfo.SeniorGUID='' then ALinkInfo.SeniorGUID:=MyInfo.GUID;
 
-  if ALinkInfo.LinkType = ltPoint then
+  if ALinkInfo.Info['addr_type'] <> 'node' then
   begin
     // Выделяем новый номер поинта
     if PointList.IndexOf(ALinkInfo)<>-1 then Exit;
@@ -2725,7 +2827,8 @@ begin
     ALinkInfo.Addr.Point:=Self.GetFreePointID();
     PointList.Add(ALinkInfo);
   end
-  else if ALinkInfo.LinkType = ltNode then
+
+  else // ALinkInfo.Info['addr_type'] = 'node'
   begin
     // Выделяем новый номер узла (!!!)
     // { TODO : Нужна проверка незанятости номера узла в сегменте }

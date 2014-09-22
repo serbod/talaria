@@ -177,7 +177,7 @@ begin
   RemoteInfo.IpAddr:=Msg.Info.Values['ip_addr'];
   RemoteInfo.PhoneNo:=Msg.Info.Values['phone_no'];
   RemoteInfo.OtherInfo:=Msg.Info.Values['other_info'];
-  if Msg.Info.Values['type']='node' then self.Link.LinkType:=ltNode;
+  if Msg.Info.Values['type']='node' then self.RemoteInfo.Info['addr_type']:='node';
 
   TmpInfo:=nil;
   Found:=False;

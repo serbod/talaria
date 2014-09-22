@@ -1,1 +1,1 @@
-d4:type15:DnmpContactList5:itemsd1:0d4:addr3:1.04:guid38:{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}4:name8:Node 1.05:state7:Unknowneee
+d4:type15:DnmpContactList5:itemsd1:0d4:addr3:1.04:guid38:{C2D4B913-E0A7-4240-BBC8-D0DDC32E630F}4:name8:Node 1.05:state6:Onlineeee

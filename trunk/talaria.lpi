@@ -73,6 +73,7 @@
         <ComponentName Value="FrameLinkInfoList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="LinkInfoListFrame"/>
       </Unit4>
       <Unit5>
         <Filename Value="dnmp_unit.pas"/>
