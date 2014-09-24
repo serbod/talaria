@@ -14,7 +14,7 @@ object FrameContactList: TFrameContactList
     Top = 32
     Width = 365
     HorzScrollBar.Page = 1
-    VertScrollBar.Increment = 1
+    VertScrollBar.Increment = 0
     VertScrollBar.Page = 1
     VertScrollBar.Smooth = True
     VertScrollBar.Tracking = True
@@ -126,6 +126,7 @@ object FrameContactList: TFrameContactList
     Visible = False
   end
   object alContactList: TActionList
+    Images = FormMain.ImageList16
     left = 100
     top = 155
     object actTest1: TAction
@@ -134,40 +135,50 @@ object FrameContactList: TFrameContactList
     end
     object actDeleteContact: TAction
       Caption = 'Delete contact'
+      ImageIndex = 21
       OnExecute = actDeleteContactExecute
     end
     object actFindContacts: TAction
       Caption = 'Find contacts'
+      ImageIndex = 19
       OnExecute = actFindContactsExecute
     end
     object actAddToFavorites: TAction
       Caption = 'Add to favorites'
+      ImageIndex = 16
       OnExecute = actAddToFavoritesExecute
     end
     object actEditContact: TAction
       Caption = 'Edit contact'
+      ImageIndex = 27
       OnExecute = actEditContactExecute
     end
     object actRequestInfo: TAction
       Caption = 'Request contact info'
+      ImageIndex = 30
       OnExecute = actRequestInfoExecute
     end
     object actChat: TAction
       Caption = 'Chat with contact'
+      ImageIndex = 37
       OnExecute = actChatExecute
     end
   end
   object pmContactList: TPopupMenu
+    Images = FormMain.ImageList16
     left = 100
     top = 240
     object MenuItem2: TMenuItem
       Action = actFindContacts
     end
-    object MenuItem1: TMenuItem
-      Action = actDeleteContact
+    object MenuItem7: TMenuItem
+      Caption = '-'
     end
     object MenuItem3: TMenuItem
       Action = actAddToFavorites
+    end
+    object MenuItem6: TMenuItem
+      Action = actChat
     end
     object MenuItem4: TMenuItem
       Action = actEditContact
@@ -175,8 +186,8 @@ object FrameContactList: TFrameContactList
     object MenuItem5: TMenuItem
       Action = actRequestInfo
     end
-    object MenuItem6: TMenuItem
-      Action = actChat
+    object MenuItem1: TMenuItem
+      Action = actDeleteContact
     end
   end
 end

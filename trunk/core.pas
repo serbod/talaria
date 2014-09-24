@@ -726,7 +726,6 @@ var
 begin
   TmpFrame:=TFrameContactList.Create(nil);
   TmpFrame.Serv:=Self;
-  TmpFrame.Mgr:=Self.Mgr;
   TmpFrame.Update();
   ShowForm(TmpFrame, 'Contact list');
 end;

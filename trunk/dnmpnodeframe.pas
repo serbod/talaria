@@ -210,8 +210,6 @@ begin
     end;
     if Assigned(FrameContactsList) then
     begin
-      FrameContactsList.ContactList:=Mgr.ContactList;
-      FrameContactsList.Mgr:=Mgr;
       FrameContactsList.Serv:=Serv;
     end;
     if Assigned(FrameMyInfo) then FrameMyInfo.LinkInfo:=Mgr.MyInfo;
