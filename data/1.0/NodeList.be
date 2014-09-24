@@ -1,1 +1,0 @@
-d4:type15:DnmpContactList5:itemsd1:0d4:addr3:2.04:guid0:4:name6:Node 25:state7:Unknowneee

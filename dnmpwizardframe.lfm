@@ -6,7 +6,7 @@ object FormDnmpWizard: TFormDnmpWizard
   Caption = 'FormDnmpWizard'
   ClientHeight = 310
   ClientWidth = 485
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.3'
   object nbPages: TNotebook
     Left = 0
     Height = 276
@@ -29,11 +29,11 @@ object FormDnmpWizard: TFormDnmpWizard
       end
       object gbUplink: TGroupBox
         Left = 8
-        Height = 125
+        Height = 173
         Top = 83
         Width = 304
         Caption = 'Сервер'
-        ClientHeight = 107
+        ClientHeight = 155
         ClientWidth = 300
         TabOrder = 0
         object lbUplinkHost: TLabel
@@ -64,8 +64,23 @@ object FormDnmpWizard: TFormDnmpWizard
           Left = 8
           Height = 23
           Top = 80
-          Width = 286
+          Width = 285
           TabOrder = 1
+        end
+        object lbUplinkPassword: TLabel
+          Left = 8
+          Height = 15
+          Top = 107
+          Width = 161
+          Caption = 'Пароль для авторегистрации'
+          ParentColor = False
+        end
+        object edUplinkPassword: TEdit
+          Left = 8
+          Height = 23
+          Top = 128
+          Width = 285
+          TabOrder = 2
         end
       end
     end

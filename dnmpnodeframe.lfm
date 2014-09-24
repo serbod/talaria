@@ -26,17 +26,17 @@ object FrameDnmp: TFrameDnmp
       Action = actTest
     end
     object ToolButton2: TToolButton
-      Left = 225
+      Left = 239
       Top = 2
       Action = actContactList
     end
     object ToolButton3: TToolButton
-      Left = 311
+      Left = 325
       Top = 2
       Action = actServer
     end
     object ToolButton4: TToolButton
-      Left = 369
+      Left = 383
       Top = 2
       Action = actClient
     end
@@ -47,7 +47,7 @@ object FrameDnmp: TFrameDnmp
       Style = tbsCheck
     end
     object ToolButton6: TToolButton
-      Left = 124
+      Left = 138
       Top = 2
       Action = actChatRoomList
     end
@@ -124,8 +124,8 @@ object FrameDnmp: TFrameDnmp
     left = 262
     top = 242
     object actTest: TAction
-      Caption = 'Test'
-      ImageIndex = 35
+      Caption = 'Wizard'
+      ImageIndex = 18
       OnExecute = actTestExecute
     end
     object actContactList: TAction
