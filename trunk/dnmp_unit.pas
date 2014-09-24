@@ -658,11 +658,15 @@ function StreamToStr(AStream: TStream): AnsiString;
 var
   ss: TStringStream;
 begin
+  Result:='';
   ss:=TStringStream.Create('');
-  AStream.Seek(0, soFromBeginning);
-  ss.CopyFrom(AStream, AStream.Size);
-  Result:=ss.DataString;
-  ss.Free();
+  try
+    AStream.Seek(0, soFromBeginning);
+    ss.CopyFrom(AStream, AStream.Size);
+    Result:=ss.DataString;
+  finally
+    ss.Free();
+  end;
 end;
 
 function StrToStream(s: AnsiString; AStream: TStream): boolean;
@@ -1077,7 +1081,7 @@ begin
   for i:=0 to InfoList.Count-1 do
   begin
     Item:=(InfoList.Items[i] as TDnmpContactInfo);
-    if Item.Name=Name then
+    if Item.Name=AName then
     begin
       Result:=Item.Value;
       Exit;
@@ -1095,7 +1099,7 @@ begin
   for i:=0 to InfoList.Count-1 do
   begin
     Item:=(InfoList.Items[i] as TDnmpContactInfo);
-    if Item.Name=Name then Break;
+    if Item.Name=AName then Break;
     Item:=nil;
   end;
   if not Assigned(Item) then
@@ -2015,7 +2019,6 @@ end;
 function TDnmpLink.Approve(): Boolean;
 begin
   Result:=false;
-  if LinkType = ltTemporary then Exit;
   if not Assigned(Mgr) then Exit;
   Result:=Mgr.Approve(RemoteInfo);
 end;
@@ -2175,6 +2178,7 @@ var
   tmpLinkInfo: TDnmpContact;
   tmpLink: TDnmpLink;
   sTcpPort: string;
+  i: integer;
 begin
 
   if ServerMode then
@@ -2208,8 +2212,18 @@ begin
     tmpLinkInfo:=NodeList.GetByAddr(NodeAddr(MyInfo.Addr));
     if not Assigned(tmpLinkInfo) then
     begin
-      DebugText('Uplink node not found. Add it to nodelist.');
-      Exit;
+      // get first node from list
+      for i:=0 to NodeList.Count-1 do
+      begin
+        tmpLinkInfo:=NodeList.Items[i];
+        if tmpLinkInfo<>MyInfo then Break;
+        tmpLinkInfo:=nil;
+      end;
+      if not Assigned(tmpLinkInfo) then
+      begin
+        DebugText('Uplink node not found. Add it to nodelist.');
+        Exit;
+      end;
     end;
 
     // Create connection to uplink server
@@ -2814,7 +2828,7 @@ end;
 function TDnmpManager.Approve(ALinkInfo: TDnmpContact): boolean;
 begin
   Result:=false;
-  if ServerMode then Exit;
+  if not ServerMode then Exit;
 
   if ALinkInfo.GUID='' then ALinkInfo.GUID:=GenerateGUID();
   if ALinkInfo.SeniorGUID='' then ALinkInfo.SeniorGUID:=MyInfo.GUID;

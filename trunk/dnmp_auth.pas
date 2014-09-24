@@ -137,6 +137,7 @@ begin
   MsgOut.Info.Values['phone_no']:=MyInfo.PhoneNo;
   MsgOut.Info.Values['other_info']:=MyInfo.OtherInfo;
   if Mgr.ServerMode then MsgOut.Info.Values['type']:='node';
+  if RemoteInfo.Info['uplink_password']<>'' then MsgOut.Info.Values['password']:=RemoteInfo.Info['uplink_password'];
   //MsgOut.Info.Values['key']:=sKey;
   //StrToStream(sKey, MsgOut.Data);
 
@@ -153,6 +154,7 @@ var
   i: Integer;
   Found: Boolean;
   TmpInfo: TDnmpContact;
+  sPassword: string;
 
 // Шифруем PlainText и сравниваем с CypherText
 function CheckKey(Key, CypherText, PlainText: AnsiString): boolean;
@@ -199,9 +201,10 @@ begin
   begin
     // Ищем в списке неавторизованных контактов
     TmpInfo:=Mgr.ContactList.GetByGUID(RemoteInfo.GUID);
-    if Assigned(TmpInfo) then Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
+    //if Assigned(TmpInfo) then Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
   end;
 
+  {
   // Возможно, этот блок не нужен..
   if not Found then
   begin
@@ -229,14 +232,20 @@ begin
       Found:=CheckKey(TmpInfo.Key, sRemoteCypher, TestPhrase);
     end;
   end;
+  }
 
   if (not Found) and (Mgr.Conf.ReadBool('Main', 'AutoApprove', False)) then
   begin
-    RemoteInfo.Key:=TestPhrase;
-    RemoteInfo.Addr:=EmptyAddr();
-    Link.Approve();
-    TmpInfo:=RemoteInfo;
-    Found:=True;
+    sPassword:=Mgr.Conf.ReadString('Main', 'AutoApprovePassword', '');
+    if (sPassword='') or (sPassword=Msg.Info.Values['password']) then
+    begin
+      if not Assigned(TmpInfo) then TmpInfo:=RemoteInfo;
+      TmpInfo.Key:=TestPhrase;
+      TmpInfo.Addr:=EmptyAddr();
+      Mgr.Approve(TmpInfo);
+      //Link.Approve();
+      Found:=True;
+    end;
   end;
 
   if Found then
@@ -265,7 +274,7 @@ begin
     RemoteInfo.Addr:=EmptyAddr();
 
     // Сохраняем информацию линка в списке контактов
-    Mgr.ContactList.Add(RemoteInfo);
+    Mgr.UnapprovedList.AddItem(RemoteInfo);
 
     SendAuthResult('KEY_NOT_FOUND');
     Mgr.Cmd('AUTH_FAIL '+RemoteInfo.GUID);

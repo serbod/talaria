@@ -16,6 +16,7 @@ type
     btnNext: TButton;
     btnBack: TButton;
     edUplinkKey: TEdit;
+    edUplinkPassword: TEdit;
     edUplunkHost: TEdit;
     edName: TEdit;
     edFullName: TEdit;
@@ -24,6 +25,7 @@ type
     gbUserInfo: TGroupBox;
     gbUplink: TGroupBox;
     imgPicture: TImage;
+    Label1: TLabel;
     lbFinishInfo: TLabel;
     lbPageInfo: TLabel;
     lbUplinkKey: TLabel;
@@ -111,6 +113,7 @@ begin
   begin
     edUplunkHost.Text:=Item.IpAddr;
     edUplinkKey.Text:=Item.Key;
+    edUplinkPassword.Text:=Item.Info['uplink_password'];
   end;
 
 end;
@@ -119,6 +122,7 @@ procedure TFormDnmpWizard.Finish();
 var
   Item: TDnmpContact;
   i: integer;
+  s: string;
 begin
   if not Assigned(Serv) then Exit;
   if not Assigned(Serv.Mgr) then Exit;
@@ -128,19 +132,25 @@ begin
   Serv.Mgr.MyInfo.Location:=edLocation.Text;
 
   // set uplink
-  Item:=TDnmpContact.Create();
+  s:=Trim(edUplunkHost.Text);
+  for i:=0 to Serv.Mgr.NodeList.Count-1 do
+  begin
+    Item:=Serv.Mgr.NodeList.Items[i];
+    if Item.IpAddr=s then Break;
+    Item:=nil;
+  end;
+  if not Assigned(Item) then
+  begin
+    Item:=TDnmpContact.Create();
+    Serv.Mgr.NodeList.AddItem(Item);
+  end;
   Item.Name:='Uplink';
   Item.IpAddr:=Trim(edUplunkHost.Text);
   Item.Key:=Trim(edUplinkKey.Text);
-  for i:=0 to Serv.Mgr.NodeList.Count-1 do
-  begin
-    if Serv.Mgr.NodeList.Items[i].IpAddr=Item.IpAddr then
-    begin
-      FreeAndNil(Item);
-      Break;
-    end;
-  end;
-  if Assigned(Item) then Serv.Mgr.NodeList.AddItem(Item);
+  Item.Info['uplink_password']:=Trim(edUplinkPassword.Text);
+  // close
+  Close();
+  //if Assigned(Parent) and (Parent is TForm) then (Parent as TForm).Close();
 end;
 
 end.

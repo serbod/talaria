@@ -65,7 +65,6 @@
         <ComponentName Value="FrameChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="ChatFrame"/>
       </Unit3>
       <Unit4>
         <Filename Value="linkinfolistframe.pas"/>
@@ -122,7 +121,6 @@
         <ComponentName Value="FrameGrpcService"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="GrpcServiceFrame"/>
       </Unit12>
       <Unit13>
         <Filename Value="mailboxframe.pas"/>
@@ -154,7 +152,6 @@
         <ComponentName Value="FrameLinkList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="LinkListFrame"/>
       </Unit17>
       <Unit18>
         <Filename Value="linkinfoframe.pas"/>
@@ -167,11 +164,11 @@
       <Unit19>
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_serializers"/>
       </Unit19>
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_grpc"/>
       </Unit20>
       <Unit21>
         <Filename Value="chatroomlistframe.pas"/>
@@ -179,7 +176,6 @@
         <ComponentName Value="FrameChatRoomList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="ChatRoomListFrame"/>
       </Unit21>
       <Unit22>
         <Filename Value="dnmp_auth.pas"/>
@@ -205,7 +201,6 @@
         <ComponentName Value="FrameDnmpChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="DnmpChatFrame"/>
       </Unit25>
       <Unit26>
         <Filename Value="dnmp_info.pas"/>
@@ -231,9 +226,6 @@
         </Win32>
       </Options>
     </Linking>
-    <Other>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

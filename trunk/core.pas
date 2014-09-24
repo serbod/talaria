@@ -112,8 +112,7 @@ type
 
 var
   MainFormPages: TMainFormPages;
-  ServiceDnmpNode: TServiceDnmp;
-  ServiceDnmpPoint: TServiceDnmp;
+  ServiceDnmpList: TStringList;
 
 procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
@@ -140,20 +139,57 @@ uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
 procedure Init(ConfigName: string);
 var
   frame: TFrame;
+  Config: TDnmpConf;
+  ServiceDnmp: TServiceDnmp;
+  i: integer;
+  s, sName: string;
 begin
 
   if not Assigned(MainFormPages) then Exit;
   MainFormPages.ClearAll();
 
+  ServiceDnmpList.Clear();
+
+  if FileExists('config.ini') then
+  begin
+    // read from config
+    Config:=TDnmpConf.Create('config.ini');
+
+    for i:=0 to 10 do
+    begin
+      s:='Item_'+IntToStr(i);
+      if Config.SectionExists(s) then
+      begin
+        sName:=Config.ReadString(s, 'Name', 'DNMP');
+        ServiceDnmp:=TServiceDnmp.Create(sName);
+        frame:=TFrameDnmp.Create(nil);
+        ServiceDnmp.Frame:=frame;
+        (frame as TFrameDnmp).Serv:=ServiceDnmp;
+        Core.AddPage(frame, sName, ServiceDnmp);
+        ServiceDnmp.LoadData();
+        ServiceDnmpList.AddObject(s, ServiceDnmp);
+        // wizard
+        if ServiceDnmp.Mgr.MyInfo.Name='' then ServiceDnmp.ShowSetupWizard();
+      end;
+    end;
+  end
+
+  else
+  begin
+    // default
+    ServiceDnmp:=TServiceDnmp.Create('');
+    frame:=TFrameDnmp.Create(nil);
+    ServiceDnmp.Frame:=frame;
+    (frame as TFrameDnmp).Serv:=ServiceDnmp;
+    Core.AddPage(frame, 'DNMP', ServiceDnmp);
+    ServiceDnmp.LoadData();
+    ServiceDnmpList.AddObject('DNMP', ServiceDnmp);
+    // wizard
+    if ServiceDnmp.Mgr.MyInfo.Name='' then ServiceDnmp.ShowSetupWizard();
+  end;
+
   // node
   // TODO: clearing
-  if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
-  ServiceDnmpNode:=TServiceDnmp.Create(ConfigName);
-  frame:=TFrameDnmp.Create(nil);
-  ServiceDnmpNode.Frame:=frame;
-  (frame as TFrameDnmp).Serv:=ServiceDnmpNode;
-  Core.AddPage(frame, 'Node '+ConfigName, ServiceDnmpNode);
-  ServiceDnmpNode.LoadData();
 
   // status page
   //AddPage(TFrameStatus.Create(nil), 'Status', nil);
@@ -169,14 +205,6 @@ begin
   AddPage(frame, 'Mail');
   }
 
-  // point
-  if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
-  ServiceDnmpPoint:=TServiceDnmp.Create('1.2');
-  frame:=TFrameDnmp.Create(nil);
-  ServiceDnmpPoint.Frame:=frame;
-  (frame as TFrameDnmp).Serv:=ServiceDnmpPoint;
-  Core.AddPage(frame, 'Point 1.2', ServiceDnmpPoint);
-  ServiceDnmpPoint.LoadData();
 end;
 
 procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
@@ -740,13 +768,14 @@ begin
 end;
 
 initialization
+  ServiceDnmpList:=TStringList.Create();
+  ServiceDnmpList.OwnsObjects:=True;
   MainFormPages:=TMainFormPages.Create(TMainFormPageItem);
 
 finalization
   MainFormPages.ClearAll();
   FreeAndNil(MainFormPages);
-  if Assigned(ServiceDnmpNode) then FreeAndNil(ServiceDnmpNode);
-  if Assigned(ServiceDnmpPoint) then FreeAndNil(ServiceDnmpPoint);
+  if Assigned(ServiceDnmpList) then FreeAndNil(ServiceDnmpList);
 
 end.
 

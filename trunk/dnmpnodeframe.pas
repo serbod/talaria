@@ -96,7 +96,7 @@ begin
   Serv.ShowSetupWizard();
   Exit;
 
-
+  {
   if not Assigned(ServMgr) then Exit;
   ServMgr.ModService('GRPC','#test', 'add', '');
   ServMgr.ModService('GRPC','#test', 'set_descr', 'test description');
@@ -118,6 +118,7 @@ begin
   s:=Mgr.Serializer.StorageToString(ServMgr.ServiceInfoList.ToStorage());
   MemoStatus.Append(s);
   MemoStatus.Append('--------------------------------------------');
+  }
 end;
 
 procedure TFrameDnmp.actContactListExecute(Sender: TObject);

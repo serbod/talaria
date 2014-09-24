@@ -136,6 +136,7 @@ end;
 procedure TFrameContactList.actDeleteContactExecute(Sender: TObject);
 begin
   if MessageDlg('Delete item', 'Are you sure?', mtConfirmation, mbYesNo, 0)<>mrYes then Exit;
+  if Assigned(SelectedList()) and Assigned(SelectedItem()) then SelectedList().Extract(SelectedItem());
 end;
 
 procedure TFrameContactList.actEditContactExecute(Sender: TObject);
