@@ -22,7 +22,7 @@ type
     Item: TDnmpContact;
     Rect: TRect;
     Image: TImage;
-    lbName: TStaticText;
+    lbName: TLabel;
     Background: TShape;
     property Selected: boolean read FSelected write FSetSelected;
     property Active: boolean read FActive write FSetActive;
@@ -46,6 +46,7 @@ type
     MenuItem4: TMenuItem;
     MenuItem5: TMenuItem;
     MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
     pmContactList: TPopupMenu;
     ScrollBox: TScrollBox;
     tcGroups: TTabControl;
@@ -59,7 +60,9 @@ type
     procedure tcGroupsChange(Sender: TObject);
   private
     { private declarations }
+    FServ: TServiceDnmp;
     VisualItems: TCollection;
+    procedure FSetServ(Value: TServiceDnmp);
     procedure AddTestContacts();
     procedure OnClickHandler(Sender: TObject);
     procedure OnMouseEnterHandler(Sender: TObject);
@@ -73,9 +76,9 @@ type
     function SelectedList(): TDnmpContactList;
   public
     { public declarations }
-    Serv: TServiceDnmp;
     Mgr: TDnmpManager;
-    ContactList: TDnmpContactList;
+    //ContactList: TDnmpContactList;
+    property Serv: TServiceDnmp read FServ write FSetServ;
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
     procedure UpdateList();
@@ -114,6 +117,14 @@ end;
 
 procedure TFrameContactList.tcGroupsChange(Sender: TObject);
 begin
+  Update();
+end;
+
+procedure TFrameContactList.FSetServ(Value: TServiceDnmp);
+begin
+  Mgr:=nil;
+  FServ:=Value;
+  if Assigned(FServ) then Mgr:=FServ.Mgr;
   Update();
 end;
 
@@ -192,7 +203,7 @@ begin
     Item.GUID:=GenerateGUID();
     Item.Name:='Point '+AddrToStr(Item.Addr);
 
-    ContactList.Add(Item);
+    //ContactList.Add(Item);
   end;
 end;
 
@@ -233,10 +244,9 @@ var
   i, x, y, h: integer;
   //Pan: TPanel;
   Image: TImage;
-  lb: TStaticText;
+  lb: TLabel;
   ss: TStringStream;
 begin
-  if not Assigned(ContactList) then Exit;
   x:=0;
   h:=24;
   i:=VisualItems.Count;
@@ -288,7 +298,7 @@ begin
   x:=x+Image.Width+2;
 
   // name
-  lb:=TStaticText.Create(ScrollBox);
+  lb:=TLabel.Create(ScrollBox);
   lb.Name:='lb'+IntToStr(i);
   lb.Parent:=ScrollBox;
   lb.AutoSize:=False;
@@ -303,8 +313,10 @@ begin
   lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
   lb.Transparent:=True;
   //lb.Brush.Color:=clNone;
-  lb.Color:=clNone;
-  //lb.OnClick:=@OnClickHandler;
+  //lb.Brush.Style:=bsClear;
+  //lb.ParentColor:=False;
+  //lb.Color:=clNone;
+  lb.OnClick:=@OnClickHandler;
   lb.OnMouseDown:=@OnMouseDownHandler;
   lb.OnMouseEnter:=@OnMouseEnterHandler;
   lb.OnMouseLeave:=@OnMouseLeaveHandler;
@@ -413,7 +425,6 @@ var
   Item: TDnmpContact;
   ItemList: TDnmpContactList;
 begin
-  if not Assigned(ContactList) then Exit;
   n:=tcGroups.TabIndex;
 
   // clear list

@@ -133,6 +133,7 @@ begin
 
   // set uplink
   s:=Trim(edUplunkHost.Text);
+  Item:=nil;
   for i:=0 to Serv.Mgr.NodeList.Count-1 do
   begin
     Item:=Serv.Mgr.NodeList.Items[i];

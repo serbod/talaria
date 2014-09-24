@@ -272,6 +272,8 @@ type
   TDnmpLink = class(TInterfacedObject)
   protected
     FOnIncomingMsg: TIncomingMsgEvent;
+    FOnConnect: TNotifyEvent;
+    FOnDisconnect: TNotifyEvent;
     FActive: boolean;
   public
     Mgr: TDnmpManager;
@@ -304,6 +306,10 @@ type
     property Active: Boolean read FActive;
     { Triggers when link received incoming message }
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
+    { Triggers after successful connection (but before authorization) }
+    property OnConnect: TNotifyEvent read FOnConnect write FOnConnect;
+    { Triggers after disconnection }
+    property OnDisconnect: TNotifyEvent read FOnDisconnect write FOnDisconnect;
   end;
 
   TDnmpLinkList = class(TObjectList)
@@ -497,7 +503,18 @@ type
     procedure DebugMsg(Msg: TDnmpMsg; Link: TDnmpLink = nil; Comment: string = '');
     // Execute text command, triggers OnCmd
     function Cmd(CmdText: string): string;
-    // Internal event, triggers OnEvent
+    { Internal event, triggers OnEvent
+    MGR
+      REFRESH
+      APPROVE
+      UPDATE
+        ROUTING
+        CONTACTS
+        TMP_CONTACTS
+        POINTLIST
+        NODELIST
+        LINKS
+    }
     procedure Event(Sender, Text: string);
     // Add text command to commands queue
     procedure AddCmd(CmdText: string);
@@ -602,7 +619,7 @@ end;
 
 function AddrToStr(Addr: TAddr): string;
 begin
-  result:=''+IntToStr(Addr.Node)+'.'+IntToStr(Addr.Point);
+  Result:=''+IntToStr(Addr.Node)+'.'+IntToStr(Addr.Point);
 end;
 
 function StrToAddr(StrAddr: string): TAddr;
@@ -2715,9 +2732,17 @@ begin
   sCmd:='';
   sParams:='';
   ExtractCmd(CmdText, sCmd, sParams);
-  if sCmd='AUTH_OK' then
+  if sCmd='AUTH' then
   begin
-    // Кто-то успешно авторизировался
+    if sParams='OK' then
+    begin
+      // Кто-то успешно авторизировался
+    end
+
+    else if sParams='FAIL' then
+    begin
+      // Кто-то не авторизировался
+    end;
     Event('MGR','REFRESH');
   end
 
