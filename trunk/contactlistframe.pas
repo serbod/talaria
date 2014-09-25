@@ -96,9 +96,9 @@ begin
   FSelected:=Value;
   if Assigned(Background) then
   begin
-    if FSelected then Background.Brush.Color:=clSkyBlue
-    else if FActive then Background.Brush.Color:=clActiveCaption
-    else Background.Brush.Color:=clDefault;
+    if FSelected then Background.Brush.Color:=clActiveCaption
+    else if FActive then Background.Brush.Color:=clInactiveCaption
+    else Background.Brush.Color:=clNone;
   end;
 end;
 
@@ -107,9 +107,9 @@ begin
   FActive:=Value;
   if Assigned(Background) then
   begin
-    if FSelected then Background.Brush.Color:=clSkyBlue
-    else if FActive then Background.Brush.Color:=clActiveCaption
-    else Background.Brush.Color:=clDefault;
+    if FSelected then Background.Brush.Color:=clActiveCaption
+    else if FActive then Background.Brush.Color:=clInactiveCaption
+    else Background.Brush.Color:=clNone;
   end;
 end;
 
@@ -264,8 +264,9 @@ begin
   Result.Background.Parent:=ScrollBox;
   Result.Background.Left:=x;
   Result.Background.Top:=y;
-  Result.Background.Shape:=stRectangle;
-  Result.Background.Pen.Color:=clNone;
+  //Result.Background.Shape:=stRectangle;
+  Result.Background.Shape:=stRoundRect;
+  Result.Background.Pen.Color:=clWindowFrame;
   //Result.Background.OnClick:=@OnClickHandler;
   //Result.Background.On
 
@@ -348,7 +349,7 @@ var
   i: integer;
 begin
   Result:=nil;
-  if (Sender is TStaticText) then
+  if (Sender is TStaticText) or ((Sender is TLabel)) then
   begin
     for i:=0 to VisualItems.Count-1 do
     begin
