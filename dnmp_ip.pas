@@ -7,14 +7,14 @@ type
   TSockReaderEvent = procedure(LastError: integer; Data: string) of object;
   TSockReader = class(TThread)
   private
-    Event: TSockReaderEvent;
+    FOnEvent: TSockReaderEvent;
   public
     Str: string;
     //Socket: TTCPBlockSocket;
     Socket: TBlockSocket;
     constructor Create(BSock: TBlockSocket; EventHandler: TSockReaderEvent);
     destructor Destroy(); override;
-    property OnEvent: TSockReaderEvent read Event write Event;
+    property OnEvent: TSockReaderEvent read FOnEvent write FOnEvent;
     procedure SyncProc();
   protected
     procedure Execute(); override;
@@ -23,7 +23,7 @@ type
   TSockListenerEvent = procedure(Sock: TSocket; LastError: integer; Data: string) of object;
   TSockListener = class(TThread)
   private
-    Event: TSockListenerEvent;
+    FOnEvent: TSockListenerEvent;
   public
     Str: string;
     Socket: TTCPBlockSocket;
@@ -31,7 +31,7 @@ type
     NewSocket: TSocket;
     constructor Create(BSock: TTCPBlockSocket; EventHandler: TSockListenerEvent);
     destructor Destroy(); override;
-    property OnEvent: TSockListenerEvent read Event write Event;
+    property OnEvent: TSockListenerEvent read FOnEvent write FOnEvent;
     procedure SyncProc();
   protected
     procedure Execute(); override;
@@ -96,20 +96,20 @@ begin
   FreeOnTerminate:=true;
   Socket:=BSock;
   OnEvent:=EventHandler;
-  inherited Create(false);
+  inherited Create(True);
 end;
 
 destructor TSockReader.Destroy();
 begin
+  OnEvent:=nil;
   if Assigned(Socket) then FreeAndNil(Socket);
-  Event:=nil;
   inherited Destroy();
 end;
 
 procedure TSockReader.SyncProc();
 begin
   if Str='' then Exit;
-  if Assigned(Event) then Event(Socket.LastError, Str);
+  if Assigned(OnEvent) then OnEvent(Socket.LastError, Str);
   Str:='';
 end;
 
@@ -151,20 +151,20 @@ begin
   FreeOnTerminate:=true;
   Socket:=BSock;
   OnEvent:=EventHandler;
-  inherited Create(false);
+  inherited Create(True);
 end;
 
 destructor TSockListener.Destroy();
 begin
   if Assigned(Socket) then FreeAndNil(Socket);
-  Event:=nil;
+  OnEvent:=nil;
   inherited Destroy();
 end;
 
 procedure TSockListener.SyncProc();
 begin
   //if Str='' then Exit;
-  if Assigned(Event) then Event(NewSocket, Socket.LastError, Str);
+  if Assigned(OnEvent) then OnEvent(NewSocket, Socket.LastError, Str);
   Str:='';
 end;
 
@@ -234,7 +234,7 @@ begin
 //  Reader.FreeOnTerminate:=true;
 //  Reader.Socket:=self.Socket;
 //  Reader.OnEvent:=ReaderEventHandler;
-//  Reader.Resume();
+  Reader.Resume();
   //FActive:=true;
   Result:=True;
 end;
@@ -281,6 +281,7 @@ begin
       Exit;
     end;
     Listener:=TSockListener.Create(TTCPBlockSocket(self.Socket), @ListenerEventHandler);
+    Listener.Resume();
   end
   else if (IpProto = 'UDP') then
   begin

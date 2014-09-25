@@ -128,7 +128,7 @@ begin
   Result.Background.Left:=x;
   Result.Background.Top:=y;
   Result.Background.Shape:=stRectangle;
-  Result.Background.Pen.Color:=clWindowFrame;
+  Result.Background.Pen.Color:=cl3DLight;
   //Result.Background.OnClick:=@OnClickHandler;
   //Result.Background.On
 
@@ -264,6 +264,9 @@ procedure TFrameDnmpChat.AfterConstruction();
 begin
   inherited AfterConstruction();
   VisualItems:=TCollection.Create(TVisualItem);
+  Contact:=nil;
+  ChatSession:=nil;
+  Chat:=nil
 end;
 
 procedure TFrameDnmpChat.BeforeDestruction();

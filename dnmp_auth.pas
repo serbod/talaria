@@ -323,13 +323,10 @@ begin
   if sResult='OK' then
   begin
     // Опознание успешно
-    if SameAddr(MyInfo.Addr, EmptyAddr()) then
-    begin
-      // Мой адрес был пустым
-      MyInfo.Addr:=Msg.TargetAddr;
-      MyInfo.GUID:=Msg.Info.Values['guid'];
-      MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
-    end;
+    { TODO : А вдруг у нас уже был корректный адрес и GUID? }
+    MyInfo.Addr:=Msg.TargetAddr;
+    MyInfo.GUID:=Msg.Info.Values['guid'];
+    MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
 
     Mgr.Cmd('AUTH OK');
     if MyInfo.Addr.Point=0 then OnAuthOkAsNode() else OnAuthOkAsPoint();

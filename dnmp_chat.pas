@@ -439,7 +439,7 @@ begin
   RemoteContact:=Mgr.GetContactByAddr(AMsg.SourceAddr);
   if not Assigned(RemoteContact) then
   begin
-    Mgr.DebugText('CHAT message from uncnown addr: '+AddrToStr(AMsg.SourceAddr));
+    Mgr.DebugText('CHAT message from unknown addr: '+AddrToStr(AMsg.SourceAddr));
     Exit;
   end;
 

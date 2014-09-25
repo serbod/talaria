@@ -63,20 +63,20 @@ var
   Len: integer;
 begin
   Len:=Length(Key);
-  if (Len<= 0) or (Len> 256) then
+  if (Len<=0) or (Len>256) then
     raise Exception.Create('RC4: Invalid key length');
-  for i:= 0 to 255 do
+  for i:=0 to 255 do
   begin
-    Data.Key[i]:= i;
-    xKey[i]:= Byte(Key[i mod Len]);
+    Data.Key[i]:=i;
+    xKey[i]:=Byte(Key[(i mod Len)+1]);
   end;
-  j:= 0;
-  for i:= 0 to 255 do
+  j:=0;
+  for i:=0 to 255 do
   begin
-    j:= (j+Data.Key[i]+xKey[i]) and $FF;
-    t:= Data.Key[i];
-    Data.Key[i]:= Data.Key[j];
-    Data.Key[j]:= t;
+    j:=(j+Data.Key[i]+xKey[i]) and $FF;
+    t:=Data.Key[i];
+    Data.Key[i]:=Data.Key[j];
+    Data.Key[j]:=t;
   end;
   Move(Data.Key, Data.OrgKey, 256);
 end;
