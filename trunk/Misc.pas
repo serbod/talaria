@@ -1,7 +1,11 @@
 unit Misc;
 
 interface
-uses SysUtils, ComCtrls, ValEdit, IniFiles, Classes, Windows;
+uses SysUtils, ComCtrls, ValEdit, IniFiles, Classes
+{$ifdef WINDOWS}
+  , Windows
+{$endif}
+;
 
 procedure IniToVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
 procedure IniFromVLE(ini: TMemIniFile; SectionName: string; vle: TValueListEditor);
@@ -11,12 +15,14 @@ function CopyFile(FileNameSrc, FileNameDst: string): boolean;
 // Проверяет заданный путь. Создает каталоги, если их нет
 function CheckPath(sPath: string): Boolean;
 
+{$ifdef WINDOWS}
 // Возвращает имя пользователя windows
 function GetWinUserName(): string;
 // Возвращает имя компьютера
 function GetWinCompName(): string;
 // Возвращает версию Windows
 function GetWinVersion(): string;
+{$endif}
 //
 function GetTimestampStr(): string;
 //
@@ -97,6 +103,7 @@ begin
   end;
 end;
 
+{$ifdef WINDOWS}
 // Возвращает имя пользователя windows
 function GetWinUserName(): string;
 var
@@ -130,12 +137,14 @@ begin
   lw:=Word(dwVersion);
   Result := ''+IntToStr(Byte(lw))+'.'+IntToStr(HiByte(lw))+'.'+IntToStr(HiWord(dwVersion));
 end;
+{$endif}
 
 function GetTimestampStr(): string;
 var
   st: TSystemTime;
 begin
-  GetSystemTime(st);
+  //GetSystemTime(st);
+  DateTimeToSystemTime(Now(), st);
   result:=IntToStr(DateTimeToFileDate(SystemTimeToDateTime(st)));
 end;
 

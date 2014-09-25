@@ -20,7 +20,6 @@ begin
   RequireDerivedFormResource := True;
   Application.Initialize;
   Application.CreateForm(TFormMain, FormMain);
-  Application.CreateForm(TFormDnmpWizard, FormDnmpWizard);
   Application.Run;
 end.
 

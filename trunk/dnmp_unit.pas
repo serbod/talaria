@@ -2209,6 +2209,7 @@ begin
     // Create server listener link
     // {TODO: remove TIpLink, get it from outside}
     tmpLink:=TIpLink.Create(self, nil);
+    (tmpLink as TIpLink).LinkHost:='';
     (tmpLink as TIpLink).LinkPort:=sTcpPort;
     tmpLink.LinkType:=ltListener;
     tmpLink.MsgHandler:=TDnmpAuthService.Create(Self, tmpLink);
@@ -2737,11 +2738,13 @@ begin
     if sParams='OK' then
     begin
       // Кто-то успешно авторизировался
+      DebugText('AUTH OK');
     end
 
     else if sParams='FAIL' then
     begin
       // Кто-то не авторизировался
+      DebugText('AUTH FAIL');
     end;
     Event('MGR','REFRESH');
   end

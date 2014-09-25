@@ -747,10 +747,10 @@ var
 begin
   if not Assigned(Contact) then Exit;
   TmpFrame:=TFrameDnmpChat.Create(nil);
-  TmpFrame.Contact:=Contact;
-  TmpFrame.Chat:=(ServMgr.GetService(csCHAT, '') as TDnmpChat);
   //ShowForm(TmpFrame, 'Chat: '+Contact.Name);
   AddPage(TmpFrame, 'Chat: '+Contact.Name, TmpFrame.Chat);
+  TmpFrame.Contact:=Contact;
+  TmpFrame.Chat:=(ServMgr.GetService(csCHAT, '') as TDnmpChat);
 end;
 
 procedure TServiceDnmp.LoadData();

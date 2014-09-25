@@ -266,7 +266,7 @@ begin
   Result.Background.Top:=y;
   //Result.Background.Shape:=stRectangle;
   Result.Background.Shape:=stRoundRect;
-  Result.Background.Pen.Color:=clWindowFrame;
+  Result.Background.Pen.Color:=cl3DLight;
   //Result.Background.OnClick:=@OnClickHandler;
   //Result.Background.On
 
