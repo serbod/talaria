@@ -201,6 +201,7 @@
         <ComponentName Value="FrameDnmpChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="DnmpChatFrame"/>
       </Unit25>
       <Unit26>
         <Filename Value="dnmp_info.pas"/>

@@ -4,7 +4,7 @@
     <PathDelim Value="\"/>
     <Version Value="9"/>
     <BuildModes Active="Default"/>
-    <Units Count="90">
+    <Units Count="94">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -17,7 +17,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainForm"/>
-        <EditorIndex Value="14"/>
+        <EditorIndex Value="15"/>
         <WindowIndex Value="1"/>
         <TopLine Value="60"/>
         <CursorPos X="33" Y="76"/>
@@ -54,7 +54,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="LinkInfoListFrame"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="1"/>
         <TopLine Value="163"/>
         <CursorPos X="29" Y="183"/>
@@ -66,7 +66,7 @@
         <Filename Value="dnmp_unit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_unit"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="1"/>
         <TopLine Value="894"/>
         <CursorPos X="3" Y="896"/>
@@ -82,7 +82,7 @@
         <Filename Value="dnmp_services.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_services"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="1"/>
         <TopLine Value="1"/>
         <CursorPos X="23" Y="122"/>
@@ -93,7 +93,7 @@
         <Filename Value="core.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Core"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="1"/>
         <TopLine Value="54"/>
         <CursorPos X="19" Y="98"/>
@@ -107,9 +107,9 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpNodeFrame"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="233"/>
+        <TopLine Value="232"/>
         <CursorPos X="67" Y="215"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
@@ -166,7 +166,7 @@
         <Filename Value="dnmp_mail.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_mail"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="1"/>
         <TopLine Value="184"/>
         <CursorPos X="1" Y="269"/>
@@ -187,12 +187,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="ContactListFrame"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="298"/>
-        <CursorPos X="13" Y="301"/>
-        <UsageCount Value="193"/>
+        <TopLine Value="248"/>
+        <CursorPos X="45" Y="269"/>
+        <UsageCount Value="195"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit16>
@@ -205,7 +204,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="116"/>
         <CursorPos X="53" Y="117"/>
-        <UsageCount Value="189"/>
+        <UsageCount Value="191"/>
       </Unit17>
       <Unit18>
         <Filename Value="linkinfoframe.pas"/>
@@ -218,7 +217,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="166"/>
         <CursorPos X="58" Y="118"/>
-        <UsageCount Value="181"/>
+        <UsageCount Value="183"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit18>
@@ -226,11 +225,11 @@
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_serializers"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="1"/>
         <TopLine Value="274"/>
         <CursorPos X="1" Y="299"/>
-        <UsageCount Value="171"/>
+        <UsageCount Value="173"/>
         <Loaded Value="True"/>
       </Unit19>
       <Unit20>
@@ -239,7 +238,7 @@
         <WindowIndex Value="1"/>
         <TopLine Value="1075"/>
         <CursorPos X="54" Y="1084"/>
-        <UsageCount Value="182"/>
+        <UsageCount Value="184"/>
       </Unit20>
       <Unit21>
         <Filename Value="chatroomlistframe.pas"/>
@@ -250,17 +249,17 @@
         <WindowIndex Value="1"/>
         <TopLine Value="180"/>
         <CursorPos X="42" Y="135"/>
-        <UsageCount Value="130"/>
+        <UsageCount Value="132"/>
       </Unit21>
       <Unit22>
         <Filename Value="dnmp_auth.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_auth"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="13"/>
         <WindowIndex Value="1"/>
         <TopLine Value="162"/>
         <CursorPos X="1" Y="187"/>
-        <UsageCount Value="79"/>
+        <UsageCount Value="81"/>
         <Loaded Value="True"/>
       </Unit22>
       <Unit23>
@@ -270,11 +269,11 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="DnmpWizardFrame"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="1"/>
         <TopLine Value="117"/>
         <CursorPos X="13" Y="136"/>
-        <UsageCount Value="66"/>
+        <UsageCount Value="68"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit23>
@@ -282,11 +281,11 @@
         <Filename Value="dnmp_chat.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_chat"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="1"/>
         <TopLine Value="65"/>
         <CursorPos X="71" Y="341"/>
-        <UsageCount Value="55"/>
+        <UsageCount Value="57"/>
         <Loaded Value="True"/>
       </Unit24>
       <Unit25>
@@ -295,20 +294,25 @@
         <ComponentName Value="FrameDnmpChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="DnmpChatFrame"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="74"/>
-        <CursorPos X="32" Y="86"/>
-        <UsageCount Value="55"/>
+        <TopLine Value="108"/>
+        <CursorPos X="39" Y="129"/>
+        <UsageCount Value="57"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit25>
       <Unit26>
         <Filename Value="dnmp_info.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_info"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="14"/>
         <WindowIndex Value="1"/>
         <TopLine Value="171"/>
         <CursorPos X="44" Y="179"/>
-        <UsageCount Value="44"/>
+        <UsageCount Value="46"/>
         <Loaded Value="True"/>
       </Unit26>
       <Unit27>
@@ -411,11 +415,11 @@
       <Unit43>
         <Filename Value="dnmp_ip.pas"/>
         <UnitName Value="dnmp_ip"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="1"/>
         <TopLine Value="423"/>
         <CursorPos X="66" Y="440"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="40"/>
         <Loaded Value="True"/>
       </Unit43>
       <Unit44>
@@ -617,9 +621,10 @@
       </Unit75>
       <Unit76>
         <Filename Value="C:\lazarus\lcl\stdctrls.pp"/>
+        <UnitName Value="StdCtrls"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="990"/>
-        <CursorPos X="103" Y="1006"/>
+        <TopLine Value="1432"/>
+        <CursorPos X="28" Y="1447"/>
         <UsageCount Value="16"/>
       </Unit76>
       <Unit77>
@@ -630,10 +635,11 @@
       </Unit77>
       <Unit78>
         <Filename Value="C:\lazarus\lcl\extctrls.pp"/>
+        <UnitName Value="ExtCtrls"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="246"/>
-        <CursorPos X="3" Y="248"/>
-        <UsageCount Value="2"/>
+        <TopLine Value="238"/>
+        <CursorPos X="19" Y="255"/>
+        <UsageCount Value="10"/>
       </Unit78>
       <Unit79>
         <Filename Value="C:\lazarus\lcl\include\customform.inc"/>
@@ -709,131 +715,156 @@
         <WindowIndex Value="1"/>
         <UsageCount Value="9"/>
       </Unit89>
+      <Unit90>
+        <Filename Value="C:\lazarus\lcl\include\customlabel.inc"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="371"/>
+        <CursorPos X="3" Y="320"/>
+        <UsageCount Value="10"/>
+      </Unit90>
+      <Unit91>
+        <Filename Value="C:\lazarus\lcl\graphics.pp"/>
+        <UnitName Value="Graphics"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="1196"/>
+        <CursorPos X="22" Y="1210"/>
+        <UsageCount Value="10"/>
+      </Unit91>
+      <Unit92>
+        <Filename Value="C:\lazarus\lcl\include\canvas.inc"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="1759"/>
+        <CursorPos X="3" Y="1771"/>
+        <UsageCount Value="10"/>
+      </Unit92>
+      <Unit93>
+        <Filename Value="C:\lazarus\lcl\include\shape.inc"/>
+        <WindowIndex Value="1"/>
+        <TopLine Value="28"/>
+        <CursorPos X="3" Y="127"/>
+        <UsageCount Value="10"/>
+      </Unit93>
     </Units>
     <General>
       <ActiveWindowIndexAtStart Value="1"/>
     </General>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="243" Column="1" TopLine="224"/>
+        <Caret Line="267" Column="1" TopLine="240"/>
       </Position1>
       <Position2>
         <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="244" Column="1" TopLine="224"/>
+        <Caret Line="268" Column="1" TopLine="241"/>
       </Position2>
       <Position3>
         <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="245" Column="1" TopLine="224"/>
+        <Caret Line="277" Column="1" TopLine="261"/>
       </Position3>
       <Position4>
         <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="248" Column="1" TopLine="224"/>
+        <Caret Line="286" Column="1" TopLine="261"/>
       </Position4>
       <Position5>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="249" Column="1" TopLine="224"/>
-      </Position5>
-      <Position6>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="252" Column="1" TopLine="225"/>
-      </Position6>
-      <Position7>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="265" Column="1" TopLine="249"/>
-      </Position7>
-      <Position8>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="267" Column="1" TopLine="249"/>
-      </Position8>
-      <Position9>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="268" Column="1" TopLine="249"/>
-      </Position9>
-      <Position10>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="277" Column="1" TopLine="259"/>
-      </Position10>
-      <Position11>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="286" Column="1" TopLine="259"/>
-      </Position11>
-      <Position12>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="187" Column="1" TopLine="171"/>
-      </Position12>
-      <Position13>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="206" Column="1" TopLine="190"/>
-      </Position13>
-      <Position14>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="207" Column="1" TopLine="190"/>
-      </Position14>
-      <Position15>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="240" Column="1" TopLine="224"/>
-      </Position15>
-      <Position16>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="241" Column="1" TopLine="224"/>
-      </Position16>
-      <Position17>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="252" Column="1" TopLine="225"/>
-      </Position17>
-      <Position18>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="255" Column="1" TopLine="228"/>
-      </Position18>
-      <Position19>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="256" Column="1" TopLine="229"/>
-      </Position19>
-      <Position20>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="257" Column="1" TopLine="230"/>
-      </Position20>
-      <Position21>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="258" Column="1" TopLine="231"/>
-      </Position21>
-      <Position22>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="260" Column="1" TopLine="233"/>
-      </Position22>
-      <Position23>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="261" Column="1" TopLine="234"/>
-      </Position23>
-      <Position24>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="262" Column="1" TopLine="235"/>
-      </Position24>
-      <Position25>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="265" Column="1" TopLine="238"/>
-      </Position25>
-      <Position26>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="267" Column="1" TopLine="240"/>
-      </Position26>
-      <Position27>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="268" Column="1" TopLine="241"/>
-      </Position27>
-      <Position28>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="277" Column="1" TopLine="261"/>
-      </Position28>
-      <Position29>
-        <Filename Value="dnmp_auth.pas"/>
-        <Caret Line="286" Column="1" TopLine="261"/>
-      </Position29>
-      <Position30>
         <Filename Value="contactlistframe.pas"/>
         <Caret Line="425" Column="1" TopLine="414"/>
-      </Position30>
+      </Position5>
+      <Position6>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="190" Column="13" TopLine="148"/>
+      </Position6>
+      <Position7>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="186" Column="18" TopLine="170"/>
+      </Position7>
+      <Position8>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="234" Column="25" TopLine="219"/>
+      </Position8>
+      <Position9>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="235" Column="19" TopLine="219"/>
+      </Position9>
+      <Position10>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="238" Column="11" TopLine="225"/>
+      </Position10>
+      <Position11>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="237" Column="1" TopLine="225"/>
+      </Position11>
+      <Position12>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="238" Column="1" TopLine="225"/>
+      </Position12>
+      <Position13>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="240" Column="1" TopLine="225"/>
+      </Position13>
+      <Position14>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="241" Column="1" TopLine="225"/>
+      </Position14>
+      <Position15>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="242" Column="1" TopLine="225"/>
+      </Position15>
+      <Position16>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="240" Column="1" TopLine="225"/>
+      </Position16>
+      <Position17>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="241" Column="1" TopLine="225"/>
+      </Position17>
+      <Position18>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="242" Column="1" TopLine="225"/>
+      </Position18>
+      <Position19>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="240" Column="1" TopLine="225"/>
+      </Position19>
+      <Position20>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="241" Column="1" TopLine="225"/>
+      </Position20>
+      <Position21>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="242" Column="1" TopLine="225"/>
+      </Position21>
+      <Position22>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="240" Column="12" TopLine="219"/>
+      </Position22>
+      <Position23>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="237" Column="1" TopLine="219"/>
+      </Position23>
+      <Position24>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="238" Column="1" TopLine="219"/>
+      </Position24>
+      <Position25>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="240" Column="1" TopLine="219"/>
+      </Position25>
+      <Position26>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="241" Column="1" TopLine="219"/>
+      </Position26>
+      <Position27>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="242" Column="1" TopLine="219"/>
+      </Position27>
+      <Position28>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="45" Column="14" TopLine="106"/>
+      </Position28>
+      <Position29>
+        <Filename Value="dnmpchatframe.pas"/>
+        <Caret Line="28" Column="5" TopLine="11"/>
+      </Position29>
     </JumpHistory>
   </ProjectSession>
   <Debugging>

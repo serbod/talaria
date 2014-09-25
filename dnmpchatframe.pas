@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, StdCtrls, dnmp_chat,
-  dnmp_unit, Graphics, LCLType;
+  dnmp_unit, Graphics, LCLType, LazUTF8;
 
 type
 
@@ -22,8 +22,8 @@ type
     Item: TDnmpChatMessage;
     Rect: TRect;
     //Image: TImage;
-    lbName: TStaticText;
-    lbTime: TStaticText;
+    lbName: TLabel;
+    lbTime: TLabel;
     lbText: TLabel;
     Background: TShape;
     property Selected: boolean read FSelected write FSetSelected;
@@ -103,16 +103,17 @@ end;
 
 function TFrameDnmpChat.AddVisualItem(Item: TDnmpChatMessage): TVisualItem;
 var
-  i, x, y, h: integer;
+  i, x, y, h, n, nn: integer;
   //Pan: TPanel;
   Image: TImage;
   st: TStaticText;
   lb: TLabel;
-  ss: TStringStream;
+  s, ss: string;
 begin
   x:=0;
   h:=16;
   y:=LastY+2;
+  i:=VisualItems.Count;
 
   //Result:=TVisualItem.Create();
   Result:=(VisualItems.Add() as TVisualItem);
@@ -127,7 +128,7 @@ begin
   Result.Background.Left:=x;
   Result.Background.Top:=y;
   Result.Background.Shape:=stRectangle;
-  Result.Background.Pen.Color:=clNone;
+  Result.Background.Pen.Color:=clWindowFrame;
   //Result.Background.OnClick:=@OnClickHandler;
   //Result.Background.On
 
@@ -162,53 +163,54 @@ begin
   }
 
   // name
-  st:=TStaticText.Create(ScrollBox);
-  st.Name:='lbn'+IntToStr(i);
-  st.Parent:=ScrollBox;
-  st.AutoSize:=False;
-  st.Left:=x;
-  st.Top:=y;
-  st.Height:=h;
-  st.Width:=200;
+  lb:=TLabel.Create(ScrollBox);
+  lb.Name:='lbn'+IntToStr(i);
+  lb.Parent:=ScrollBox;
+  lb.AutoSize:=False;
+  lb.Left:=x+4;
+  lb.Top:=y;
+  lb.Height:=h;
+  lb.Width:=200;
 
-  st.Font.Size:=10;
-  st.Font.Style:=[fsBold];
-  st.Caption:=BoolToStr(Item.IsIncoming, Item.RemoteName, 'Me')+':';
-  //st.ShowHint:=True;
-  //st.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
-  st.Transparent:=True;
-  st.Color:=clNone;
-  //st.OnClick:=@OnClickHandler;
-  //st.OnMouseDown:=@OnMouseDownHandler;
-  //st.OnMouseEnter:=@OnMouseEnterHandler;
-  //st.OnMouseLeave:=@OnMouseLeaveHandler;
-  //st.PopupMenu:=pmContactList;
-  Result.lbName:=st;
-  x:=x+st.Width+2;
+  lb.Font.Size:=8;
+  lb.Font.Style:=[fsBold];
+  lb.Caption:=BoolToStr(Item.IsIncoming, Item.RemoteName, Chat.Author.Name);
+  //lb.ShowHint:=True;
+  //lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  lb.Transparent:=True;
+  //lb.Color:=clNone;
+  //lb.OnClick:=@OnClickHandler;
+  //lb.OnMouseDown:=@OnMouseDownHandler;
+  //lb.OnMouseEnter:=@OnMouseEnterHandler;
+  //lb.OnMouseLeave:=@OnMouseLeaveHandler;
+  //lb.PopupMenu:=pmContactList;
+  Result.lbName:=lb;
+  x:=x+lb.Width+2;
 
   // time
-  st:=TStaticText.Create(ScrollBox);
-  st.Name:='lbt'+IntToStr(i);
-  st.Parent:=ScrollBox;
-  st.AutoSize:=False;
-  st.Left:=x;
-  st.Top:=y;
-  st.Height:=h;
-  st.Width:=100;
+  lb:=TLabel.Create(ScrollBox);
+  lb.Name:='lbt'+IntToStr(i);
+  lb.Parent:=ScrollBox;
+  lb.AutoSize:=False;
+  lb.Left:=x;
+  lb.Top:=y;
+  lb.Height:=h;
+  lb.Width:=100;
 
-  st.Font.Size:=10;
-  st.Caption:=FormatDateTime('YYYY-MM-DD HH:NN:SS', Item.Timestamp);
-  //st.ShowHint:=True;
-  //st.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
-  st.Transparent:=True;
-  st.Color:=clNone;
-  //st.OnClick:=@OnClickHandler;
-  //st.OnMouseDown:=@OnMouseDownHandler;
-  //st.OnMouseEnter:=@OnMouseEnterHandler;
-  //st.OnMouseLeave:=@OnMouseLeaveHandler;
-  //st.PopupMenu:=pmContactList;
-  Result.lbTime:=st;
-  x:=x+st.Width+2;
+  lb.Font.Size:=8;
+  lb.Caption:=FormatDateTime('YYYY-MM-DD HH:NN:SS', Item.Timestamp);
+  //lb.ShowHint:=True;
+  //lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  lb.Transparent:=True;
+  //lb.Color:=clNone;
+  //lb.OnClick:=@OnClickHandler;
+  //lb.OnMouseDown:=@OnMouseDownHandler;
+  //lb.OnMouseEnter:=@OnMouseEnterHandler;
+  //lb.OnMouseLeave:=@OnMouseLeaveHandler;
+  //lb.PopupMenu:=pmContactList;
+  Result.lbTime:=lb;
+  x:=x+lb.Width+4;
+  Result.Rect.Right:=x;
 
   y:=y+h;
   x:=0;
@@ -218,29 +220,41 @@ begin
   lb.Name:='lbx'+IntToStr(i);
   lb.Parent:=ScrollBox;
   lb.AutoSize:=False;
-  lb.Left:=x;
+  lb.Left:=x+4;
   lb.Top:=y;
   lb.Height:=h;
   lb.Width:=300;
 
-  lb.Font.Size:=8;
+  lb.Font.Size:=10;
   lb.Caption:=Item.Text;
   //lb.ShowHint:=True;
   //lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
   lb.Transparent:=True;
-  lb.Color:=clNone;
+  //lb.Color:=clNone;
   lb.WordWrap:=True;
+
+  // calculate text height
+  s:=Item.Text;
+  n:=lb.Canvas.TextFitInfo(s, lb.Width-4);
+  while n<UTF8Length(s) do
+  begin
+    s:=UTF8Copy(s, n, maxint);
+    n:=lb.Canvas.TextFitInfo(s, lb.Width-4);
+    lb.Height:=lb.Height+lb.Canvas.TextHeight(s);
+  end;
+  //lb.CalcFittingFontHeight();
   //lb.OnClick:=@OnClickHandler;
   //lb.OnMouseDown:=@OnMouseDownHandler;
   //lb.OnMouseEnter:=@OnMouseEnterHandler;
   //lb.OnMouseLeave:=@OnMouseLeaveHandler;
   //lb.PopupMenu:=pmContactList;
   Result.lbText:=lb;
-  x:=x+lb.Width+2;
+  x:=x+lb.Width+4;
+  y:=y+lb.Height+2;
 
-  Result.Rect.Right:=x;
-  Result.Rect.Bottom:=y+h;
-  LastY:=y+h;
+  //Result.Rect.Right:=x;
+  Result.Rect.Bottom:=y;
+  LastY:=y;
 
   Result.Background.Width:=Result.Rect.Right-Result.Rect.Left;
   Result.Background.Height:=Result.Rect.Bottom-Result.Rect.Top;
