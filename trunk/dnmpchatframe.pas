@@ -75,6 +75,8 @@ end;
 
 procedure TFrameDnmpChat.edSayKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
+var
+  i: integer;
 begin
   if Key = VK_RETURN then
   begin
@@ -85,6 +87,18 @@ begin
     edSay.Text:='';
     Key:=0;
     Update();
+  end;
+  if Key = VK_F7 then
+  begin
+    // test
+    //ScrollBox.Visible:=False;
+    for i:=1 to 100 do
+    begin
+      Chat.SayToContact(Contact, 'Абра швабра кадабра! Абра швабра кадабра! Абра швабра кадабра! Абра швабра кадабра!');
+    end;
+    //Update();
+    //ScrollBox.Visible:=True;
+    Key:=0;
   end;
 end;
 
@@ -258,6 +272,9 @@ begin
 
   Result.Background.Width:=Result.Rect.Right-Result.Rect.Left;
   Result.Background.Height:=Result.Rect.Bottom-Result.Rect.Top;
+
+  // scroll to message
+  ScrollBox.VertScrollBar.Position:=(ScrollBox.VertScrollBar.Range-ScrollBox.VertScrollBar.Page);
 end;
 
 procedure TFrameDnmpChat.AfterConstruction();
@@ -266,7 +283,8 @@ begin
   VisualItems:=TCollection.Create(TVisualItem);
   Contact:=nil;
   ChatSession:=nil;
-  Chat:=nil
+  Chat:=nil;
+  LastY:=0;
 end;
 
 procedure TFrameDnmpChat.BeforeDestruction();
@@ -277,18 +295,31 @@ end;
 
 procedure TFrameDnmpChat.Update();
 var
-  i: integer;
+  i, ii, n: integer;
+  Found: boolean;
+  Item: TDnmpChatMessage;
 begin
   // clear list
-  for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
-  VisualItems.Clear();
+  //for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
+  //VisualItems.Clear();
 
-  LastY:=0;
+  n:=0;
   if Assigned(ChatSession) then
   begin
     for i:=0 to ChatSession.MessagesList.Count-1 do
     begin
-      AddVisualItem(ChatSession.MessagesList.Items[i]);
+      Item:=ChatSession.MessagesList.Items[i];
+      Found:=False;
+      for ii:=n to VisualItems.Count-1 do
+      begin
+        if (VisualItems.Items[ii] as TVisualItem).Item=Item then
+        begin
+          Found:=True;
+          n:=ii+1;
+          Break;
+        end;
+      end;
+      if not Found then AddVisualItem(Item);
     end;
   end;
   inherited Update();
