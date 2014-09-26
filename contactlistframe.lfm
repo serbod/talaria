@@ -10,8 +10,8 @@ object FrameContactList: TFrameContactList
   DesignTop = 43
   object ScrollBox: TScrollBox
     Left = 0
-    Height = 458
-    Top = 32
+    Height = 466
+    Top = 24
     Width = 365
     HorzScrollBar.Page = 1
     VertScrollBar.Increment = 1
@@ -23,10 +23,10 @@ object FrameContactList: TFrameContactList
   end
   object tcGroups: TTabControl
     Left = 0
-    Height = 32
+    Height = 24
     Top = 0
     Width = 365
-    MultiLine = True
+    HotTrack = True
     OnChange = tcGroupsChange
     TabIndex = 0
     Tabs.Strings = (

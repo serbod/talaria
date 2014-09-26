@@ -85,6 +85,14 @@ type
     procedure Update(); override;
   end;
 
+const
+  ciContactsPageAll = 0;
+  ciContactsPageFavorites = 1;
+  ciContactsPageNodes = 2;
+  ciContactsPagePoints = 3;
+  ciContactsPageGuests = 4;
+  ciContactsPageFound = 5;
+
 implementation
 
 {$R *.lfm}
@@ -179,6 +187,7 @@ begin
   if Length(s)<3 then Exit;
   // request
   Mgr.RequestContactsByName(s);
+  tcGroups.TabIndex:=ciContactsPageFound;
 end;
 
 procedure TFrameContactList.actRequestInfoExecute(Sender: TObject);
@@ -382,27 +391,27 @@ begin
   Result:=nil;
   n:=tcGroups.TabIndex;
 
-  if n=0 then // all
+  if n=ciContactsPageAll then // all
   begin
     Result:=Mgr.ContactList;
   end
-  else if n=1 then // favorites
+  else if n=ciContactsPageFavorites then // favorites
   begin
     Result:=Mgr.MyPassport.ContactsList;
   end
-  else if n=2 then // nodes
+  else if n=ciContactsPageNodes then // nodes
   begin
     Result:=Mgr.NodeList;
   end
-  else if n=3 then // points
+  else if n=ciContactsPagePoints then // points
   begin
     Result:=Mgr.PointList;
   end
-  else if n=4 then // guests
+  else if n=ciContactsPageGuests then // guests
   begin
     Result:=Mgr.UnapprovedList;
   end
-  else if n=5 then // found
+  else if n=ciContactsPageFound then // found
   begin
     Result:=Mgr.TmpContactList;
   end;

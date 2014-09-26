@@ -190,6 +190,8 @@ type
     { Private key }
     Key: AnsiString;
     { === Extra info === }
+    IncomingChat: boolean; // has unread incoming CHAT message or invite
+    IncomingFile: boolean;
     { Online state }
     //Online: boolean;
     { ltPoint, ltNode, ltTemporary }
@@ -231,18 +233,6 @@ type
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
-    { Содержит список контактов в формате CSV.
-    Каждый элемент списка содержит сведения:
-    [0] addr - адрес
-    [1] guid - GUID абонента
-    [2] senior_guid - SeniorGUID абонента
-    [3] state - состояние (подключен или отключен)
-    [4] name - имя
-    [5] status - статус (сообщение абонента) }
-    function SaveToCSV(): string;
-    { Загрузить контакты из сериализованого списка в формате CSV.
-    Состав сведений как в SaveToCSV() }
-    function UpdateFromCSV(sData: string): boolean;
   end;
 
   { TDnmpPassport }
@@ -1030,63 +1020,6 @@ begin
   Result:=True;
 end;
 
-function TDnmpContactList.SaveToCSV(): string;
-var
-  i: Integer;
-  Item: TDnmpContact;
-  sl, slData: TStringList;
-begin
-  Result:='';
-  sl:=TStringList.Create();
-  slData:=TStringList.Create();
-  for i:=0 to self.Count-1 do
-  begin
-    Item:=self[i];
-
-    sl.Clear();
-    // Send service info
-//    sl.Values['guid']:=Item.GUID;
-//    sl.Values['state']:=Item.Status;
-//    sl.Values['name']:=Item.Name;
-//    sl.Values['addr']:=AddrToStr(Item.Addr);
-//    sl.Values['rights']:='';
-//    sl.Values['status']:=Item.StatusMsg;
-
-    sl.Add(AddrToStr(Item.Addr));
-    sl.Add(Item.GUID);
-    sl.Add(Item.SeniorGUID);
-    sl.Add(Item.StateStr());
-    sl.Add(Item.Name);
-    sl.Add(Item.StatusMessage);
-    slData.Add(sl.DelimitedText);
-  end;
-  sl.Free();
-
-  if slData.Count>0 then Result:=slData.Text;
-  slData.Free();
-end;
-
-function TDnmpContactList.UpdateFromCSV(sData: string): boolean;
-var
-  sl, slData: TStringList;
-  i: Integer;
-begin
-  Result:=False;
-  sl:=TStringList.Create();
-  slData:=TStringList.Create();
-  slData.Text:=sData;
-  for i:=0 to slData.Count-1 do
-  begin
-    sl.Clear();
-    sl.DelimitedText:=slData[i];
-    if sl.Count<6 then Continue;
-    self.UpdateItem(StrToAddr(sl[0]), sl[1], sl[2], sl[4], sl[3], sl[5]);
-    Result:=True;
-  end;
-  FreeAndNil(slData);
-  FreeAndNil(sl);
-end;
-
 { TDnmpContact }
 
 function TDnmpContact.GetInfo(AName: string): string;
@@ -1131,6 +1064,8 @@ constructor TDnmpContact.Create();
 begin
   inherited Create();
   Self.InfoList:=TCollection.Create(TDnmpContactInfo);
+  IncomingChat:=False;
+  IncomingFile:=False;
 end;
 
 destructor TDnmpContact.Destroy();
@@ -2680,13 +2615,14 @@ function TDnmpManager.SendBroadcastMsg(Msg: TDnmpMsg; Destinations: string
 var
   i: integer;
 begin
+  Result:=False;
   if (Destinations='points') or (Destinations='all') then
   begin
     for i:=0 to LinkList.Count-1 do
     begin
       if LinkList.Items[i].RemoteInfo.Addr.Point=0 then Continue;
       Msg.TargetAddr:=LinkList.Items[i].RemoteInfo.Addr;
-      Self.SendMsg(Msg);
+      Result:=Self.SendMsg(Msg);
     end;
   end;
   if (Destinations='nodes') or (Destinations='all') then
@@ -2695,7 +2631,7 @@ begin
     begin
       if LinkList.Items[i].RemoteInfo.Addr.Point<>0 then Continue;
       Msg.TargetAddr:=LinkList.Items[i].RemoteInfo.Addr;
-      Self.SendMsg(Msg);
+      Result:=Self.SendMsg(Msg);
     end;
   end;
 end;

@@ -448,6 +448,7 @@ begin
   if sCmd = 'MSG' then // Это сообщение
   begin
     // update chat session
+    RemoteContact.IncomingChat:=True;
     AddChatMessage(RemoteContact, True, StreamToStr(AMsg.Data));
     if Assigned(OnEvent) then OnEvent('MSG', Self);
   end
