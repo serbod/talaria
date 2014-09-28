@@ -162,12 +162,12 @@ begin
       begin
         sName:=Config.ReadString(s, 'Name', 'DNMP');
         ServiceDnmp:=TServiceDnmp.Create(sName);
+        ServiceDnmp.LoadData();
+        ServiceDnmpList.AddObject(s, ServiceDnmp);
         frame:=TFrameDnmp.Create(nil);
         ServiceDnmp.Frame:=frame;
         (frame as TFrameDnmp).Serv:=ServiceDnmp;
         Core.AddPage(frame, sName, ServiceDnmp);
-        ServiceDnmp.LoadData();
-        ServiceDnmpList.AddObject(s, ServiceDnmp);
         // wizard
         if ServiceDnmp.Mgr.MyInfo.Name='' then ServiceDnmp.ShowSetupWizard();
       end;
@@ -178,12 +178,12 @@ begin
   begin
     // default
     ServiceDnmp:=TServiceDnmp.Create('');
+    ServiceDnmp.LoadData();
+    ServiceDnmpList.AddObject('DNMP', ServiceDnmp);
     frame:=TFrameDnmp.Create(nil);
     ServiceDnmp.Frame:=frame;
     (frame as TFrameDnmp).Serv:=ServiceDnmp;
     Core.AddPage(frame, 'DNMP', ServiceDnmp);
-    ServiceDnmp.LoadData();
-    ServiceDnmpList.AddObject('DNMP', ServiceDnmp);
     // wizard
     if ServiceDnmp.Mgr.MyInfo.Name='' then ServiceDnmp.ShowSetupWizard();
   end;

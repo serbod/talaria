@@ -7,7 +7,8 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
   ExtCtrls, dnmp_unit, dnmp_services, LinkInfoListFrame, DnmpServicesFrame,
-  ConfigFrame, LinkListFrame, LinkInfoFrame, Core, ContactListFrame;
+  ConfigFrame, LinkListFrame, LinkInfoFrame, Core, ContactListFrame,
+  DnmpContactsFrame;
 
 type
 
@@ -55,7 +56,8 @@ type
     FrameLinks: TFrameLinkList;
     FrameNodesList: TFrameLinkInfoList;
     FramePointsList: TFrameLinkInfoList;
-    FrameContactsList: TFrameContactList;
+    //FrameContactsList: TFrameContactList;
+    FrameContactsList: TFrameDnmpContacts;
     FrameServices: TFrameDnmpServices;
     FrameMyInfo: TFrameLinkInfo;
     FrameConfig: TFrameConfig;
@@ -329,7 +331,8 @@ begin
   FramePointsList.Parent:=tsPoints;
   FramePointsList.Align:=alClient;
   // Contacts
-  FrameContactsList:=TFrameContactList.Create(tsContacts);
+  //FrameContactsList:=TFrameContactList.Create(tsContacts);
+  FrameContactsList:=TFrameDnmpContacts.Create(tsContacts);
   FrameContactsList.Parent:=tsContacts;
   FrameContactsList.Align:=alClient;
   // Services

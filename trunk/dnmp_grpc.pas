@@ -871,7 +871,7 @@ begin
 
   else if sDataType='USERS' then
   begin
-    self.UsersList.UpdateFromCSV(sData);
+    //self.UsersList.UpdateFromCSV(sData);
     if Assigned(OnEvent) then OnEvent(sDataType, Self.UsersList);
   end
 
@@ -1101,7 +1101,8 @@ end;
 
 function TDnmpGrpcServer.SendUserList(Addr: TAddr): Boolean;
 begin
-  Result:=SendData(Addr, 'USERS', self.UsersList.SaveToCSV());
+  Result:=False;
+  //Result:=SendData(Addr, 'USERS', self.UsersList.SaveToCSV());
 end;
 
 function TDnmpGrpcServer.SendBanList(Addr: TAddr): Boolean;

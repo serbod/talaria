@@ -190,8 +190,9 @@ type
     { Private key }
     Key: AnsiString;
     { === Extra info === }
-    IncomingChat: boolean; // has unread incoming CHAT message or invite
-    IncomingFile: boolean;
+    IncomingChat: Boolean; // has unread incoming CHAT message or invite
+    IncomingFile: Boolean;
+    IsNode: Boolean;
     { Online state }
     //Online: boolean;
     { ltPoint, ltNode, ltTemporary }
