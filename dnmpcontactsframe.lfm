@@ -171,9 +171,9 @@ object FrameDnmpContacts: TFrameDnmpContacts
       Height = 412
       Top = 0
       Width = 397
-      ActivePage = tsChat
+      ActivePage = tsInfo
       Align = alClient
-      TabIndex = 0
+      TabIndex = 1
       TabOrder = 0
       object tsChat: TTabSheet
         Caption = 'Chat'
@@ -215,6 +215,21 @@ object FrameDnmpContacts: TFrameDnmpContacts
       end
       object tsInfo: TTabSheet
         Caption = 'Info'
+        ClientHeight = 384
+        ClientWidth = 389
+        object ScrollBoxInfo: TScrollBox
+          Left = 0
+          Height = 384
+          Top = 0
+          Width = 389
+          HorzScrollBar.Page = 1
+          VertScrollBar.Page = 1
+          VertScrollBar.Smooth = True
+          VertScrollBar.Tracking = True
+          Align = alClient
+          BorderStyle = bsNone
+          TabOrder = 0
+        end
       end
     end
   end

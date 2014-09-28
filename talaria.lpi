@@ -215,6 +215,7 @@
         <Filename Value="dnmpcontactsframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmpContacts"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpContactsFrame"/>
       </Unit27>

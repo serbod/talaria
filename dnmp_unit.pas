@@ -154,9 +154,9 @@ type
 
   TDnmpContact = class(TInterfacedObject)
   private
-    InfoList: TCollection;
-    function GetInfo(AName: string): string;
-    procedure SetInfo(AName: string; AValue: string);
+    FInfoList: TCollection;
+    function FGetInfo(AName: string): string;
+    procedure FSetInfo(AName: string; AValue: string);
   public
     { === Brief info === }
     { Contact name }
@@ -199,7 +199,10 @@ type
     //LinkType: TDnmpLinkType;
     constructor Create();
     destructor Destroy(); override;
-    property Info[AName: string]: string read GetInfo write SetInfo;
+    property Info[AName: string]: string read FGetInfo write FSetInfo;
+    function InfoCount(): integer;
+    function GetInfoName(Index: integer): string;
+    function GetInfo(Index: integer): string;
     function AddrStr(): string;
     function SameAddr(AAddr: TAddr): boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
@@ -1023,15 +1026,15 @@ end;
 
 { TDnmpContact }
 
-function TDnmpContact.GetInfo(AName: string): string;
+function TDnmpContact.FGetInfo(AName: string): string;
 var
   i: integer;
   Item: TDnmpContactInfo;
 begin
   Result:='';
-  for i:=0 to InfoList.Count-1 do
+  for i:=0 to FInfoList.Count-1 do
   begin
-    Item:=(InfoList.Items[i] as TDnmpContactInfo);
+    Item:=(FInfoList.Items[i] as TDnmpContactInfo);
     if Item.Name=AName then
     begin
       Result:=Item.Value;
@@ -1040,22 +1043,22 @@ begin
   end;
 end;
 
-procedure TDnmpContact.SetInfo(AName: string; AValue: string);
+procedure TDnmpContact.FSetInfo(AName: string; AValue: string);
 var
   i: integer;
   Item: TDnmpContactInfo;
 begin
   if AName='' then Exit;
   Item:=nil;
-  for i:=0 to InfoList.Count-1 do
+  for i:=0 to FInfoList.Count-1 do
   begin
-    Item:=(InfoList.Items[i] as TDnmpContactInfo);
+    Item:=(FInfoList.Items[i] as TDnmpContactInfo);
     if Item.Name=AName then Break;
     Item:=nil;
   end;
   if not Assigned(Item) then
   begin
-    Item:=(InfoList.Add() as TDnmpContactInfo);
+    Item:=(FInfoList.Add() as TDnmpContactInfo);
     Item.Name:=AName;
   end;
   Item.Value:=AValue;
@@ -1064,15 +1067,33 @@ end;
 constructor TDnmpContact.Create();
 begin
   inherited Create();
-  Self.InfoList:=TCollection.Create(TDnmpContactInfo);
+  Self.FInfoList:=TCollection.Create(TDnmpContactInfo);
   IncomingChat:=False;
   IncomingFile:=False;
 end;
 
 destructor TDnmpContact.Destroy();
 begin
-  FreeAndNil(Self.InfoList);
+  FreeAndNil(Self.FInfoList);
   inherited Destroy();
+end;
+
+function TDnmpContact.InfoCount(): integer;
+begin
+  Result:=FInfoList.Count;
+end;
+
+function TDnmpContact.GetInfoName(Index: integer): string;
+begin
+  Result:='';
+  if (Index<0) or (Index>=FInfoList.Count) then Exit;
+  Result:=(FInfoList.Items[Index] as TDnmpContactInfo).Name;
+end;
+
+function TDnmpContact.GetInfo(Index: integer): string;
+begin
+  if (Index<0) or (Index>=FInfoList.Count) then Exit;
+  Result:=(FInfoList.Items[Index] as TDnmpContactInfo).Value;
 end;
 
 function TDnmpContact.AddrStr(): string;
@@ -1115,9 +1136,9 @@ begin
   Result.Add('key', Self.Key);
 
   SubStorage:=TDnmpStorage.Create(stDictionary);
-  for i:=0 to InfoList.Count-1 do
+  for i:=0 to FInfoList.Count-1 do
   begin
-    InfoItem:=(InfoList.Items[i] as TDnmpContactInfo);
+    InfoItem:=(FInfoList.Items[i] as TDnmpContactInfo);
     SubStorage.Add(InfoItem.Name, InfoItem.Value);
   end;
   Result.Add('info', SubStorage);
@@ -1232,9 +1253,9 @@ begin
   Self.OtherInfo:=Item.OtherInfo;
   Self.Key:=Item.Key;
   // Info
-  for i:=0 to Item.InfoList.Count-1 do
+  for i:=0 to Item.FInfoList.Count-1 do
   begin
-    InfoItem1:=(Item.InfoList.Items[i] as TDnmpContactInfo);
+    InfoItem1:=(Item.FInfoList.Items[i] as TDnmpContactInfo);
     Self.Info[InfoItem1.Name]:=InfoItem1.Value;
   end;
   // Temp

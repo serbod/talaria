@@ -42,6 +42,20 @@ type
     Background: TShape;
   end;
 
+  TVisualInfoItem = class(TCollectionItem)
+  private
+    FSelected: boolean;
+    FActive: boolean;
+  public
+    Name: string;
+    Rect: TRect;
+    //Image: TImage;
+    lbName: TLabel;
+    //lbTime: TLabel;
+    memoText: TMemo;
+    Background: TShape;
+  end;
+
   { TFrameDnmpContacts }
 
   TFrameDnmpContacts = class(TFrame)
@@ -63,6 +77,7 @@ type
     panContacts: TPanel;
     panContactInfo: TPanel;
     pmContacts: TPopupMenu;
+    ScrollBoxInfo: TScrollBox;
     ScrollBoxChat: TScrollBox;
     ScrollBoxContacts: TScrollBox;
     Splitter1: TSplitter;
@@ -95,6 +110,7 @@ type
     FContactList: TDnmpContactList;
     VisualContacts: TCollection;
     VisualChatItems: TCollection;
+    VisualInfoItems: TCollection;
     Mgr: TDnmpManager;
     ChatSession: TDnmpChatSession;
     procedure FSetServ(Value: TServiceDnmp);
@@ -103,6 +119,7 @@ type
     procedure FSetContactList(Value: TDnmpContactList);
     function AddVisualContact(Item: TDnmpContact): TVisualContact;
     function AddVisualChatItem(Item: TDnmpChatMessage): TVisualChatItem;
+    function AddVisualInfoItem(AName, AValue: string): TVisualInfoItem;
     function VisualContactBySender(Sender: TObject): TVisualContact;
     procedure OnMouseEnterContact(Sender: TObject);
     procedure OnMouseLeaveContact(Sender: TObject);
@@ -111,6 +128,7 @@ type
   public
     { public declarations }
     LastChatY: integer;
+    LastInfoY: integer;
     property Serv: TServiceDnmp read FServ write FSetServ;
     property Contact: TDnmpContact read FContact write FSetContact;
     property ContactList: TDnmpContactList read FContactList write FSetContactList;
@@ -120,6 +138,7 @@ type
     procedure UpdateContactsList();
     procedure ClearChat();
     procedure UpdateChat();
+    procedure UpdateInfo();
     procedure UpdateViewHandler(var AMsg); message 'UpdateView';
   end;
 
@@ -301,6 +320,9 @@ begin
     ChatSession:=Chat.GetChatSessionForContact(Contact);
     ChatSession.MessagesList.AddObserver(Self);
     UpdateChat();
+
+    // update info
+    UpdateInfo();
   end;
 end;
 
@@ -320,7 +342,7 @@ var
   lb: TLabel;
   ss: TStringStream;
 begin
-  x:=0;
+  x:=2;
   h:=24;
   i:=VisualContacts.Count;
   y:=(h+2)*i;
@@ -415,7 +437,7 @@ var
   lb: TLabel;
   s, ss: string;
 begin
-  x:=0;
+  x:=2;
   h:=16;
   y:=LastChatY+2;
   i:=VisualChatItems.Count;
@@ -433,7 +455,7 @@ begin
   Result.Background.Left:=x;
   Result.Background.Top:=y;
   Result.Background.Shape:=stRectangle;
-  Result.Background.Pen.Color:=cl3DLight;
+  Result.Background.Pen.Color:=clActiveBorder;
   //Result.Background.OnClick:=@OnClickHandler;
   //Result.Background.On
 
@@ -568,6 +590,96 @@ begin
   ScrollBoxChat.VertScrollBar.Position:=(ScrollBoxChat.VertScrollBar.Range-ScrollBoxChat.VertScrollBar.Page);
 end;
 
+function TFrameDnmpContacts.AddVisualInfoItem(AName, AValue: string
+  ): TVisualInfoItem;
+var
+  i, x, y, h, n, nn: integer;
+  //Pan: TPanel;
+  Image: TImage;
+  st: TStaticText;
+  lb: TLabel;
+  m: TMemo;
+  s, ss: string;
+begin
+  x:=2;
+  h:=16;
+  i:=VisualInfoItems.Count;
+  y:=LastInfoY+2;
+
+  Result:=(VisualInfoItems.Add() as TVisualInfoItem);
+  Result.Name:=AName;
+  Result.Rect.Top:=y-1;
+  Result.Rect.Left:=x;
+
+  {
+  // selected background
+  Result.Background:=TShape.Create(ScrollBoxInfo);
+  Result.Background.Name:='bg'+IntToStr(i);
+  Result.Background.Parent:=ScrollBoxInfo;
+  Result.Background.Left:=x;
+  Result.Background.Top:=y-1;
+  Result.Background.Shape:=stRectangle;
+  Result.Background.Pen.Color:=clActiveBorder;
+  //Result.Background.OnClick:=@OnClickHandler;
+  }
+
+  // name
+  lb:=TLabel.Create(ScrollBoxInfo);
+  lb.Name:='lbn'+IntToStr(i);
+  lb.Parent:=ScrollBoxInfo;
+  lb.AutoSize:=False;
+  lb.Left:=x+4;
+  lb.Top:=y;
+  lb.Height:=h;
+  lb.Width:=100;
+
+  lb.Font.Size:=8;
+  lb.Font.Style:=[fsBold];
+  lb.Caption:=AName;
+  //lb.ShowHint:=True;
+  //lb.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  lb.Transparent:=True;
+  //lb.Color:=clNone;
+  //lb.OnClick:=@OnClickHandler;
+  //lb.OnMouseDown:=@OnMouseDownHandler;
+  //lb.OnMouseEnter:=@OnMouseEnterHandler;
+  //lb.OnMouseLeave:=@OnMouseLeaveHandler;
+  //lb.PopupMenu:=pmContactList;
+  Result.lbName:=lb;
+  x:=x+lb.Width+2;
+
+  // text
+  m:=TMemo.Create(ScrollBoxInfo);
+  m.Name:='m'+IntToStr(i);
+  m.Parent:=ScrollBoxInfo;
+  m.Left:=x+4;
+  m.Top:=y+1;
+  m.Height:=h;
+  m.Width:=250;
+
+  m.Font.Size:=10;
+  m.Text:=AValue;
+  //m.ShowHint:=True;
+  //m.Hint:=Item.GUID+LineEnding+AddrToStr(Item.Addr);
+  //m.Color:=clNone;
+  m.WordWrap:=True;
+  m.ReadOnly:=True;
+  m.BorderStyle:=bsNone;
+
+  Result.memoText:=m;
+  x:=x+m.Width+4+2;
+  y:=y+m.Height+2;
+
+  Result.Rect.Right:=x;
+  Result.Rect.Bottom:=y+1;
+  LastInfoY:=y;
+
+  {
+  Result.Background.Width:=Result.Rect.Right-Result.Rect.Left;
+  Result.Background.Height:=Result.Rect.Bottom-Result.Rect.Top;
+  }
+end;
+
 function TFrameDnmpContacts.VisualContactBySender(Sender: TObject
   ): TVisualContact;
 var
@@ -624,6 +736,7 @@ begin
   inherited AfterConstruction();
   VisualContacts:=TCollection.Create(TVisualContact);
   VisualChatItems:=TCollection.Create(TVisualChatItem);
+  VisualInfoItems:=TCollection.Create(TVisualInfoItem);
   FContact:=nil;
   ChatSession:=nil;
   FChat:=nil;
@@ -632,6 +745,7 @@ end;
 
 procedure TFrameDnmpContacts.BeforeDestruction();
 begin
+  FreeAndNil(VisualInfoItems);
   FreeAndNil(VisualChatItems);
   FreeAndNil(VisualContacts);
   inherited BeforeDestruction();
@@ -693,6 +807,47 @@ begin
       if not Found then AddVisualChatItem(Item);
     end;
   end;
+end;
+
+procedure TFrameDnmpContacts.UpdateInfo();
+var
+  i, n: integer;
+  Item: TDnmpContact;
+begin
+  ScrollBoxInfo.Visible:=False;
+  // clear list
+  for i:=ScrollBoxInfo.ControlCount-1 downto 0 do ScrollBoxInfo.Controls[i].Free();
+  VisualInfoItems.Clear();
+  LastInfoY:=0;
+
+  if Assigned(Contact) then
+  begin
+    // brief
+    AddVisualInfoItem('Name', Contact.Name);
+    AddVisualInfoItem('Address', Contact.AddrStr());
+    AddVisualInfoItem('GUID', Contact.GUID);
+    AddVisualInfoItem('State', Contact.StateStr());
+    // public
+    AddVisualInfoItem('Senior GUID', Contact.SeniorGUID);
+    AddVisualInfoItem('Status message', Contact.StatusMessage);
+    //AddVisualInfoItem('Picture', Contact.Picture);
+    AddVisualInfoItem('Rating', IntToStr(Contact.Rating));
+    // private
+    AddVisualInfoItem('Owner', Contact.Owner);
+    AddVisualInfoItem('Location', Contact.Location);
+    AddVisualInfoItem('IP address', Contact.IpAddr);
+    AddVisualInfoItem('Phone number', Contact.PhoneNo);
+    AddVisualInfoItem('Other info', Contact.OtherInfo);
+    AddVisualInfoItem('Key', Contact.Key);
+    // extra
+    AddVisualInfoItem('IsNode', BoolToStr(Contact.IsNode, 'True', 'False'));
+    // info
+    for i:=0 to Contact.InfoCount()-1 do
+    begin
+      AddVisualInfoItem(Contact.GetInfoName(i), Contact.GetInfo(i));
+    end;
+  end;
+  ScrollBoxInfo.Visible:=True;
 end;
 
 procedure TFrameDnmpContacts.UpdateViewHandler(var AMsg);
