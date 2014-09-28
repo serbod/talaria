@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="27">
+    <Units Count="28">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -171,6 +171,7 @@
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_grpc"/>
       </Unit20>
       <Unit21>
         <Filename Value="chatroomlistframe.pas"/>
@@ -210,6 +211,13 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_info"/>
       </Unit26>
+      <Unit27>
+        <Filename Value="dnmpcontactsframe.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="FrameDnmpContacts"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="DnmpContactsFrame"/>
+      </Unit27>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -241,6 +249,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">
