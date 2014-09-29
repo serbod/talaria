@@ -16,10 +16,9 @@ type
 
   TFrameDnmp = class(TFrame)
     actContactList: TAction;
-    actClient: TAction;
     actChatRoomList: TAction;
+    actConnect: TAction;
     actShowLog: TAction;
-    actServer: TAction;
     actTest: TAction;
     alNode: TActionList;
     MemoStatus: TMemo;
@@ -28,13 +27,10 @@ type
     Splitter1: TSplitter;
     ToolButton5: TToolButton;
     ToolButton6: TToolButton;
+    ToolButton7: TToolButton;
     tsConfig: TTabSheet;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
-    ToolButton3: TToolButton;
-    ToolButton4: TToolButton;
-    tsPoints: TTabSheet;
-    tsNodes: TTabSheet;
     tsLinks: TTabSheet;
     tsRouting: TTabSheet;
     tsServices: TTabSheet;
@@ -42,9 +38,8 @@ type
     tsContacts: TTabSheet;
     ToolBarNode: TToolBar;
     procedure actChatRoomListExecute(Sender: TObject);
-    procedure actClientExecute(Sender: TObject);
+    procedure actConnectExecute(Sender: TObject);
     procedure actContactListExecute(Sender: TObject);
-    procedure actServerExecute(Sender: TObject);
     procedure actShowLogExecute(Sender: TObject);
     procedure actTestExecute(Sender: TObject);
     procedure PageControlNodeChange(Sender: TObject);
@@ -54,8 +49,8 @@ type
     FMgr: TDnmpManager;
     FServMgr: TDnmpServiceManager;
     FrameLinks: TFrameLinkList;
-    FrameNodesList: TFrameLinkInfoList;
-    FramePointsList: TFrameLinkInfoList;
+    //FrameNodesList: TFrameLinkInfoList;
+    //FramePointsList: TFrameLinkInfoList;
     //FrameContactsList: TFrameContactList;
     FrameContactsList: TFrameDnmpContacts;
     FrameServices: TFrameDnmpServices;
@@ -129,10 +124,10 @@ begin
   Serv.ShowContactList();
 end;
 
-procedure TFrameDnmp.actClientExecute(Sender: TObject);
+procedure TFrameDnmp.actConnectExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
-  if Mgr.Active then Mgr.Stop() else Mgr.StartClient();
+  if Mgr.Active then Mgr.Stop() else Mgr.Start();
   Update();
 end;
 
@@ -140,13 +135,6 @@ procedure TFrameDnmp.actChatRoomListExecute(Sender: TObject);
 begin
   if not Assigned(Serv) then Exit;
   Serv.ShowChatRoomList();
-end;
-
-procedure TFrameDnmp.actServerExecute(Sender: TObject);
-begin
-  if not Assigned(Mgr) then Exit;
-  if Mgr.Active then Mgr.Stop() else Mgr.StartServer();
-  Update();
 end;
 
 procedure TFrameDnmp.actShowLogExecute(Sender: TObject);
@@ -200,6 +188,7 @@ begin
     Mgr.OnIncomingMsg:=@MgrMsgHandler;
     Mgr.OnLog:=@MgrLogHandler;
     if Assigned(FrameLinks) then FrameLinks.Mgr:=Mgr;
+    {
     if Assigned(FrameNodesList) then
     begin
       FrameNodesList.InfoList:=Mgr.NodeList;
@@ -210,6 +199,7 @@ begin
       FramePointsList.InfoList:=Mgr.PointList;
       FramePointsList.DnmpMgr:=Mgr;
     end;
+    }
     if Assigned(FrameContactsList) then
     begin
       FrameContactsList.Serv:=Serv;
@@ -264,11 +254,13 @@ begin
       end
       else if sParam='NODELIST' then
       begin
-        if Assigned(FrameNodesList) then FrameNodesList.Update();
+        //if Assigned(FrameNodesList) then FrameNodesList.Update();
+        if Assigned(FrameContactsList) then FrameContactsList.Update();
       end
       else if sParam='POINTLIST' then
       begin
-        if Assigned(FramePointsList) then FramePointsList.Update();
+        //if Assigned(FramePointsList) then FramePointsList.Update();
+        if Assigned(FrameContactsList) then FrameContactsList.Update();
       end
       else if sParam='ROUTING' then
       begin
@@ -303,12 +295,12 @@ begin
   if Assigned(Mgr) then
   begin
     AppName:=Mgr.MyInfo.AddrStr();
-    actServer.Checked:=(Mgr.ServerMode and Mgr.Active);
-    actClient.Checked:=(not Mgr.ServerMode and Mgr.Active);
+    actConnect.Caption:=BoolToStr(Mgr.ServerMode, 'Start Node', 'Start Point');
+    actConnect.Checked:=Mgr.Active;
 
     if Assigned(FrameLinks) then FrameLinks.Update();
-    if Assigned(FrameNodesList) then FrameNodesList.Update();
-    if Assigned(FramePointsList) then FramePointsList.Update();
+    //if Assigned(FrameNodesList) then FrameNodesList.Update();
+    //if Assigned(FramePointsList) then FramePointsList.Update();
     if Assigned(FrameContactsList) then FrameContactsList.Update();
     if Assigned(FrameMyInfo) then FrameMyInfo.Update();
   end;
@@ -322,6 +314,7 @@ begin
   FrameLinks:=TFrameLinkList.Create(tsLinks);
   FrameLinks.Parent:=tsLinks;
   FrameLinks.Align:=alClient;
+  {
   // Nodes
   FrameNodesList:=TFrameLinkInfoList.Create(tsNodes);
   FrameNodesList.Parent:=tsNodes;
@@ -330,6 +323,7 @@ begin
   FramePointsList:=TFrameLinkInfoList.Create(tsPoints);
   FramePointsList.Parent:=tsPoints;
   FramePointsList.Align:=alClient;
+  }
   // Contacts
   //FrameContactsList:=TFrameContactList.Create(tsContacts);
   FrameContactsList:=TFrameDnmpContacts.Create(tsContacts);

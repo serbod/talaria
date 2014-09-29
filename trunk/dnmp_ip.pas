@@ -369,6 +369,8 @@ function TIpLink.SendMsg(Msg: TDnmpMsg): boolean;
 var
   ms: TMemoryStream;
 begin
+  Result:=False;
+  if Assigned(Listener) then Exit; // listener can't send messages
   Result := inherited SendMsg(Msg);
   if Result then
   begin

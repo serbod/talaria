@@ -134,7 +134,7 @@ implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
   MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame,
-  DnmpWizardFrame, DnmpChatFrame, dnmp_chat;
+  DnmpWizardFrame, DnmpChatFrame, dnmp_chat, DnmpContactsFrame;
 
 procedure Init(ConfigName: string);
 var
@@ -722,12 +722,12 @@ end;
 
 procedure TServiceDnmp.ShowContactList();
 var
-  TmpFrame: TFrameContactList;
+  TmpFrame: TFrameDnmpContacts;
 begin
-  TmpFrame:=TFrameContactList.Create(nil);
+  TmpFrame:=TFrameDnmpContacts.Create(nil);
   TmpFrame.Serv:=Self;
   TmpFrame.Update();
-  ShowForm(TmpFrame, 'Contact list');
+  ShowForm(TmpFrame, 'Contacts');
 end;
 
 procedure TServiceDnmp.ShowSetupWizard();

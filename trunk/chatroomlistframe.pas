@@ -205,7 +205,7 @@ end;
 
 function TFrameChatRoomList.SelectedItem(): TChatRoom;
 begin
-
+  Result:=nil;
 end;
 
 procedure TFrameChatRoomList.AfterConstruction();

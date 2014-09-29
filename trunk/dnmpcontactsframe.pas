@@ -68,10 +68,23 @@ type
     actContactsPoints: TAction;
     actContactsGuests: TAction;
     actContactsFound: TAction;
+    actConnectToNode: TAction;
+    actApprove: TAction;
+    actEditContact: TAction;
+    actAddContact: TAction;
     actRequestInfo: TAction;
     alContacts: TActionList;
     edChatSay: TEdit;
     imgDefault: TImage;
+    MenuItem1: TMenuItem;
+    MenuItem2: TMenuItem;
+    MenuItem3: TMenuItem;
+    MenuItem4: TMenuItem;
+    MenuItem5: TMenuItem;
+    MenuItem6: TMenuItem;
+    MenuItem7: TMenuItem;
+    MenuItem8: TMenuItem;
+    MenuItem9: TMenuItem;
     panChatSay: TPanel;
     pgcContactInfo: TPageControl;
     panContacts: TPanel;
@@ -90,7 +103,10 @@ type
     tsInfo: TTabSheet;
     tsChat: TTabSheet;
     ToolBarContacts: TToolBar;
+    procedure actAddContactExecute(Sender: TObject);
     procedure actAddToFavoritesExecute(Sender: TObject);
+    procedure actApproveExecute(Sender: TObject);
+    procedure actConnectToNodeExecute(Sender: TObject);
     procedure actContactsAllExecute(Sender: TObject);
     procedure actContactsFavoritesExecute(Sender: TObject);
     procedure actContactsFoundExecute(Sender: TObject);
@@ -98,10 +114,12 @@ type
     procedure actContactsNodesExecute(Sender: TObject);
     procedure actContactsPointsExecute(Sender: TObject);
     procedure actDeleteContactExecute(Sender: TObject);
+    procedure actEditContactExecute(Sender: TObject);
     procedure actFindContactsExecute(Sender: TObject);
     procedure actRequestInfoExecute(Sender: TObject);
     procedure edChatSayKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure pmContactsPopup(Sender: TObject);
   private
     { private declarations }
     FServ: TServiceDnmp;
@@ -178,12 +196,45 @@ procedure TFrameDnmpContacts.actDeleteContactExecute(Sender: TObject);
 begin
   if MessageDlg('Delete item', 'Are you sure?', mtConfirmation, mbYesNo, 0)<>mrYes then Exit;
   if Assigned(ContactList) and Assigned(Contact) then ContactList.Extract(Contact);
+  UpdateContactsList();
+end;
+
+procedure TFrameDnmpContacts.actEditContactExecute(Sender: TObject);
+begin
+  Core.ShowLinkInfo(Contact);
 end;
 
 procedure TFrameDnmpContacts.actAddToFavoritesExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
   if Assigned(Contact) then Mgr.MyPassport.ContactsList.AddItem(Contact);
+  UpdateContactsList();
+end;
+
+procedure TFrameDnmpContacts.actAddContactExecute(Sender: TObject);
+var
+  Item: TDnmpContact;
+begin
+  if not Assigned(ContactList) then Exit;
+  Item:=TDnmpContact.Create();
+  Item.Name:='New contact';
+  Item.Addr:=EmptyAddr();
+  ContactList.AddItem(Item);
+  UpdateContactsList();
+end;
+
+procedure TFrameDnmpContacts.actApproveExecute(Sender: TObject);
+begin
+  if (not Assigned(Mgr)) or (not Assigned(Contact)) then Exit;
+  Mgr.Approve(Contact);
+  UpdateContactsList();
+end;
+
+procedure TFrameDnmpContacts.actConnectToNodeExecute(Sender: TObject);
+begin
+  if (not Assigned(Mgr)) or (not Assigned(Contact)) then Exit;
+  Mgr.StartNodeConnection(Contact);
+  UpdateContactsList();
 end;
 
 procedure TFrameDnmpContacts.actContactsAllExecute(Sender: TObject);
@@ -265,6 +316,16 @@ begin
     //ScrollBox.Visible:=True;
     Key:=0;
   end;
+end;
+
+procedure TFrameDnmpContacts.pmContactsPopup(Sender: TObject);
+var
+  IsNode: Boolean;
+begin
+  IsNode:=False;
+  if Assigned(Contact) then IsNode:=Contact.IsNode;
+  actConnectToNode.Visible:=IsNode;
+  actApprove.Visible:=actContactsGuests.Checked;
 end;
 
 procedure TFrameDnmpContacts.FSetServ(Value: TServiceDnmp);
@@ -510,7 +571,7 @@ begin
   //lb.OnMouseDown:=@OnMouseDownHandler;
   //lb.OnMouseEnter:=@OnMouseEnterHandler;
   //lb.OnMouseLeave:=@OnMouseLeaveHandler;
-  //lb.PopupMenu:=pmContactList;
+  lb.PopupMenu:=pmContacts;
   Result.lbName:=lb;
   x:=x+lb.Width+2;
 
