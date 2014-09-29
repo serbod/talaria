@@ -42,10 +42,11 @@ Name: "{app}\data"
 [Files]
 Source: {#ExeName}; DestDir: "{app}"
 ;Source: "sqlite3.dll"; DestDir: "{app}"
-;Source: "conf_models.ini"; DestDir: "{app}"
+Source: "data\conf_models.ini"; DestDir: "{app}\data"
 ;Source: "changes.txt"; DestDir: "{app}"
 Source: "docs\talaria.chm"; DestDir: "{app}" 
 ;Source: "docs\talaria.chm"; DestDir: "{app}"; Components: docs 
+;Source: "config_demo.ini"; DestDir: "{app}"; DestName: "config.ini"; Flags: onlyifdoesntexist 
 ;Source: "config_demo.ini"; DestDir: "{app}"; DestName: "config.ini"; Flags: onlyifdoesntexist 
 ;Source: "db.sqlite3"; DestDir: "{app}"; Flags: onlyifdoesntexist; Components: sample_db 
 ;Source: "Readme.txt"; DestDir: "{app}"; Flags: isreadme

@@ -1197,6 +1197,7 @@ begin
   end;
 
   // Temporary info
+  if Addr.Point=0 then IsNode:=True else IsNode:=False;
   {
   if Storage.HaveName('link_type') then
   begin
@@ -2440,6 +2441,7 @@ var
   i, n: Integer;
   Storage: TDnmpStorage;
 begin
+  FServerMode:=Conf.ReadBool('Main','IsNode', False);
   if Assigned(Serializer) then
   begin
     // MyInfo
@@ -2556,6 +2558,7 @@ begin
     end;
 
     // Сообщение на другой узел
+    {
     // Сообщение всем узлам
     if SameAddr(Msg.TargetAddr, EmptyAddr()) then
     begin
@@ -2574,6 +2577,7 @@ begin
       end;
       Exit;
     end;
+    }
 
     // Поиск среди узлов-линков
     for i:=0 to LinkList.Count-1 do
@@ -2642,6 +2646,8 @@ begin
   begin
     for i:=0 to LinkList.Count-1 do
     begin
+      if LinkList.Items[i].LinkType=ltListener then Continue;
+      if LinkList.Items[i].LinkType=ltTemporary then Continue;
       if LinkList.Items[i].RemoteInfo.Addr.Point=0 then Continue;
       Msg.TargetAddr:=LinkList.Items[i].RemoteInfo.Addr;
       Result:=Self.SendMsg(Msg);
@@ -2651,6 +2657,8 @@ begin
   begin
     for i:=0 to LinkList.Count-1 do
     begin
+      if LinkList.Items[i].LinkType=ltListener then Continue;
+      if LinkList.Items[i].LinkType=ltTemporary then Continue;
       if LinkList.Items[i].RemoteInfo.Addr.Point<>0 then Continue;
       Msg.TargetAddr:=LinkList.Items[i].RemoteInfo.Addr;
       Result:=Self.SendMsg(Msg);

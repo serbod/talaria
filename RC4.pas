@@ -11,7 +11,7 @@ unit RC4;
 
 interface
 uses
-  Windows, Sysutils;
+  {Windows,} Sysutils;
 
 type
   TRC4Data= record

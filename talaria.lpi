@@ -85,7 +85,6 @@
       <Unit6>
         <Filename Value="dnmp_services.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_services"/>
       </Unit6>
       <Unit7>
         <Filename Value="core.pas"/>
@@ -166,7 +165,6 @@
       <Unit19>
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="dnmp_serializers"/>
       </Unit19>
       <Unit20>
         <Filename Value="dnmp_grpc.pas"/>
@@ -191,7 +189,6 @@
         <ComponentName Value="FormDnmpWizard"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="DnmpWizardFrame"/>
       </Unit23>
       <Unit24>
         <Filename Value="dnmp_chat.pas"/>
@@ -238,7 +235,6 @@
         <OverflowChecks Value="True"/>
         <StackChecks Value="True"/>
       </Checks>
-      <VerifyObjMethodCallValidity Value="True"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
@@ -251,7 +247,7 @@
       </Options>
     </Linking>
     <Other>
-      <CompilerPath Value="$(CompPath)"/>
+      <CustomOptions Value="-dUseCThreads"/>
     </Other>
   </CompilerOptions>
   <Debugging>

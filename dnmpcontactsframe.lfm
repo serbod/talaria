@@ -68,7 +68,7 @@ object FrameDnmpContacts: TFrameDnmpContacts
       Top = 54
       Width = 250
       HorzScrollBar.Page = 1
-      VertScrollBar.Increment = 0
+      VertScrollBar.Increment = 1
       VertScrollBar.Page = 1
       VertScrollBar.Smooth = True
       VertScrollBar.Tracking = True
@@ -204,7 +204,7 @@ object FrameDnmpContacts: TFrameDnmpContacts
           Top = 0
           Width = 389
           HorzScrollBar.Page = 1
-          VertScrollBar.Increment = 0
+          VertScrollBar.Increment = 1
           VertScrollBar.Page = 1
           VertScrollBar.Smooth = True
           VertScrollBar.Tracking = True
@@ -223,6 +223,7 @@ object FrameDnmpContacts: TFrameDnmpContacts
           Top = 0
           Width = 389
           HorzScrollBar.Page = 1
+          VertScrollBar.Increment = 1
           VertScrollBar.Page = 1
           VertScrollBar.Smooth = True
           VertScrollBar.Tracking = True
@@ -238,6 +239,7 @@ object FrameDnmpContacts: TFrameDnmpContacts
     left = 102
     top = 132
     object actDeleteContact: TAction
+      Category = 'Contact'
       Caption = 'Delete contact'
       ImageIndex = 21
       OnExecute = actDeleteContactExecute
@@ -248,11 +250,13 @@ object FrameDnmpContacts: TFrameDnmpContacts
       OnExecute = actFindContactsExecute
     end
     object actAddToFavorites: TAction
+      Category = 'Contact'
       Caption = 'Add to favorites'
       ImageIndex = 16
       OnExecute = actAddToFavoritesExecute
     end
     object actRequestInfo: TAction
+      Category = 'Contact'
       Caption = 'Request info'
       ImageIndex = 17
       OnExecute = actRequestInfoExecute
@@ -305,10 +309,62 @@ object FrameDnmpContacts: TFrameDnmpContacts
       ImageIndex = 19
       OnExecute = actContactsFoundExecute
     end
+    object actConnectToNode: TAction
+      Category = 'Contact'
+      Caption = 'Connect to node'
+      ImageIndex = 40
+      OnExecute = actConnectToNodeExecute
+    end
+    object actApprove: TAction
+      Category = 'Contact'
+      Caption = 'Approve'
+      ImageIndex = 6
+      OnExecute = actApproveExecute
+    end
+    object actEditContact: TAction
+      Category = 'Contact'
+      Caption = 'Edit contact'
+      ImageIndex = 18
+      OnExecute = actEditContactExecute
+    end
+    object actAddContact: TAction
+      Category = 'ContactList'
+      Caption = 'Add contact'
+      ImageIndex = 36
+      OnExecute = actAddContactExecute
+    end
   end
   object pmContacts: TPopupMenu
     Images = FormMain.ImageList16
+    OnPopup = pmContactsPopup
     left = 102
     top = 212
+    object MenuItem5: TMenuItem
+      Action = actFindContacts
+    end
+    object MenuItem4: TMenuItem
+      Caption = '-'
+    end
+    object MenuItem1: TMenuItem
+      Action = actAddToFavorites
+    end
+    object MenuItem2: TMenuItem
+      Action = actRequestInfo
+    end
+    object MenuItem8: TMenuItem
+      Action = actEditContact
+    end
+    object MenuItem3: TMenuItem
+      Action = actDeleteContact
+    end
+    object MenuItem6: TMenuItem
+      Action = actConnectToNode
+    end
+    object MenuItem7: TMenuItem
+      Action = actApprove
+    end
+    object MenuItem9: TMenuItem
+      Action = actAddContact
+    end
   end
 end

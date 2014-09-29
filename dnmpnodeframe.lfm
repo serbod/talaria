@@ -30,16 +30,6 @@ object FrameDnmp: TFrameDnmp
       Top = 2
       Action = actContactList
     end
-    object ToolButton3: TToolButton
-      Left = 325
-      Top = 2
-      Action = actServer
-    end
-    object ToolButton4: TToolButton
-      Left = 383
-      Top = 2
-      Action = actClient
-    end
     object ToolButton5: TToolButton
       Left = 1
       Top = 2
@@ -50,6 +40,11 @@ object FrameDnmp: TFrameDnmp
       Left = 138
       Top = 2
       Action = actChatRoomList
+    end
+    object ToolButton7: TToolButton
+      Left = 325
+      Top = 2
+      Action = actConnect
     end
   end
   object panNode: TPanel
@@ -67,19 +62,13 @@ object FrameDnmp: TFrameDnmp
       Height = 493
       Top = 0
       Width = 800
-      ActivePage = tsLinks
+      ActivePage = tsContacts
       Align = alClient
-      TabIndex = 0
+      TabIndex = 1
       TabOrder = 0
       OnChange = PageControlNodeChange
       object tsLinks: TTabSheet
         Caption = 'Links'
-      end
-      object tsNodes: TTabSheet
-        Caption = 'Nodes'
-      end
-      object tsPoints: TTabSheet
-        Caption = 'Points'
       end
       object tsContacts: TTabSheet
         Caption = 'Contacts'
@@ -134,18 +123,6 @@ object FrameDnmp: TFrameDnmp
       ImageIndex = 20
       OnExecute = actContactListExecute
     end
-    object actServer: TAction
-      Caption = 'Server'
-      Hint = 'Start/stop server'
-      ImageIndex = 39
-      OnExecute = actServerExecute
-    end
-    object actClient: TAction
-      Caption = 'Client'
-      Hint = 'Start/stop client (uplink connection)'
-      ImageIndex = 40
-      OnExecute = actClientExecute
-    end
     object actShowLog: TAction
       AutoCheck = True
       Caption = 'Show log'
@@ -158,6 +135,11 @@ object FrameDnmp: TFrameDnmp
       Hint = 'Chat room list'
       ImageIndex = 37
       OnExecute = actChatRoomListExecute
+    end
+    object actConnect: TAction
+      Caption = 'Connect'
+      ImageIndex = 40
+      OnExecute = actConnectExecute
     end
   end
 end
