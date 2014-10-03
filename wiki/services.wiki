@@ -40,7 +40,7 @@
 
 = Описания отдельных сервисов =
 
-<li><a href="auth.htm">AUTH (Authentication) - Аутентификация</a>
+<li><a href="https://code.google.com/p/talaria/wiki/auth">AUTH (Authentication) - Аутентификация</a>
 <li><a href="info.htm">INFO (Information) - Обмен служебной информацией</a>
 <li><a href="usrd.htm">USRD (Users Directory) - Каталог пользователей</a>
 <li><a href="srvd.htm">SRVD (Services Directory) - Каталог сервисов</a>
