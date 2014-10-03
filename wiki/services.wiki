@@ -42,10 +42,10 @@
 
 <li><a href="https://code.google.com/p/talaria/wiki/auth">AUTH (Authentication) - Аутентификация</a>
 <li><a href="https://code.google.com/p/talaria/wiki/info">INFO (Information) - Обмен служебной информацией</a>
-<li><a href="usrd.htm">USRD (Users Directory) - Каталог пользователей</a>
-<li><a href="srvd.htm">SRVD (Services Directory) - Каталог сервисов</a>
-<li><a href="grpc.htm">GRPC (Group Chat) - Канал, групповой чат</a>
-<li><a href="flst.htm">FLST (Files Storage) - Хранилище файлов</a>
-<li><a href="chat.htm">CHAT (Short messages) - Чат, короткие сообщения между пользователями</a>
-<li><a href="mail.htm">MAIL (Long messages) - Почта, длинные сообщения между пользователями</a>
-<li><a href="foru.htm">FORU (Forums) - Форумы</a>
+<li><a href="https://code.google.com/p/talaria/wiki/usrd">USRD (Users Directory) - Каталог пользователей</a>
+<li><a href="https://code.google.com/p/talaria/wiki/srvd">SRVD (Services Directory) - Каталог сервисов</a>
+<li><a href="https://code.google.com/p/talaria/wiki/grpc">GRPC (Group Chat) - Канал, групповой чат</a>
+<li><a href="https://code.google.com/p/talaria/wiki/flst">FLST (Files Storage) - Хранилище файлов</a>
+<li><a href="https://code.google.com/p/talaria/wiki/chat">CHAT (Short messages) - Чат, короткие сообщения между пользователями</a>
+<li><a href="https://code.google.com/p/talaria/wiki/mail">MAIL (Long messages) - Почта, длинные сообщения между пользователями</a>
+<li><a href="https://code.google.com/p/talaria/wiki/foru">FORU (Forums) - Форумы</a>
