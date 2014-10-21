@@ -306,6 +306,8 @@ type
     property OnDisconnect: TNotifyEvent read FOnDisconnect write FOnDisconnect;
   end;
 
+  { TDnmpLinkList }
+
   TDnmpLinkList = class(TObjectList)
   private
     function GetLink(Index: Integer): TDnmpLink;
@@ -313,6 +315,7 @@ type
   public
     property Items[Index: Integer]: TDnmpLink read GetLink write SetLink; default;
     function GetLinkByAddr(FAddr: TAddr): TDnmpLink;
+    procedure RemoveInactive();
   end;
 
   TIncomingLinkEvent = procedure(Sender: TObject; Link: TDnmpLink) of object;
@@ -382,8 +385,10 @@ type
     constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil); virtual;
     { Remove self from Mgr.MsgHandlers }
     destructor Destroy(); override;
-    // Запуск запуск обработчика
+    // Init and start handler
     function Start(): Boolean; virtual;
+    // Stop and flush handler
+    function Stop(): Boolean; virtual;
     { Обработка команды (Thread-safe) от указанного адреса }
     function Cmd(Text: string; Addr: TAddr): string; virtual;
     // Разбор сообщения и выполнение требуемых действий
@@ -464,7 +469,7 @@ type
     destructor Destroy(); override;
     property ServerMode: Boolean read FServerMode;
     procedure LoadList(List: TObject);
-    procedure WriteList(List: TObject);
+    procedure WriteList(List: TObject; AInfoType: TDnmpContactInfoType);
     procedure LoadFromFile();
     procedure SaveToFile();
     // ==== Base functions
@@ -1788,6 +1793,19 @@ begin
   end;
 end;
 
+procedure TDnmpLinkList.RemoveInactive();
+var
+  i: integer;
+  Item: TDnmpLink;
+begin
+  for i:=Self.Count-1 downto 0 do
+  begin
+    Item:=Self.GetLink(i);
+    if Item.Active then Continue;
+    Self.Delete(i);
+  end;
+end;
+
 // === TDnmpRoutingTable ===
 constructor TDnmpRoutingTable.Create(ALinks: TDnmpLinkList);
 begin
@@ -1972,6 +1990,11 @@ end;
 
 destructor TDnmpLink.Destroy();
 begin
+  // remove events
+  OnConnect:=nil;
+  OnDisconnect:=nil;
+  OnIncomingMsg:=nil;
+
   // Инфа о линке может попасть в поинтлист или нодлист
   // Если мы ее убьем здесь, то в другом месте может возникнуть ошибка при попытке
   // убить инфу второй раз
@@ -2038,9 +2061,14 @@ begin
   inherited Destroy();
 end;
 
-function TDnmpMsgHandler.Start: Boolean;
+function TDnmpMsgHandler.Start(): Boolean;
 begin
   Result:=False;
+end;
+
+function TDnmpMsgHandler.Stop(): Boolean;
+begin
+  Result:=True;
 end;
 
 function TDnmpMsgHandler.Cmd(Text: string; Addr: TAddr): string;
@@ -2061,7 +2089,7 @@ begin
   Conf:=TDnmpConf.Create(sDataPath+csConfigFileName);
 
   ContactList:=TDnmpContactList.Create(nil);
-  ContactList.Filename:=sDataPath+csContactListFileName;
+  ContactList.Filename:=csContactListFileName;
 
   TmpContactList:=TDnmpContactList.Create(nil);
 
@@ -2071,13 +2099,13 @@ begin
   MyPassport:=TDnmpPassport.Create(MyInfo, ContactList);
 
   NodeList:=TNodeList.Create(ContactList);
-  NodeList.Filename:=sDataPath+csNodelistFileName;
+  NodeList.Filename:=csNodelistFileName;
 
   PointList:=TPointList.Create(ContactList);
-  PointList.Filename:=sDataPath+csPointlistFileName;
+  PointList.Filename:=csPointlistFileName;
 
   UnapprovedList:=TDnmpContactList.Create(ContactList);
-  UnapprovedList.Filename:=sDataPath+csUnapprovedFileName;
+  UnapprovedList.Filename:=csUnapprovedFileName;
 
   LinkList:=TDnmpLinkList.Create();
 
@@ -2379,6 +2407,10 @@ end;
 
 procedure TDnmpManager.Event(Sender, Text: string);
 begin
+  if Pos('UPDATE LINKS', Text)<>0 then
+  begin
+    LinkList.RemoveInactive();
+  end;
   if Assigned(OnEvent) then OnEvent(Sender, Text);
 end;
 
@@ -2416,13 +2448,14 @@ begin
   begin
     AContactList:=(List as TDnmpContactList);
     DebugText('Load list from '+AContactList.Filename);
-    if Serializer.StorageFromFile(Storage, AContactList.Filename) then AContactList.FromStorage(Storage);
+    if Serializer.StorageFromFile(Storage, sDataPath+AContactList.Filename) then AContactList.FromStorage(Storage);
     DebugText(IntToStr(AContactList.Count)+' items loaded');
   end;
   Storage.Free();
 end;
 
-procedure TDnmpManager.WriteList(List: TObject);
+procedure TDnmpManager.WriteList(List: TObject; AInfoType: TDnmpContactInfoType
+  );
 var
   AContactList: TDnmpContactList;
 begin
@@ -2431,7 +2464,7 @@ begin
   begin
     AContactList:=(List as TDnmpContactList);
     DebugText('Save '+IntToStr(AContactList.Count)+' items to '+AContactList.Filename);
-    Serializer.StorageToFile(AContactList.ToStorage(ctAll), AContactList.Filename);
+    Serializer.StorageToFile(AContactList.ToStorage(AInfoType), sDataPath+AContactList.Filename);
   end;
 end;
 
@@ -2446,11 +2479,13 @@ begin
   begin
     // MyInfo
     Storage:=TDnmpStorage.Create(stUnknown);
+    DebugText('Load MyInfo from '+csMyInfoFileName);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
     Storage.Free();
 
     // MyPassport
     Storage:=TDnmpStorage.Create(stUnknown);
+    DebugText('Load MyPassport from '+csMyPassportFileName);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyPassportFileName) then MyPassport.FromStorage(Storage);
     Storage.Free();
 
@@ -2467,8 +2502,11 @@ begin
     LoadList(UnapprovedList);
   end;
 
-  DebugText('Read MsgQueue file='+sDataPath+csMsgQueueFileName);
+  DebugText('Load MsgQueue from '+csMsgQueueFileName);
   MsgQueue.LoadFromFile(sDataPath+csMsgQueueFileName);
+  DebugText(IntToStr(MsgQueue.Count)+' items loaded');
+
+  Event('MGR', 'REFRESH');
 end;
 
 procedure TDnmpManager.SaveToFile();
@@ -2476,28 +2514,30 @@ var
   Sect: string;
   i: Integer;
 begin
-  DebugText('Write '+IntToStr(MsgQueue.Count)+' items to file '+sDataPath+csMsgQueueFileName);
+  DebugText('Save '+IntToStr(MsgQueue.Count)+' items to '+csMsgQueueFileName);
   MsgQueue.SaveToFile(sDataPath+csMsgQueueFileName);
 
   if Assigned(Serializer) then
   begin
     // MyInfo
+    DebugText('Save MyInfo to '+csMyInfoFileName);
     Serializer.StorageToFile(MyInfo.ToStorage(ctAll), Self.sDataPath+csMyInfoFileName);
 
     // MyPassport
+    DebugText('Save MyPassport to '+csMyPassportFileName);
     Serializer.StorageToFile(MyPassport.ToStorage(), Self.sDataPath+csMyPassportFileName);
 
     // ContactList
-    Serializer.StorageToFile(ContactList.ToStorage(ctAll), ContactList.Filename);
+    WriteList(ContactList, ctAll);
 
     // Nodelist
-    Serializer.StorageToFile(Nodelist.ToStorage(ctBrief), Nodelist.Filename);
+    WriteList(Nodelist, ctBrief);
 
     // Pointlist
-    Serializer.StorageToFile(PointList.ToStorage(ctBrief), PointList.Filename);
+    WriteList(PointList, ctBrief);
 
     // UnapprovedList
-    Serializer.StorageToFile(UnapprovedList.ToStorage(ctBrief), UnapprovedList.Filename);
+    WriteList(UnapprovedList, ctBrief);
   end;
 end;
 

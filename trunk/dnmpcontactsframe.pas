@@ -11,7 +11,7 @@ uses
 type
 
   { TVisualContact }
-
+  { TODO : As visual component (TGraphicControl) }
   TVisualContact = class(TCollectionItem)
   private
     FSelected: boolean;
@@ -157,6 +157,7 @@ type
     procedure ClearChat();
     procedure UpdateChat();
     procedure UpdateInfo();
+    procedure Update(); override;
     procedure UpdateViewHandler(var AMsg); message 'UpdateView';
   end;
 
@@ -374,13 +375,10 @@ begin
   FContact:=Value;
   LastChatY:=0;
 
-  if Assigned(Contact) and Assigned(Chat) then
+  if Assigned(Contact) then
   begin
     // update chat
-    //ChatSession:=nil;
-    ChatSession:=Chat.GetChatSessionForContact(Contact);
-    ChatSession.MessagesList.AddObserver(Self);
-    UpdateChat();
+    Chat:=(FServ.ServMgr.GetService(csCHAT, '') as TDnmpChat);
 
     // update info
     UpdateInfo();
@@ -909,6 +907,12 @@ begin
     end;
   end;
   ScrollBoxInfo.Visible:=True;
+end;
+
+procedure TFrameDnmpContacts.Update();
+begin
+  UpdateContactsList();
+  inherited Update;
 end;
 
 procedure TFrameDnmpContacts.UpdateViewHandler(var AMsg);

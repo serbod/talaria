@@ -6,9 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ComCtrls, StdCtrls, ActnList,
-  ExtCtrls, dnmp_unit, dnmp_services, LinkInfoListFrame, DnmpServicesFrame,
-  ConfigFrame, LinkListFrame, LinkInfoFrame, Core, ContactListFrame,
-  DnmpContactsFrame;
+  ExtCtrls, dnmp_unit, dnmp_services, DnmpServicesFrame,
+  ConfigFrame, LinkListFrame, LinkInfoFrame, Core, DnmpContactsFrame;
 
 type
 
@@ -49,8 +48,6 @@ type
     FMgr: TDnmpManager;
     FServMgr: TDnmpServiceManager;
     FrameLinks: TFrameLinkList;
-    //FrameNodesList: TFrameLinkInfoList;
-    //FramePointsList: TFrameLinkInfoList;
     //FrameContactsList: TFrameContactList;
     FrameContactsList: TFrameDnmpContacts;
     FrameServices: TFrameDnmpServices;
@@ -79,8 +76,6 @@ type
   end;
 
 implementation
-
-uses Misc;
 
 {$R *.lfm}
 
@@ -215,7 +210,7 @@ begin
       FrameConfig.ConfigModels:=ConfigModels;
     end;
   end;
-  Update();
+  //Update();
 end;
 
 procedure TFrameDnmp.MgrLogHandler(Sender: TObject; LogMsg: string);
@@ -228,12 +223,12 @@ var
   sCmd, sParam: string;
 begin
   sCmd:='';
-  sParam:='';
+  sParam:=AText;
   if Sender='MGR' then
   begin
-    ExtractCmd(AText, sCmd, sParam);
+    sCmd:=ExtractFirstWord(sParam);
 
-    if Text='REFRESH' then
+    if AText='REFRESH' then
     begin
       Update();
     end
@@ -271,7 +266,7 @@ begin
 
   else if Sender=csGRPC then
   begin
-    ExtractCmd(Text, sCmd, sParam);
+    sCmd:=ExtractFirstWord(sParam);
 
     if sCmd='OPEN' then
     begin
@@ -299,8 +294,6 @@ begin
     actConnect.Checked:=Mgr.Active;
 
     if Assigned(FrameLinks) then FrameLinks.Update();
-    //if Assigned(FrameNodesList) then FrameNodesList.Update();
-    //if Assigned(FramePointsList) then FramePointsList.Update();
     if Assigned(FrameContactsList) then FrameContactsList.Update();
     if Assigned(FrameMyInfo) then FrameMyInfo.Update();
   end;
@@ -314,16 +307,6 @@ begin
   FrameLinks:=TFrameLinkList.Create(tsLinks);
   FrameLinks.Parent:=tsLinks;
   FrameLinks.Align:=alClient;
-  {
-  // Nodes
-  FrameNodesList:=TFrameLinkInfoList.Create(tsNodes);
-  FrameNodesList.Parent:=tsNodes;
-  FrameNodesList.Align:=alClient;
-  // Points
-  FramePointsList:=TFrameLinkInfoList.Create(tsPoints);
-  FramePointsList.Parent:=tsPoints;
-  FramePointsList.Align:=alClient;
-  }
   // Contacts
   //FrameContactsList:=TFrameContactList.Create(tsContacts);
   FrameContactsList:=TFrameDnmpContacts.Create(tsContacts);

@@ -172,7 +172,7 @@ end;
 procedure TFrameContactList.actChatExecute(Sender: TObject);
 begin
   if not Assigned(Serv) then Exit;
-  if Assigned(SelectedItem()) then Serv.ShowPrivateChatRoom(SelectedItem());
+  //if Assigned(SelectedItem()) then Serv.ShowPrivateChatRoom(SelectedItem());
 end;
 
 procedure TFrameContactList.actFindContactsExecute(Sender: TObject);

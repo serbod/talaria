@@ -75,7 +75,6 @@ end;
 // Запрос списка узлов
 procedure TDnmpInfoService.OnNodelistRequest(Msg: TDnmpMsg);
 var
-  i: Integer;
   sInfo, sData: string;
 begin
   //if Mgr.MyInfo.Addr.Point<>0 then Exit; // points cannot answer
@@ -178,7 +177,7 @@ var
   SomeAddr: TAddr;
   TmpInfo: TDnmpContact;
   Storage: TDnmpStorage;
-  s, s2: string;
+  s: string;
 begin
   TmpInfo:=nil;
   s:='';
@@ -226,8 +225,6 @@ begin
 end;
 
 procedure TDnmpInfoService.OnNodeLinksList(Msg: TDnmpMsg);
-var
-  sl: TStringList;
 begin
 
   //Mgr.RoutingTable.AddItem();

@@ -151,7 +151,7 @@ end;
 
 procedure TFrameLinkInfoList.actInfoListSaveExecute(Sender: TObject);
 begin
-  DnmpMgr.WriteList(InfoList);
+  //DnmpMgr.WriteList(InfoList);
 end;
 
 procedure TFrameLinkInfoList.UpdateInfoList();
