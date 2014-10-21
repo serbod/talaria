@@ -219,7 +219,6 @@ const
   ciMaxMsgCountClient = 1000;
 
 implementation
-uses Misc;
 
 { TGrpcBanItem }
 
@@ -534,6 +533,13 @@ end;
 
 destructor TDnmpGrpc.Destroy();
 begin
+  Self.OnEvent:=nil;
+  Self.OnSay:=nil;
+  Self.OnAbonentsChange:=nil;
+  Self.OnBanlistChange:=nil;
+  Self.OnModeChange:=nil;
+  Self.OnTopicChange:=nil;
+  Self.OnUsersChange:=nil;
   FreeAndNil(MessagesList);
   FreeAndNil(BanList);
   FreeAndNil(UsersList);
@@ -720,8 +726,8 @@ end;
 function TDnmpGrpc.Join(): string;
 begin
   //Result:=JoinAbonent(Author.GUID);
-  //if Result='' then SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
-  SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
+  //if Result='' then Result:=SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
+  Result:=SendCmd('JOIN '+Author.GUID, ServiceInfo.ProviderAddr);
 end;
 
 function TDnmpGrpc.LeaveAbonent(AbonentGUID: string): string;
@@ -916,7 +922,6 @@ end;
 function TDnmpGrpcServer.ParseCmd(Text: string; Addr: TAddr): string;
 var
   s, sCmd, sParams, sGUID: string;
-  Params: TStringArray;
   i: Integer;
   Abonent: TDnmpContact;
 begin
@@ -1096,6 +1101,7 @@ end;
 
 function TDnmpGrpcServer.SendAbonList(Addr: TAddr): Boolean;
 begin
+  Result:=False;
   //Result:=SendData(Addr, 'ABONENTS', self.ServiceInfo.Abonents.SaveToCSV());
 end;
 

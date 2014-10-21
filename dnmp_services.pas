@@ -123,13 +123,14 @@ type
     RemoteServiceInfoList: TDnmpServiceInfoList;
     // All abonents
     //AllAbonents: TDnmpContactList;
-    constructor Create(AMgr: TDnmpManager);
+    constructor Create(AMgr: TDnmpManager; ALink: TDnmpLink = nil); override;
     destructor Destroy; override;
     { Service type. For example, 'SRVD' }
     property ServiceType: string read FServiceType;
     procedure SaveToFile();
     procedure LoadFromFile();
     function Start(): boolean; override;
+    function Stop(): boolean; override;
     { (Server) Find service by sType and sName, then modify it, sAction:
       add - add service info (if not found), set owner by GUID from sParams
       del - delete service and service info
@@ -429,6 +430,7 @@ end;
 
 destructor TDnmpService.Destroy();
 begin
+  OnEvent:=nil;
   inherited Destroy();
 end;
 
@@ -566,9 +568,9 @@ end;
 
 
 // === TDnmpServiceManager ===
-constructor TDnmpServiceManager.Create(AMgr: TDnmpManager);
+constructor TDnmpServiceManager.Create(AMgr: TDnmpManager; ALink: TDnmpLink);
 begin
-  inherited Create(AMgr);
+  inherited Create(AMgr, ALink);
   FServiceType:='SRVD';
   ServiceTypes:=TStringList.Create();
   ServiceTypes.Add(ServiceType);
@@ -597,10 +599,22 @@ begin
 end;
 
 procedure TDnmpServiceManager.SaveToFile();
+var
+  i: integer;
+  SomeService: TDnmpService;
+  s: string;
 begin
   if not Assigned(Mgr.Serializer) then Exit;
   Mgr.Serializer.StorageToFile(Self.ServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDInfoFileName);
   Mgr.Serializer.StorageToFile(Self.RemoteServiceInfoList.ToStorage(), Self.Mgr.sDataPath+csSRVDKnownFileName);
+  // save services
+  for i:=0 to Self.ServiceList.Count-1 do
+  begin
+    SomeService:=Self.ServiceList.GetItem(i);
+    s:=SomeService.ServiceInfo.ServiceType+'_'+SomeService.ServiceInfo.Name;
+    Self.Mgr.DebugText('Save service '+s);
+    Self.Mgr.Serializer.StorageToFile(SomeService.ToStorage(), Self.Mgr.sDataPath+s);
+  end;
 end;
 
 procedure TDnmpServiceManager.LoadFromFile();
@@ -622,6 +636,9 @@ function TDnmpServiceManager.Start(): boolean;
 var
   i: integer;
   si: TDnmpServiceInfo;
+  SomeService: TDnmpService;
+  TmpStorage: TDnmpStorage;
+  s: string;
 begin
   Result:=inherited Start();
   // default services
@@ -639,7 +656,27 @@ begin
     si:=Self.ServiceInfoList.Items[i];
     Self.CreateService(si);
   end;
+
+  // load services data
+  for i:=0 to Self.ServiceList.Count-1 do
+  begin
+    SomeService:=Self.ServiceList.GetItem(i);
+    s:=SomeService.ServiceInfo.ServiceType+'_'+SomeService.ServiceInfo.Name;
+    TmpStorage:=TDnmpStorage.Create(stUnknown);
+    Self.Mgr.DebugText('Load service '+s);
+    if Self.Mgr.Serializer.StorageFromFile(TmpStorage, Self.Mgr.sDataPath+s) then
+    begin
+      SomeService.FromStorage(TmpStorage);
+    end;
+    TmpStorage.Free();
+  end;
+
   Result:=True;
+end;
+
+function TDnmpServiceManager.Stop(): boolean;
+begin
+  Result:=inherited Stop;
 end;
 
 function TDnmpServiceManager.ParseMsg(AMsg: TDnmpMsg): boolean;

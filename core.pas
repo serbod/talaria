@@ -103,7 +103,7 @@ type
     procedure ShowChatRoomList();
     procedure ShowContactList();
     procedure ShowSetupWizard();
-    procedure ShowPrivateChatRoom(Contact: TDnmpContact);
+    //procedure ShowPrivateChatRoom(Contact: TDnmpContact);
     procedure LoadData();
     procedure SaveData();
   end;
@@ -133,8 +133,8 @@ const
 implementation
 
 uses StatusFrame, ChatFrame, DnmpNodeFrame, GrpcServiceFrame, MainForm,
-  MailboxFrame, ContactListFrame, LinkInfoFrame, ChatRoomListFrame,
-  DnmpWizardFrame, DnmpChatFrame, dnmp_chat, DnmpContactsFrame;
+  MailboxFrame, LinkInfoFrame, ChatRoomListFrame,
+  DnmpWizardFrame, dnmp_chat, DnmpContactsFrame;
 
 procedure Init(ConfigName: string);
 var
@@ -162,12 +162,13 @@ begin
       begin
         sName:=Config.ReadString(s, 'Name', 'DNMP');
         ServiceDnmp:=TServiceDnmp.Create(sName);
-        ServiceDnmp.LoadData();
-        ServiceDnmpList.AddObject(s, ServiceDnmp);
         frame:=TFrameDnmp.Create(nil);
         ServiceDnmp.Frame:=frame;
         (frame as TFrameDnmp).Serv:=ServiceDnmp;
         Core.AddPage(frame, sName, ServiceDnmp);
+        ServiceDnmp.LoadData();
+        //(frame as TFrameDnmp).Update();
+        ServiceDnmpList.AddObject(s, ServiceDnmp);
         // wizard
         if ServiceDnmp.Mgr.MyInfo.Name='' then ServiceDnmp.ShowSetupWizard();
       end;
@@ -611,11 +612,11 @@ end;
 
 destructor TServiceDnmp.Destroy();
 begin
-  ServMgr.SaveToFile();
-  FreeAndNil(ServMgr);
   Mgr.OnLog:=nil;
   Mgr.OnEvent:=nil;
   Mgr.OnIncomingMsg:=nil;
+  ServMgr.SaveToFile();
+  FreeAndNil(ServMgr);
   FreeAndNil(Mgr);
   inherited Destroy();
 end;
@@ -741,6 +742,7 @@ begin
   Form.Free();
 end;
 
+{
 procedure TServiceDnmp.ShowPrivateChatRoom(Contact: TDnmpContact);
 var
   TmpFrame: TFrameDnmpChat;
@@ -752,6 +754,7 @@ begin
   TmpFrame.Contact:=Contact;
   TmpFrame.Chat:=(ServMgr.GetService(csCHAT, '') as TDnmpChat);
 end;
+}
 
 procedure TServiceDnmp.LoadData();
 begin

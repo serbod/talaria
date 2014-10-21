@@ -101,7 +101,7 @@ end;
 
 destructor TSockReader.Destroy();
 begin
-  OnEvent:=nil;
+  Self.OnEvent:=nil;
   if Assigned(Socket) then FreeAndNil(Socket);
   inherited Destroy();
 end;
@@ -157,7 +157,7 @@ end;
 destructor TSockListener.Destroy();
 begin
   if Assigned(Socket) then FreeAndNil(Socket);
-  OnEvent:=nil;
+  Self.OnEvent:=nil;
   inherited Destroy();
 end;
 
@@ -234,7 +234,7 @@ begin
 //  Reader.FreeOnTerminate:=true;
 //  Reader.Socket:=self.Socket;
 //  Reader.OnEvent:=ReaderEventHandler;
-  Reader.Resume();
+  Reader.Suspended:=False;
   //FActive:=true;
   Result:=True;
 end;
@@ -281,7 +281,7 @@ begin
       Exit;
     end;
     Listener:=TSockListener.Create(TTCPBlockSocket(self.Socket), @ListenerEventHandler);
-    Listener.Resume();
+    Listener.Suspended:=False;
   end
   else if (IpProto = 'UDP') then
   begin
@@ -419,7 +419,6 @@ end;
 
 procedure TIpLink.ListenerEventHandler(Sock: TSocket; LastError: integer; Data: string);
 var
-  MsgIn: TDnmpMsg;
   NewIpLink: TIpLink;
 begin
   IdleTimestamp:=Now();
@@ -443,11 +442,6 @@ begin
     NewIpLink.RemoteInfo.State:=asOnline
   else
     NewIpLink.RemoteInfo.State:=asOffline;
-
-//  { TODO : Это для отладки, можно убрать }
-//  MsgOut:=TDnmpMsg.Create(MyInfo.Addr, NewIpLink.LinkInfo.Addr, 'INFO', 'CMD=Hello', 'Hello!');
-//  NewIpLink.SendMsg(MsgOut);
-//  MsgOut.Free();
 
   Mgr.AddLink(NewIpLink);
   Mgr.Cmd('EVENT MGR UPDATE LINKS');

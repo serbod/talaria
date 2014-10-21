@@ -256,7 +256,7 @@ end;
 
 function TDnmpMail.SendData(Addr: TAddr; sBoxName, sData: string): boolean;
 begin
-
+  Result:=False;
 end;
 
 constructor TDnmpMail.Create(AMgr: TDnmpManager;

@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="28">
+    <Units Count="26">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -70,152 +70,140 @@
         <ResourceBaseClass Value="Frame"/>
       </Unit3>
       <Unit4>
-        <Filename Value="linkinfolistframe.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameLinkInfoList"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="LinkInfoListFrame"/>
-      </Unit4>
-      <Unit5>
         <Filename Value="dnmp_unit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_unit"/>
-      </Unit5>
-      <Unit6>
+      </Unit4>
+      <Unit5>
         <Filename Value="dnmp_services.pas"/>
         <IsPartOfProject Value="True"/>
-      </Unit6>
-      <Unit7>
+        <UnitName Value="dnmp_services"/>
+      </Unit5>
+      <Unit6>
         <Filename Value="core.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Core"/>
-      </Unit7>
-      <Unit8>
+      </Unit6>
+      <Unit7>
         <Filename Value="dnmpnodeframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmp"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpNodeFrame"/>
-      </Unit8>
-      <Unit9>
+      </Unit7>
+      <Unit8>
         <Filename Value="Misc.pas"/>
         <IsPartOfProject Value="True"/>
-      </Unit9>
-      <Unit10>
+      </Unit8>
+      <Unit9>
         <Filename Value="dnmpservicesframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmpServices"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit10>
-      <Unit11>
+      </Unit9>
+      <Unit10>
         <Filename Value="configframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameConfig"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit11>
-      <Unit12>
+      </Unit10>
+      <Unit11>
         <Filename Value="grpcserviceframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameGrpcService"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit12>
-      <Unit13>
+      </Unit11>
+      <Unit12>
         <Filename Value="mailboxframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameMailbox"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="dnmp_mail.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_mail"/>
       </Unit13>
       <Unit14>
-        <Filename Value="dnmp_mail.pas"/>
+        <Filename Value="adapters.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit14>
       <Unit15>
-        <Filename Value="adapters.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit15>
-      <Unit16>
-        <Filename Value="contactlistframe.pas"/>
-        <IsPartOfProject Value="True"/>
-        <ComponentName Value="FrameContactList"/>
-        <HasResources Value="True"/>
-        <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="ContactListFrame"/>
-      </Unit16>
-      <Unit17>
         <Filename Value="linklistframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameLinkList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit17>
-      <Unit18>
+      </Unit15>
+      <Unit16>
         <Filename Value="linkinfoframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameLinkInfo"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="LinkInfoFrame"/>
-      </Unit18>
-      <Unit19>
+      </Unit16>
+      <Unit17>
         <Filename Value="dnmp_serializers.pas"/>
         <IsPartOfProject Value="True"/>
-      </Unit19>
-      <Unit20>
+        <UnitName Value="dnmp_serializers"/>
+      </Unit17>
+      <Unit18>
         <Filename Value="dnmp_grpc.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_grpc"/>
-      </Unit20>
-      <Unit21>
+      </Unit18>
+      <Unit19>
         <Filename Value="chatroomlistframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameChatRoomList"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-      </Unit21>
-      <Unit22>
+        <UnitName Value="ChatRoomListFrame"/>
+      </Unit19>
+      <Unit20>
         <Filename Value="dnmp_auth.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_auth"/>
-      </Unit22>
-      <Unit23>
+      </Unit20>
+      <Unit21>
         <Filename Value="dnmpwizardframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FormDnmpWizard"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-      </Unit23>
-      <Unit24>
+      </Unit21>
+      <Unit22>
         <Filename Value="dnmp_chat.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_chat"/>
-      </Unit24>
-      <Unit25>
+      </Unit22>
+      <Unit23>
         <Filename Value="dnmpchatframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmpChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpChatFrame"/>
-      </Unit25>
-      <Unit26>
+      </Unit23>
+      <Unit24>
         <Filename Value="dnmp_info.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_info"/>
-      </Unit26>
-      <Unit27>
+      </Unit24>
+      <Unit25>
         <Filename Value="dnmpcontactsframe.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="FrameDnmpContacts"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpContactsFrame"/>
-      </Unit27>
+      </Unit25>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -248,6 +236,7 @@
     </Linking>
     <Other>
       <CustomOptions Value="-dUseCThreads"/>
+      <CompilerPath Value="$(CompPath)"/>
     </Other>
   </CompilerOptions>
   <Debugging>

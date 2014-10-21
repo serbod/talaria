@@ -69,10 +69,13 @@ type
   public
     CreationTime: TDateTime;
     Contact: TDnmpContact;
+    { Parented list, not contain any data and use Contact as filter }
     MessagesList: TDnmpChatMessagesList;
   end;
 
 
+  { TDnmpChat }
+  { Contains chat sessions, messages list }
   TDnmpChat = class(TDnmpService)
   protected
     FOnSay: TNotifyEvent;
@@ -355,6 +358,8 @@ end;
 
 destructor TDnmpChat.Destroy();
 begin
+  Self.OnEvent:=nil;
+  Self.OnSay:=nil;
   FreeAndNil(Self.ChatSessions);
   FreeAndNil(Self.MessagesList);
   inherited Destroy();
