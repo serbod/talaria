@@ -12,7 +12,7 @@ uses
   ConfigFrame, GrpcServiceFrame, MailboxFrame, dnmp_mail, adapters,
   LinkListFrame, LinkInfoFrame, dnmp_serializers, dnmp_grpc,
   ChatRoomListFrame, dnmp_auth, DnmpWizardFrame, dnmp_chat, DnmpChatFrame,
-  dnmp_info, DnmpContactsFrame;
+  dnmp_info, DnmpContactsFrame, dnmp_filebox;
 
 {$R *.res}
 

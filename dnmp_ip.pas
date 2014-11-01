@@ -1,7 +1,7 @@
 unit dnmp_ip;
 
 interface
-uses {Windows,} SysUtils, Classes, blcksock, synsock, dnmp_unit;
+uses SysUtils, Classes, blcksock, synsock, dnmp_unit;
 
 type
   TSockReaderEvent = procedure(LastError: integer; Data: string) of object;
@@ -259,7 +259,7 @@ begin
   Mgr.DebugText('IpLink.Connect() OK');
   if Assigned(OnConnect) then OnConnect(Self);
   Mgr.Cmd('EVENT MGR UPDATE LINKS');
-  Result:=true;
+  Result:=True;
 end;
 
 function TIpLink.Listen(): boolean;
@@ -303,10 +303,10 @@ end;
 
 function TIpLink.Disconnect(): boolean;
 begin
-  Result:=false;
+  Result:=False;
   Mgr.DebugText('IpLink.Disconnect()');
   if not Active then Exit;
-  FActive:=false;
+  FActive:=False;
   RemoteInfo.State:=asOffline;
   IdleTimestamp:=Now();
   if Assigned(Reader) then
@@ -332,7 +332,7 @@ begin
   Mgr.DebugText('IpLink.Disconnect() OK');
   if Assigned(OnDisconnect) then OnDisconnect(Self);
   Mgr.Cmd('EVENT MGR UPDATE LINKS');
-  Result:=true;
+  Result:=True;
 end;
 
 function TIpLink.Check(): boolean;
