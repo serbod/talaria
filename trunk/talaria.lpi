@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="26">
+    <Units Count="27">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -204,6 +204,11 @@
         <ResourceBaseClass Value="Frame"/>
         <UnitName Value="DnmpContactsFrame"/>
       </Unit25>
+      <Unit26>
+        <Filename Value="dnmp_filebox.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="dnmp_filebox"/>
+      </Unit26>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

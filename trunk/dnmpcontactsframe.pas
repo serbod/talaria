@@ -815,6 +815,9 @@ var
   i, n: integer;
   Item: TDnmpContact;
 begin
+  actContactsPoints.Visible:=Assigned(Mgr) and Mgr.MyInfo.IsNode;
+  actContactsGuests.Visible:=Assigned(Mgr) and Mgr.MyInfo.IsNode;
+
   // clear list
   for i:=ScrollBoxContacts.ControlCount-1 downto 0 do ScrollBoxContacts.Controls[i].Free();
   VisualContacts.Clear();
