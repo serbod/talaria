@@ -119,6 +119,7 @@ procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 procedure PictureFromString(Picture: TPicture; sPic: AnsiString);
 procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
+procedure SetDefaultContactPicture(Picture: TPicture);
 
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
@@ -276,6 +277,11 @@ begin
     Picture.Bitmap.Assign(bmp);
     bmp.Free();
   end;
+end;
+
+procedure SetDefaultContactPicture(Picture: TPicture);
+begin
+  FormMain.ImageList24.GetBitmap(4, Picture.Bitmap);
 end;
 
 procedure AddServicePage(AService: TDnmpService);

@@ -167,7 +167,7 @@ begin
   Result:=False;
   while n<10 do
   begin
-    sFileName:=IncludeTrailingPathDelimiter(OutboxDir)+OutboxPrefix+IntToStr(OutNum)+'.msg');
+    sFileName:=IncludeTrailingPathDelimiter(OutboxDir)+OutboxPrefix+IntToStr(OutNum)+'.msg';
     Inc(OutNum);
     Inc(n);
     if FileExists(sFileName) then Continue;
