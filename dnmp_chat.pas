@@ -2,6 +2,63 @@ unit dnmp_chat;
 
 {$mode objfpc}{$H+}
 
+{
+===== Msg Header =====
+MsgType: CHAT
+Params:
+timestamp - message creation date and time
+author_name - author name
+author_guid - author GUID
+target_name - target abonent name
+target_guid - target abonent GUID
+cmd - command name
+
+===== Commands =====
+
+=== MSG ===
+  simple short message
+  if author in black list, return BYE
+Params:
+  * cmd=MSG
+  * req - request delivery report
+Data:
+  message text
+
+=== BYE ===
+  reject call, end of chat session
+Params:
+  * cmd=BYE
+Data:
+  reject message text
+
+=== FILE ===
+  small file, up to 16 KBytes
+  or preview for large file
+Params:
+  * cmd=FILE
+  * preview - (optional) data is preview for large file
+  * file_name - file name
+  * file_size - file size
+  * file_date - file creation date
+  * file_params - (optional) file params
+  * offset - (optional, default=0) offset from beginning of file, bytes
+Data:
+  file contents
+
+=== FREQ ===
+  file request
+Params:
+  * cmd=FREQ
+  * file_name - file name
+  * preview - (optional) request only preview for large file
+  * offset - (optional, default=0) offset from beginning of file, bytes
+  * size - (optional) size of requested data
+Data:
+  none
+
+}
+
+
 interface
 
 uses
@@ -13,7 +70,7 @@ type
   // GRPC Chat message
   // Contain text and basic info about author
   // Serializable
-  TDnmpChatMessage = class(TCollectionItem)
+  TDnmpChatMessage = class(TInterfacedObject)
   public
     Timestamp: TDateTime;
     IsIncoming: boolean;
@@ -21,8 +78,24 @@ type
     RemoteName: string;
     RemoteGUID: string;
     Text: string;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDnmpStorage; virtual;
+    function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+  end;
+
+  { TDnmpChatFileMessage }
+  // GRPC Chat File message
+  // Contain short file info and contents
+  // Serializable
+  TDnmpChatFileMessage = class(TDnmpChatMessage)
+  public
+    FileName: string;
+    FileDate: TDateTime;
+    FileSize: Cardinal;
+    FileContent: TStream;
+    procedure AfterConstruction(); override;
+    procedure BeforeDestruction(); override;
+    function ToStorage(): TDnmpStorage; override;
+    function FromStorage(Storage: TDnmpStorage): boolean; override;
   end;
 
   { TDnmpChatMessagesList }
@@ -32,10 +105,10 @@ type
   TDnmpChatMessagesList = class(TInterfacedObject)
   protected
     FObservers: TComponentList;
-    FItems: TCollection;
+    FItems: TObjectList;
     function GetCount(): integer;
-    function GetItem(Index: Integer): TDnmpChatMessage; reintroduce;
-    procedure SetItem(Index: Integer; Value: TDnmpChatMessage); reintroduce;
+    function GetItem(Index: Integer): TDnmpChatMessage;
+    procedure SetItem(Index: Integer; Value: TDnmpChatMessage);
   public
     MaxCount: Integer;
     { source of messages }
@@ -55,6 +128,16 @@ type
       RemoteGUID
       RemoteContact - (optional), for name and address }
     function AddItem(Timestamp: TDateTime; IsIncoming: boolean; Text: string; RemoteAddr: TAddr; RemoteContact: TDnmpContact = nil): TDnmpChatMessage; overload;
+    { Add FILE message to list:
+    Timestamp - datetime
+    IsIncoming - true if incoming message
+    RemoteGUID
+    RemoteContact - (optional), for name and address
+    AFileName - file name
+    AFileSize - file size (bytes)
+    AFileDate - file creation date
+    }
+    function AddItemFile(Timestamp: TDateTime; IsIncoming: boolean; RemoteAddr: TAddr; AFileName: string; AFileSize: Cardinal; AFileDate: TDateTime; RemoteContact: TDnmpContact = nil): TDnmpChatFileMessage;
     //function GetAbonentByGUID(sGUID: string): TDnmpChannelMessage;
     { Add observer visual control }
     function AddObserver(AControl: TComponent): boolean;
@@ -99,6 +182,39 @@ type
   end;
 
 implementation
+
+{ TDnmpChatFileMessage }
+
+procedure TDnmpChatFileMessage.AfterConstruction();
+begin
+  inherited AfterConstruction();
+  Self.FileContent:=TMemoryStream.Create();
+end;
+
+procedure TDnmpChatFileMessage.BeforeDestruction();
+begin
+  FreeAndNil(Self.FileContent);
+  inherited BeforeDestruction();
+end;
+
+function TDnmpChatFileMessage.ToStorage: TDnmpStorage;
+begin
+  Result:=inherited ToStorage;
+  Result.Add('file_name', FileName);
+  Result.Add('file_size', FileSize);
+  Result.Add('file_date', FileDate);
+  Result.Add('file_content', StreamToStr(FileContent));
+end;
+
+function TDnmpChatFileMessage.FromStorage(Storage: TDnmpStorage): boolean;
+begin
+  Result:=inherited FromStorage(Storage);
+  if not Result then Exit;
+  Self.FileName:=Storage.GetString('file_name');
+  Self.FileSize:=Storage.GetInteger('file_size');
+  Self.FileDate:=Storage.GetReal('file_date');
+  Result:=StrToStream(Storage.GetString('file_content'), Self.FileContent);
+end;
 
 { TDnmpChatMessage }
 
@@ -199,7 +315,7 @@ end;
 constructor TDnmpChatMessagesList.Create();
 begin
   inherited Create();
-  FItems:=TCollection.Create(TDnmpChatMessage);
+  FItems:=TObjectList.Create();
   FObservers:=TComponentList.Create(False);
 end;
 
@@ -212,21 +328,20 @@ end;
 
 function TDnmpChatMessagesList.AddItem(Item: TDnmpChatMessage): Integer;
 begin
-  {
-  if not Assigned(ParentList) then Result:=inherited Add()
+  Result:=-1;
+  if not Assigned(ParentList) then
+  begin
+    Result:=FItems.IndexOf(Item);
+    if Result=-1 then Result:=FItems.Add(Item)
+  end
   else
   begin
     if Assigned(Contact) then
     begin
-      Result:=0;
-      for i:=0 to ParentList.Count-1 do
-      begin
-        if ParentList[i].RemoteGUID=Contact.GUID then Result:=Result+1;
-      end;
-    end
-    else Result:=ParentList.Count;
+      if not SameAddr(Contact.Addr, Item.RemoteAddr) then Exit;
+    end;
+    Result:=ParentList.AddItem(Item);
   end;
-  }
 end;
 
 function TDnmpChatMessagesList.AddItem(Timestamp: TDateTime;
@@ -240,7 +355,8 @@ begin
   begin
     // { TODO : find }
     // add
-    Result:=(FItems.Add() as TDnmpChatMessage);
+    Result:=TDnmpChatMessage.Create();
+    FItems.Add(Result);
     Result.Timestamp:=Timestamp;
     Result.IsIncoming:=IsIncoming;
     Result.Text:=Text;
@@ -265,6 +381,51 @@ begin
       if not SameAddr(Contact.Addr, RemoteAddr) then Exit;
     end;
     Result:=ParentList.AddItem(Timestamp, IsIncoming, Text, RemoteAddr, RemoteContact);
+  end;
+end;
+
+function TDnmpChatMessagesList.AddItemFile(Timestamp: TDateTime;
+  IsIncoming: boolean; RemoteAddr: TAddr; AFileName: string;
+  AFileSize: Cardinal; AFileDate: TDateTime; RemoteContact: TDnmpContact
+  ): TDnmpChatFileMessage;
+var
+  TmpContact: TDnmpContact;
+begin
+  Result:=nil;
+  if not Assigned(ParentList) then
+  begin
+    // { TODO : find }
+    // add
+    Result:=TDnmpChatFileMessage.Create();
+    FItems.Add(Result);
+    Result.Timestamp:=Timestamp;
+    Result.IsIncoming:=IsIncoming;
+    Result.Text:='';
+    if Assigned(RemoteContact) then
+    begin
+      Result.RemoteGUID:=RemoteContact.GUID;
+      Result.RemoteName:=RemoteContact.Name;
+      Result.RemoteAddr:=RemoteContact.Addr;
+    end
+    else
+    begin
+      Result.RemoteAddr:=RemoteAddr;
+      Result.RemoteName:='';
+      Result.RemoteGUID:='';
+    end;
+    Result.FileName:=AFileName;
+    Result.FileSize:=AFileSize;
+    Result.FileDate:=AFileDate;
+    //Result.FileContent;
+  end
+
+  else
+  begin
+    if Assigned(Contact) then
+    begin
+      if not SameAddr(Contact.Addr, RemoteAddr) then Exit;
+    end;
+    Result:=ParentList.AddItemFile(Timestamp, IsIncoming, RemoteAddr, AFileName, AFileSize, AFileDate, RemoteContact);
   end;
 end;
 
@@ -314,12 +475,16 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    Item:=(FItems.Add() as TDnmpChatMessage);
+    if SubStorage.HaveName('file_name') then
+      Item:=TDnmpChatFileMessage.Create()
+    else
+      Item:=TDnmpChatMessage.Create();
     if not Item.FromStorage(SubStorage.GetObject(i)) then
     begin
       Item.Free();
       Continue;
     end;
+    FItems.Add(Item);
   end;
   Result:=True;
 end;

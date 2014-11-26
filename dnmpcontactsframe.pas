@@ -6,40 +6,62 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, ExtCtrls, ComCtrls, StdCtrls,
-  ActnList, Menus, dnmp_unit, Core, dnmp_chat, Graphics, Dialogs, LCLType, LazUTF8;
+  ActnList, Menus, dnmp_unit, Core, dnmp_chat, Graphics, Dialogs, LCLType,
+  LazUTF8, contnrs;
 
 type
 
-  { TVisualContact }
-  { TODO : As visual component (TGraphicControl) }
-  TVisualContact = class(TCollectionItem)
+  { TVisualContactItem }
+  TVisualContactItem = class(TGraphicControl)
   private
     FSelected: boolean;
     FActive: boolean;
+    FItem: TDnmpContact;
     procedure FSetSelected(Value: boolean);
     procedure FSetActive(Value: boolean);
+    procedure FSetItem(Value: TDnmpContact);
   public
-    Item: TDnmpContact;
-    Rect: TRect;
+    //Rect: TRect;
     Image: TImage;
-    lbName: TLabel;
-    Background: TShape;
+    //lbName: TLabel;
+    //Background: TShape;
     property Selected: boolean read FSelected write FSetSelected;
     property Active: boolean read FActive write FSetActive;
+    property Item: TDnmpContact read FItem write FSetItem;
+    procedure Paint(); override;
   end;
 
-  TVisualChatItem = class(TCollectionItem)
+  { TVisualChatItem }
+
+  TVisualChatItem = class(TGraphicControl)
   private
     FSelected: boolean;
     FActive: boolean;
   public
     Item: TDnmpChatMessage;
-    Rect: TRect;
+    //Rect: TRect;
     //Image: TImage;
     lbName: TLabel;
     lbTime: TLabel;
     lbText: TLabel;
     Background: TShape;
+    Chat: TDnmpChat;
+    procedure Paint(); override;
+    { Calculate Height value, with multi-line text field. Text and Width must be set }
+    function GetHeight(): integer;
+  end;
+
+  { TVisualChatFileItem }
+
+  TVisualChatFileItem = class(TGraphicControl)
+  private
+    FSelected: boolean;
+    FActive: boolean;
+  public
+    Item: TDnmpChatFileMessage;
+    //Rect: TRect;
+    Chat: TDnmpChat;
+    procedure Paint(); override;
   end;
 
   TVisualInfoItem = class(TCollectionItem)
@@ -75,7 +97,6 @@ type
     actRequestInfo: TAction;
     alContacts: TActionList;
     edChatSay: TEdit;
-    imgDefault: TImage;
     MenuItem1: TMenuItem;
     MenuItem2: TMenuItem;
     MenuItem3: TMenuItem;
@@ -120,14 +141,15 @@ type
     procedure edChatSayKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure pmContactsPopup(Sender: TObject);
+    procedure ScrollBoxChatResize(Sender: TObject);
   private
     { private declarations }
     FServ: TServiceDnmp;
     FChat: TDnmpChat;
     FContact: TDnmpContact;
     FContactList: TDnmpContactList;
-    VisualContacts: TCollection;
-    VisualChatItems: TCollection;
+    VisualContacts: TComponentList;
+    VisualChatItems: TComponentList;
     VisualInfoItems: TCollection;
     Mgr: TDnmpManager;
     ChatSession: TDnmpChatSession;
@@ -135,10 +157,10 @@ type
     procedure FSetChat(Value: TDnmpChat);
     procedure FSetContact(Value: TDnmpContact);
     procedure FSetContactList(Value: TDnmpContactList);
-    function AddVisualContact(Item: TDnmpContact): TVisualContact;
+    function AddVisualContact(Item: TDnmpContact): TVisualContactItem;
     function AddVisualChatItem(Item: TDnmpChatMessage): TVisualChatItem;
     function AddVisualInfoItem(AName, AValue: string): TVisualInfoItem;
-    function VisualContactBySender(Sender: TObject): TVisualContact;
+    function VisualContactBySender(Sender: TObject): TVisualContactItem;
     procedure OnMouseEnterContact(Sender: TObject);
     procedure OnMouseLeaveContact(Sender: TObject);
     procedure OnMouseDownContact(Sender: TObject; Button: TMouseButton;
@@ -167,28 +189,284 @@ uses dnmp_services;
 
 {$R *.lfm}
 
-{ TVisualContact }
+{ TVisualChatItem }
 
-procedure TVisualContact.FSetSelected(Value: boolean);
+procedure TVisualChatItem.Paint();
+var
+  i, x, y, h, w, n, nn: integer;
+  Image: TImage;
+  s, ss: string;
 begin
-  FSelected:=Value;
-  if Assigned(Background) then
+  if Assigned(OnPaint) then
   begin
-    if FSelected then Background.Brush.Color:=clActiveCaption
-    else if FActive then Background.Brush.Color:=clInactiveCaption
-    else Background.Brush.Color:=clNone;
+    inherited Paint();
+    Exit;
   end;
+  h:=16;
+
+  Self.Canvas.AntialiasingMode:=TAntialiasingMode.amOn;
+
+  // frame
+  if FSelected then Self.Canvas.Brush.Color:=clActiveCaption
+  else if FActive then Self.Canvas.Brush.Color:=clInactiveCaption
+  else Self.Canvas.Brush.Color:=clNone;
+
+  Self.Canvas.Pen.Color:=clActiveBorder;
+  //Self.Canvas.RoundRect(Self.ClientRect, 4, 4);
+  Self.Canvas.Rectangle(Self.ClientRect);
+
+  // author name
+  x:=6;
+  y:=2;
+  Self.Canvas.Font.Size:=8;
+  Self.Canvas.Font.Style:=[fsBold];
+  s:=BoolToStr(Item.IsIncoming, Item.RemoteName, Chat.Author.Name);
+  Self.Canvas.TextOut(x, y, s);
+
+  // time
+  x:=x+200;
+  //y:=;
+  Self.Canvas.Font.Size:=8;
+  Self.Canvas.Font.Style:=[];
+  s:=FormatDateTime('YYYY-MM-DD HH:NN:SS', Item.Timestamp);
+  Self.Canvas.TextOut(x, y, s);
+
+  // text
+  x:=6;
+  y:=y+h;
+  Self.Canvas.Font.Size:=10;
+  Self.Canvas.Font.Style:=[];
+
+  // calculate text height
+  ss:=Item.Text;
+  w:=Self.Width-10;
+  n:=Self.Canvas.TextFitInfo(ss, w);
+  while n<UTF8Length(ss) do
+  begin
+    s:=UTF8Copy(ss, 1, n);
+    Self.Canvas.TextOut(x, y, s);
+    y:=y+h;
+    ss:=UTF8Copy(ss, n, maxint);
+    n:=Self.Canvas.TextFitInfo(ss, w);
+  end;
+  Self.Canvas.TextOut(x, y, ss);
+  //Self.Height:=y+h+2;
+
 end;
 
-procedure TVisualContact.FSetActive(Value: boolean);
+function TVisualChatItem.GetHeight(): integer;
+var
+  h, w, n: integer;
+  ss: string;
 begin
-  FActive:=Value;
+  // calculate text height
+  h:=16;
+  Result:=2+h;
+  ss:=Item.Text;
+  w:=Self.Width-10;
+  n:=Self.Canvas.TextFitInfo(ss, w);
+  while n<UTF8Length(ss) do
+  begin
+    Result:=Result+h;
+    ss:=UTF8Copy(ss, n, maxint);
+    n:=Self.Canvas.TextFitInfo(ss, w);
+  end;
+  Result:=Result+h+2;
+end;
+
+{ TVisualChatFileItem }
+
+procedure TVisualChatFileItem.Paint();
+var
+  i, x, y, h, n, nn: integer;
+  Image: TImage;
+  s, ss: string;
+begin
+  h:=16;
+
+  Self.Canvas.AntialiasingMode:=TAntialiasingMode.amOn;
+
+  // frame
+  Self.Canvas.Pen.Color:=clActiveBorder;
+  Self.Canvas.RoundRect(Self.ReadBounds, 4, 4);
+
+  // author name
+  x:=6;
+  y:=10;
+  Self.Canvas.Font.Size:=8;
+  Self.Canvas.Font.Style:=[fsBold];
+  s:=BoolToStr(Item.IsIncoming, Item.RemoteName, Chat.Author.Name);
+  Self.Canvas.TextOut(x, y, s);
+
+  // time
+  x:=x+200;
+  //y:=;
+  Self.Canvas.Font.Size:=8;
+  Self.Canvas.Font.Style:=[];
+  s:=FormatDateTime('YYYY-MM-DD HH:NN:SS', Item.Timestamp);
+  Self.Canvas.TextOut(x, y, s);
+
+  // file name
+  x:=6;
+  y:=y+h;
+  Self.Canvas.Font.Size:=10;
+  Self.Canvas.Font.Style:=[];
+  Self.Canvas.TextOut(x, y, Item.FileName);
+
+  // file size
+  x:=x+200;
+  //y:=;
+  Self.Canvas.Font.Size:=10;
+  Self.Canvas.Font.Style:=[];
+  Self.Canvas.TextOut(x, y, 'Size: '+IntToStr(Item.FileSize)+' bytes');
+
+  {
+  // image
+  Image:=TImage.Create(ScrollBox);
+  Image.Name:='img'+IntToStr(i);
+  Image.Parent:=ScrollBox;
+  Image.Left:=x;
+  Image.Top:=y;
+  Image.Height:=h;
+  Image.Width:=h;
+
+  Image.Center:=True;
+  Image.Proportional:=True;
+  Image.Stretch:=True;
+  if Length(Item.Picture)>4 then
+  begin
+    ss:=TStringStream.Create(Item.Picture);
+    try
+      Image.Picture.LoadFromStream(ss);
+    finally
+      ss.Free();
+    end;
+  end
+  else
+  begin
+    Image.Picture.Assign(imgDefault.Picture);
+  end;
+  Result.Image:=Image;
+  x:=x+Image.Width+2;
+  }
+
+  inherited Paint();
+
+end;
+
+{ TVisualContactItem }
+
+procedure TVisualContactItem.FSetSelected(Value: boolean);
+begin
+  FSelected:=Value;
+  Invalidate();
+  {
   if Assigned(Background) then
   begin
     if FSelected then Background.Brush.Color:=clActiveCaption
     else if FActive then Background.Brush.Color:=clInactiveCaption
     else Background.Brush.Color:=clNone;
   end;
+  }
+end;
+
+procedure TVisualContactItem.FSetActive(Value: boolean);
+begin
+  FActive:=Value;
+  Invalidate();
+  {
+  if Assigned(Background) then
+  begin
+    if FSelected then Background.Brush.Color:=clActiveCaption
+    else if FActive then Background.Brush.Color:=clInactiveCaption
+    else Background.Brush.Color:=clNone;
+  end;
+  }
+end;
+
+procedure TVisualContactItem.FSetItem(Value: TDnmpContact);
+var
+  ss: TStringStream;
+begin
+  FItem:=Value;
+  if Assigned(Image) then FreeAndNil(Image);
+  if not Assigned(FItem) then Exit;
+
+  // image
+  Image:=TImage.Create(Self);
+  //Image.Name:='img'+IntToStr(i);
+  //Image.Parent:=ScrollBoxContacts;
+  Image.Left:=0;
+  Image.Top:=0;
+  Image.Height:=Self.Height-2;
+  Image.Width:=Self.Height-2;
+
+  Image.Center:=True;
+  Image.Proportional:=True;
+  Image.Stretch:=True;
+  if Length(Item.Picture)>4 then
+  begin
+    ss:=TStringStream.Create(Item.Picture);
+    try
+      Image.Picture.LoadFromStream(ss);
+    finally
+      ss.Free();
+    end;
+  end
+  else
+  begin
+    Core.SetDefaultContactPicture(Image.Picture);
+    //Image.Picture.Assign(imgDefault.Picture);
+  end;
+
+end;
+
+procedure TVisualContactItem.Paint();
+var
+  i, x, y, h: integer;
+  //Pan: TPanel;
+  //Image: TImage;
+  lb: TLabel;
+  ss: TStringStream;
+  s: string;
+  r1, r2: TRect;
+begin
+  inherited Paint();
+  h:=24;
+
+  Self.Canvas.AntialiasingMode:=TAntialiasingMode.amOn;
+
+  // frame
+  if FSelected then Self.Canvas.Brush.Color:=clActiveCaption
+  else if FActive then Self.Canvas.Brush.Color:=clInactiveCaption
+  else Self.Canvas.Brush.Color:=clNone;
+
+  Self.Canvas.Pen.Color:=clActiveBorder;
+  //Self.Canvas.RoundRect(Self.BoundsRect, 4, 4);
+  //Self.Canvas.Rectangle(Self.BoundsRect);
+  Self.Canvas.Rectangle(Self.ClientRect);
+
+  // copy image
+  if Assigned(Image) then
+  begin
+    x:=2;
+    y:=2;
+    r1:=Rect(x, y, x+h-2, y+h-2);
+    //r2:=Image.BoundsRect;
+    //Self.Canvas.CopyRect(r1, Image.Canvas, r2);
+    //Self.Canvas.Draw(x, y, Image.Picture.Bitmap);
+    Self.Canvas.StretchDraw(r1, Image.Picture.Bitmap);
+  end;
+
+  x:=x+Image.Width+2;
+
+  // contact name
+  y:=2;
+  Self.Canvas.Font.Size:=12;
+  Self.Canvas.Font.Style:=[];
+  s:=Item.Name;
+  Self.Canvas.TextOut(x, y, s);
+
 end;
 
 { TFrameDnmpContacts }
@@ -329,6 +607,11 @@ begin
   actApprove.Visible:=actContactsGuests.Checked;
 end;
 
+procedure TFrameDnmpContacts.ScrollBoxChatResize(Sender: TObject);
+begin
+  edChatSay.Text:='h='+IntToStr(ScrollBoxChat.ClientHeight)+'  v='+IntToStr(ScrollBoxChat.ClientWidth);
+end;
+
 procedure TFrameDnmpContacts.FSetServ(Value: TServiceDnmp);
 var
   MgrAssigned: Boolean;
@@ -393,7 +676,8 @@ begin
   UpdateContactsList();
 end;
 
-function TFrameDnmpContacts.AddVisualContact(Item: TDnmpContact): TVisualContact;
+{
+function TFrameDnmpContacts.AddVisualContact(Item: TDnmpContact): TVisualContactItem;
 var
   i, x, y, h: integer;
   //Pan: TPanel;
@@ -407,7 +691,7 @@ begin
   y:=(h+2)*i;
 
   //Result:=TVisualItem.Create();
-  Result:=(VisualContacts.Add() as TVisualContact);
+  Result:=(VisualContacts.Add() as TVisualContactItem);
   Result.Item:=Item;
   Result.Rect.Top:=y;
   Result.Rect.Left:=x;
@@ -485,7 +769,39 @@ begin
   Result.Background.Width:=Result.Rect.Right-Result.Rect.Left;
   Result.Background.Height:=Result.Rect.Bottom-Result.Rect.Top;
 end;
+}
 
+function TFrameDnmpContacts.AddVisualContact(Item: TDnmpContact): TVisualContactItem;
+var
+  i, x, y, h: integer;
+begin
+  x:=2;
+  h:=24;
+  i:=VisualContacts.Count;
+  y:=(h+2)*i;
+
+  Result:=TVisualContactItem.Create(ScrollBoxContacts);
+  Result.Name:='vc'+IntToStr(i);
+  Result.Parent:=ScrollBoxContacts;
+  VisualContacts.Add(Result);
+
+  Result.Top:=y;
+  Result.Left:=x;
+  Result.Width:=ScrollBoxContacts.ClientWidth-4;
+  Result.Height:=h;
+  //Result.Anchors:=[akTop, akLeft];
+  Result.Anchors:=[akTop, akLeft, akRight];
+
+  Result.Item:=Item;
+  ScrollBoxContacts.UpdateScrollbars();
+
+  Result.OnMouseDown:=@OnMouseDownContact;
+  Result.OnMouseEnter:=@OnMouseEnterContact;
+  Result.OnMouseLeave:=@OnMouseLeaveContact;
+  Result.PopupMenu:=pmContacts;
+end;
+
+{
 function TFrameDnmpContacts.AddVisualChatItem(Item: TDnmpChatMessage
   ): TVisualChatItem;
 var
@@ -648,6 +964,45 @@ begin
   // scroll to message
   ScrollBoxChat.VertScrollBar.Position:=(ScrollBoxChat.VertScrollBar.Range-ScrollBoxChat.VertScrollBar.Page);
 end;
+}
+
+function TFrameDnmpContacts.AddVisualChatItem(Item: TDnmpChatMessage
+  ): TVisualChatItem;
+var
+  i, x, y, h: integer;
+begin
+  x:=2;
+  h:=16;
+  y:=LastChatY+2;
+  i:=VisualChatItems.Count;
+
+  Result:=TVisualChatItem.Create(ScrollBoxChat);
+  Result.Name:='vchi'+IntToStr(i);
+  VisualChatItems.Add(Result);
+
+  Result.Chat:=Chat;
+  Result.Item:=Item;
+
+  Result.Parent:=ScrollBoxChat;
+  Result.Top:=y;
+  Result.Left:=x;
+  Result.Width:=ScrollBoxChat.ClientWidth-4;
+  Result.Height:=Result.GetHeight();
+  //Result.Anchors:=[akTop, akLeft];
+  Result.Anchors:=[akTop, akLeft, akRight];
+
+  LastChatY:=Result.Top+Result.Height;
+  ScrollBoxChat.ClientHeight:=LastChatY;
+  ScrollBoxContacts.UpdateScrollbars();
+
+  //Result.OnMouseDown:=@OnMouseDown;
+  //Result.OnMouseEnter:=@OnMouseEnterContact;
+  //Result.OnMouseLeave:=@OnMouseLeaveContact;
+  //Result.PopupMenu:=pmContacts;
+
+  // scroll to message
+  ScrollBoxChat.VertScrollBar.Position:=(ScrollBoxChat.VertScrollBar.Range-ScrollBoxChat.VertScrollBar.Page);
+end;
 
 function TFrameDnmpContacts.AddVisualInfoItem(AName, AValue: string
   ): TVisualInfoItem;
@@ -740,25 +1095,18 @@ begin
 end;
 
 function TFrameDnmpContacts.VisualContactBySender(Sender: TObject
-  ): TVisualContact;
+  ): TVisualContactItem;
 var
   i: integer;
 begin
   Result:=nil;
-  if (Sender is TStaticText) or ((Sender is TLabel)) then
-  begin
-    for i:=0 to VisualContacts.Count-1 do
-    begin
-      Result:=(VisualContacts.Items[i] as TVisualContact);
-      if Sender=Result.lbName then Exit;
-    end;
-    Result:=nil;
-  end;
+  if (Sender is TVisualContactItem) then
+    Result:=(Sender as TVisualContactItem);
 end;
 
 procedure TFrameDnmpContacts.OnMouseEnterContact(Sender: TObject);
 var
-  Item: TVisualContact;
+  Item: TVisualContactItem;
 begin
   Item:=VisualContactBySender(Sender);
   if Assigned(Item) then Item.Active:=True;
@@ -766,7 +1114,7 @@ end;
 
 procedure TFrameDnmpContacts.OnMouseLeaveContact(Sender: TObject);
 var
-  Item: TVisualContact;
+  Item: TVisualContactItem;
 begin
   Item:=VisualContactBySender(Sender);
   if Assigned(Item) then Item.Active:=False;
@@ -775,7 +1123,7 @@ end;
 procedure TFrameDnmpContacts.OnMouseDownContact(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 var
-  Item, Item2: TVisualContact;
+  Item, Item2: TVisualContactItem;
   i: integer;
 begin
   //Item:=VisualItemAtMousePos();
@@ -783,7 +1131,7 @@ begin
   if not Assigned(Item) then Exit;
   for i:=0 to VisualContacts.Count-1 do
   begin
-    Item2:=(VisualContacts.Items[i] as TVisualContact);
+    Item2:=(VisualContacts.Items[i] as TVisualContactItem);
     if (Item2<>Item) and (Item2.Selected) then Item2.Selected:=False;
   end;
   Item.Selected:=True;
@@ -793,8 +1141,8 @@ end;
 procedure TFrameDnmpContacts.AfterConstruction();
 begin
   inherited AfterConstruction();
-  VisualContacts:=TCollection.Create(TVisualContact);
-  VisualChatItems:=TCollection.Create(TVisualChatItem);
+  VisualContacts:=TComponentList.Create();
+  VisualChatItems:=TComponentList.Create();
   VisualInfoItems:=TCollection.Create(TVisualInfoItem);
   FContact:=nil;
   ChatSession:=nil;
