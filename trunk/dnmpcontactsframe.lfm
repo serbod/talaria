@@ -98,9 +98,9 @@ object FrameDnmpContacts: TFrameDnmpContacts
       Height = 412
       Top = 0
       Width = 397
-      ActivePage = tsInfo
+      ActivePage = tsChat
       Align = alClient
-      TabIndex = 1
+      TabIndex = 0
       TabOrder = 0
       object tsChat: TTabSheet
         Caption = 'Chat'
@@ -260,6 +260,12 @@ object FrameDnmpContacts: TFrameDnmpContacts
       Caption = 'Add contact'
       ImageIndex = 36
       OnExecute = actAddContactExecute
+    end
+    object actSendFileToContact: TAction
+      Category = 'Contact'
+      Caption = 'Send file'
+      ImageIndex = 4
+      OnExecute = actSendFileToContactExecute
     end
   end
   object pmContacts: TPopupMenu

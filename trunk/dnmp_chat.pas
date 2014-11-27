@@ -62,7 +62,7 @@ Data:
 interface
 
 uses
-  Classes, SysUtils, dnmp_unit, dnmp_services, contnrs;
+  Classes, SysUtils, dnmp_unit, dnmp_services, contnrs, FileUtil;
 
 type
 
@@ -173,7 +173,10 @@ type
     function ToStorage(): TDnmpStorage; override;
     function FromStorage(Storage: TDnmpStorage): boolean; override;
     //function SayText(AbonentGUID: string; sText: string): string;
+    { create new message with sText and send it to Contact }
     function SayToContact(Contact: TDnmpContact; sText: string): string;
+    { send file to Contact }
+    function SendFileToContact(Contact: TDnmpContact; AFileName: string): string;
     { return messages list for contact }
     function GetChatSessionForContact(AContact: TDnmpContact): TDnmpChatSession;
     //function Msg(Msg: TDnmpMsg): string; override;
@@ -569,6 +572,35 @@ begin
   AddChatMessage(Contact, False, sText);
   // send message to remote contact
   Mgr.SendDataMsg(Contact.Addr, 'CHAT', 'cmd=MSG', sText);
+end;
+
+function TDnmpChat.SendFileToContact(Contact: TDnmpContact; AFileName: string
+  ): string;
+var
+  ChatFileMessage: TDnmpChatFileMessage;
+  fs: TFileStream;
+begin
+  if not FileExistsUTF8(AFileName) then Exit;
+  ChatFileMessage:=TDnmpChatFileMessage.Create();
+  ChatFileMessage.FileName:=AFileName;
+  ChatFileMessage.FileDate:=FileAgeUTF8();
+  try
+    fs:=TFileStream.Create(AFileName, fmOpenRead);
+  except
+    fs:=nil;
+  end;
+  if Assigned(fs) then
+  begin
+    ChatFileMessage.FileSize:=fs.Size;
+    ChatFileMessage.FileContent.CopyFrom(fs, fs.Size);
+    FreeAndNil(fs);
+  end;
+
+  // add to local messages list
+  AddChatMessage(Contact, False, sText);
+  // send message to remote contact
+  Mgr.SendDataMsg(Contact.Addr, 'CHAT', 'cmd=MSG', sText);
+
 end;
 
 function TDnmpChat.GetChatSessionForContact(AContact: TDnmpContact

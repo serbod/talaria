@@ -94,6 +94,7 @@ type
     actApprove: TAction;
     actEditContact: TAction;
     actAddContact: TAction;
+    actSendFileToContact: TAction;
     actRequestInfo: TAction;
     alContacts: TActionList;
     edChatSay: TEdit;
@@ -138,6 +139,7 @@ type
     procedure actEditContactExecute(Sender: TObject);
     procedure actFindContactsExecute(Sender: TObject);
     procedure actRequestInfoExecute(Sender: TObject);
+    procedure actSendFileToContactExecute(Sender: TObject);
     procedure edChatSayKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure pmContactsPopup(Sender: TObject);
@@ -153,6 +155,8 @@ type
     VisualInfoItems: TCollection;
     Mgr: TDnmpManager;
     ChatSession: TDnmpChatSession;
+    LastVisualContactItem: TControl;
+    LastVisualChatItem: TControl;
     procedure FSetServ(Value: TServiceDnmp);
     procedure FSetChat(Value: TDnmpChat);
     procedure FSetContact(Value: TDnmpContact);
@@ -292,7 +296,7 @@ begin
 
   // author name
   x:=6;
-  y:=10;
+  y:=2;
   Self.Canvas.Font.Size:=8;
   Self.Canvas.Font.Style:=[fsBold];
   s:=BoolToStr(Item.IsIncoming, Item.RemoteName, Chat.Author.Name);
@@ -567,6 +571,16 @@ begin
   if Assigned(Contact) then Mgr.RequestInfoByAddr(Contact.Addr);
 end;
 
+procedure TFrameDnmpContacts.actSendFileToContactExecute(Sender: TObject);
+var
+  FileName: string;
+begin
+  if not Assigned(Contact) then Exit;
+  FileName:=Core.SelectFileName();
+  if FileName='' then Exit;
+  //Chat.
+end;
+
 procedure TFrameDnmpContacts.edChatSayKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
@@ -609,7 +623,7 @@ end;
 
 procedure TFrameDnmpContacts.ScrollBoxChatResize(Sender: TObject);
 begin
-  edChatSay.Text:='h='+IntToStr(ScrollBoxChat.ClientHeight)+'  v='+IntToStr(ScrollBoxChat.ClientWidth);
+  //edChatSay.Text:='h='+IntToStr(ScrollBoxChat.ClientHeight)+'  v='+IntToStr(ScrollBoxChat.ClientWidth);
 end;
 
 procedure TFrameDnmpContacts.FSetServ(Value: TServiceDnmp);
@@ -782,18 +796,24 @@ begin
 
   Result:=TVisualContactItem.Create(ScrollBoxContacts);
   Result.Name:='vc'+IntToStr(i);
-  Result.Parent:=ScrollBoxContacts;
   VisualContacts.Add(Result);
 
-  Result.Top:=y;
-  Result.Left:=x;
+  //Result.Top:=y;
+  //Result.Left:=x;
   Result.Width:=ScrollBoxContacts.ClientWidth-4;
   Result.Height:=h;
   //Result.Anchors:=[akTop, akLeft];
   Result.Anchors:=[akTop, akLeft, akRight];
+  Result.Parent:=ScrollBoxContacts;
 
   Result.Item:=Item;
-  ScrollBoxContacts.UpdateScrollbars();
+  //ScrollBoxContacts.UpdateScrollbars();
+
+  if Assigned(LastVisualContactItem) then
+  begin
+    Result.AnchorToNeighbour(akTop, 2, LastVisualContactItem);
+  end;
+  LastVisualContactItem:=Result;
 
   Result.OnMouseDown:=@OnMouseDownContact;
   Result.OnMouseEnter:=@OnMouseEnterContact;
@@ -990,15 +1010,21 @@ begin
   Result.Height:=Result.GetHeight();
   //Result.Anchors:=[akTop, akLeft];
   Result.Anchors:=[akTop, akLeft, akRight];
+  if Assigned(LastVisualChatItem) then
+  begin
+    Result.AnchorToNeighbour(akTop, 2, LastVisualChatItem);
+  end;
 
   LastChatY:=Result.Top+Result.Height;
-  ScrollBoxChat.ClientHeight:=LastChatY;
-  ScrollBoxContacts.UpdateScrollbars();
+  //ScrollBoxChat.ClientHeight:=LastChatY;
+  //ScrollBoxContacts.UpdateScrollbars();
 
   //Result.OnMouseDown:=@OnMouseDown;
   //Result.OnMouseEnter:=@OnMouseEnterContact;
   //Result.OnMouseLeave:=@OnMouseLeaveContact;
   //Result.PopupMenu:=pmContacts;
+
+  LastVisualChatItem:=Result;
 
   // scroll to message
   ScrollBoxChat.VertScrollBar.Position:=(ScrollBoxChat.VertScrollBar.Range-ScrollBoxChat.VertScrollBar.Page);
@@ -1169,6 +1195,7 @@ begin
   // clear list
   for i:=ScrollBoxContacts.ControlCount-1 downto 0 do ScrollBoxContacts.Controls[i].Free();
   VisualContacts.Clear();
+  LastVisualContactItem:=nil;
 
   if Assigned(ContactList) then
   begin
@@ -1186,6 +1213,7 @@ var
 begin
   for i:=ScrollBoxChat.ControlCount-1 downto 0 do ScrollBoxChat.Controls[i].Free();
   VisualChatItems.Clear();
+  LastVisualChatItem:=nil;
 end;
 
 procedure TFrameDnmpContacts.UpdateChat();
@@ -1197,6 +1225,7 @@ begin
   // clear list
   //for i:=ScrollBox.ControlCount-1 downto 0 do ScrollBox.Controls[i].Free();
   //VisualItems.Clear();
+  //LastVisualChatItem:=nil;
 
   n:=0;
   if Assigned(ChatSession) then
