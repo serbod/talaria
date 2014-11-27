@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, LinkInfoListFrame,
-  Misc, dnmp_mail, Controls, dnmp_serializers, Graphics;
+  Misc, dnmp_mail, Controls, dnmp_serializers, Graphics, Dialogs;
 
 type
 
@@ -117,9 +117,12 @@ var
 procedure Init(ConfigName: string);
 procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
+
 procedure PictureFromString(Picture: TPicture; sPic: AnsiString);
 procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
 procedure SetDefaultContactPicture(Picture: TPicture);
+
+function SelectFileName(): string;
 
 // DNMP-specific
 procedure AddServicePage(AService: TDnmpService);
@@ -282,6 +285,16 @@ end;
 procedure SetDefaultContactPicture(Picture: TPicture);
 begin
   FormMain.ImageList24.GetBitmap(4, Picture.Bitmap);
+end;
+
+function SelectFileName(): string;
+var
+  fd: TOpenDialog;
+begin
+  Result:='';
+  fd:=TOpenDialog.Create(nil);
+  if fd.Execute then Result:=fd.FileName;
+  FreeAndNil(fd);
 end;
 
 procedure AddServicePage(AService: TDnmpService);
