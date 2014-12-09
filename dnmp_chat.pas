@@ -38,8 +38,8 @@ Params:
   * cmd=FILE
   * preview - (optional) data is preview for large file
   * file_name - file name
-  * file_size - file size
-  * file_date - file creation date
+  * file_size - file size (bytes)
+  * file_date - file creation date (ISO 8601)
   * file_params - (optional) file params
   * offset - (optional, default=0) offset from beginning of file, bytes
 Data:
@@ -174,9 +174,9 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean; override;
     //function SayText(AbonentGUID: string; sText: string): string;
     { create new message with sText and send it to Contact }
-    function SayToContact(Contact: TDnmpContact; sText: string): string;
+    function SayToContact(AContact: TDnmpContact; sText: string): string;
     { send file to Contact }
-    function SendFileToContact(Contact: TDnmpContact; AFileName: string): string;
+    function SendFileToContact(AContact: TDnmpContact; AFileName: string): string;
     { return messages list for contact }
     function GetChatSessionForContact(AContact: TDnmpContact): TDnmpChatSession;
     //function Msg(Msg: TDnmpMsg): string; override;
@@ -566,24 +566,30 @@ begin
   Result:=True;
 end;
 
-function TDnmpChat.SayToContact(Contact: TDnmpContact; sText: string): string;
+function TDnmpChat.SayToContact(AContact: TDnmpContact; sText: string): string;
 begin
   // add to local messages list
-  AddChatMessage(Contact, False, sText);
+  AddChatMessage(AContact, False, sText);
   // send message to remote contact
-  Mgr.SendDataMsg(Contact.Addr, 'CHAT', 'cmd=MSG', sText);
+  Mgr.SendDataMsg(AContact.Addr, 'CHAT', 'cmd=MSG', sText);
 end;
 
-function TDnmpChat.SendFileToContact(Contact: TDnmpContact; AFileName: string
+function TDnmpChat.SendFileToContact(AContact: TDnmpContact; AFileName: string
   ): string;
 var
   ChatFileMessage: TDnmpChatFileMessage;
   fs: TFileStream;
+  ChatSession: TDnmpChatSession;
+  sParams: string;
 begin
+  ChatSession:=Self.GetChatSessionForContact(AContact);
+  if not Assigned(ChatSession) then Exit;
+
   if not FileExistsUTF8(AFileName) then Exit;
   ChatFileMessage:=TDnmpChatFileMessage.Create();
   ChatFileMessage.FileName:=AFileName;
-  ChatFileMessage.FileDate:=FileAgeUTF8();
+  ChatFileMessage.FileDate:=FileDateToDateTime(FileAgeUTF8(AFileName));
+  ChatFileMessage.FileSize:=0;
   try
     fs:=TFileStream.Create(AFileName, fmOpenRead);
   except
@@ -592,14 +598,37 @@ begin
   if Assigned(fs) then
   begin
     ChatFileMessage.FileSize:=fs.Size;
-    ChatFileMessage.FileContent.CopyFrom(fs, fs.Size);
+    if ChatFileMessage.FileSize < 64000 then
+    begin
+      ChatFileMessage.FileContent.CopyFrom(fs, fs.Size);
+    end;
     FreeAndNil(fs);
   end;
 
   // add to local messages list
-  AddChatMessage(Contact, False, sText);
+  ChatSession.MessagesList.AddItem(ChatFileMessage);
+  ChatSession.MessagesList.UpdateView();
   // send message to remote contact
-  Mgr.SendDataMsg(Contact.Addr, 'CHAT', 'cmd=MSG', sText);
+  {
+  === FILE ===
+    small file, up to 16 KBytes
+    or preview for large file
+  Params:
+    * cmd=FILE
+    * preview - (optional) data is preview for large file
+    * file_name - file name
+    * file_size - file size
+    * file_date - file creation date
+    * file_params - (optional) file params
+    * offset - (optional, default=0) offset from beginning of file, bytes
+  Data:
+    file contents
+  }
+  sParams:='cmd=FILE'+CRLF;
+  sParams:=sParams+'file_name='+ChatFileMessage.FileName;
+  sParams:=sParams+'file_size='+IntToStr(ChatFileMessage.FileSize);
+  sParams:=sParams+'file_date='+FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', ChatFileMessage.FileDate);
+  Mgr.SendDataMsg(AContact.Addr, 'CHAT', 'cmd=FILE', sText);
 
 end;
 
