@@ -42,7 +42,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="27">
+    <Units Count="28">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -95,6 +95,7 @@
       <Unit8>
         <Filename Value="Misc.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="Misc"/>
       </Unit8>
       <Unit9>
         <Filename Value="dnmpservicesframe.pas"/>
@@ -209,6 +210,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="dnmp_filebox"/>
       </Unit26>
+      <Unit27>
+        <Filename Value="graphictools.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="GraphicTools"/>
+      </Unit27>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

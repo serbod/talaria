@@ -34,34 +34,38 @@ type
   { TVisualChatItem }
 
   TVisualChatItem = class(TGraphicControl)
-  private
+  protected
     FSelected: boolean;
     FActive: boolean;
+    FItem: TDnmpChatMessage;
+    procedure FSetItem(Value: TDnmpChatMessage); virtual;
   public
-    Item: TDnmpChatMessage;
     //Rect: TRect;
     //Image: TImage;
-    lbName: TLabel;
-    lbTime: TLabel;
-    lbText: TLabel;
-    Background: TShape;
+    //lbName: TLabel;
+    //lbTime: TLabel;
+    //lbText: TLabel;
+    //Background: TShape;
     Chat: TDnmpChat;
+    property Item: TDnmpChatMessage read FItem write FSetItem;
     procedure Paint(); override;
     { Calculate Height value, with multi-line text field. Text and Width must be set }
-    function GetHeight(): integer;
+    function GetHeight(): integer; virtual;
   end;
 
   { TVisualChatFileItem }
 
-  TVisualChatFileItem = class(TGraphicControl)
-  private
-    FSelected: boolean;
-    FActive: boolean;
+  TVisualChatFileItem = class(TVisualChatItem)
+  protected
+    FFileItem: TDnmpChatFileMessage;
+    procedure FSetItem(Value: TDnmpChatMessage); override;
   public
-    Item: TDnmpChatFileMessage;
-    //Rect: TRect;
-    Chat: TDnmpChat;
+    Bmp: TBitmap;
     procedure Paint(); override;
+    { Calculate Height value, according to contained picture }
+    function GetHeight(): integer; override;
+    procedure AfterConstruction(); override;
+    procedure BeforeDestruction(); override;
   end;
 
   TVisualInfoItem = class(TCollectionItem)
@@ -189,11 +193,16 @@ type
 
 implementation
 
-uses dnmp_services;
+uses dnmp_services, GraphicTools;
 
 {$R *.lfm}
 
 { TVisualChatItem }
+
+procedure TVisualChatItem.FSetItem(Value: TDnmpChatMessage);
+begin
+  FItem:=Value;
+end;
 
 procedure TVisualChatItem.Paint();
 var
@@ -280,12 +289,26 @@ end;
 
 { TVisualChatFileItem }
 
+procedure TVisualChatFileItem.FSetItem(Value: TDnmpChatMessage);
+begin
+  inherited FSetItem(Value);
+  FFileItem:=(Value as TDnmpChatFileMessage);
+  if not Assigned(FFileItem) then Exit;
+  FFileItem.FileContent.Position:=0;
+  Self.Bmp.LoadFromStream(FFileItem.FileContent);
+end;
+
 procedure TVisualChatFileItem.Paint();
 var
   i, x, y, h, n, nn: integer;
   Image: TImage;
   s, ss: string;
 begin
+  if Assigned(OnPaint) then
+  begin
+    inherited Paint();
+    Exit;
+  end;
   h:=16;
 
   Self.Canvas.AntialiasingMode:=TAntialiasingMode.amOn;
@@ -293,6 +316,8 @@ begin
   // frame
   Self.Canvas.Pen.Color:=clActiveBorder;
   Self.Canvas.RoundRect(Self.ReadBounds, 4, 4);
+
+  if not Assigned(Item) then Exit;
 
   // author name
   x:=6;
@@ -315,47 +340,35 @@ begin
   y:=y+h;
   Self.Canvas.Font.Size:=10;
   Self.Canvas.Font.Style:=[];
-  Self.Canvas.TextOut(x, y, Item.FileName);
+  Self.Canvas.TextOut(x, y, FFileItem.FileName);
 
   // file size
   x:=x+200;
   //y:=;
   Self.Canvas.Font.Size:=10;
   Self.Canvas.Font.Style:=[];
-  Self.Canvas.TextOut(x, y, 'Size: '+IntToStr(Item.FileSize)+' bytes');
+  Self.Canvas.TextOut(x, y, 'Size: '+IntToStr(FFileItem.FileSize)+' bytes');
 
-  {
   // image
-  Image:=TImage.Create(ScrollBox);
-  Image.Name:='img'+IntToStr(i);
-  Image.Parent:=ScrollBox;
-  Image.Left:=x;
-  Image.Top:=y;
-  Image.Height:=h;
-  Image.Width:=h;
+  Self.Canvas.Draw(x, y, Self.Bmp);
 
-  Image.Center:=True;
-  Image.Proportional:=True;
-  Image.Stretch:=True;
-  if Length(Item.Picture)>4 then
-  begin
-    ss:=TStringStream.Create(Item.Picture);
-    try
-      Image.Picture.LoadFromStream(ss);
-    finally
-      ss.Free();
-    end;
-  end
-  else
-  begin
-    Image.Picture.Assign(imgDefault.Picture);
-  end;
-  Result.Image:=Image;
-  x:=x+Image.Width+2;
-  }
+end;
 
-  inherited Paint();
+function TVisualChatFileItem.GetHeight(): integer;
+begin
+  Result:=Bmp.Height+4;
+end;
 
+procedure TVisualChatFileItem.AfterConstruction();
+begin
+  inherited AfterConstruction();
+  Bmp:=TBitmap.Create();
+end;
+
+procedure TVisualChatFileItem.BeforeDestruction();
+begin
+  FreeAndNil(Bmp);
+  inherited BeforeDestruction();
 end;
 
 { TVisualContactItem }
@@ -573,18 +586,30 @@ end;
 
 procedure TFrameDnmpContacts.actSendFileToContactExecute(Sender: TObject);
 var
-  FileName: string;
+  FileName, FileInfo: string;
+  s: AnsiString;
 begin
   if not Assigned(Contact) then Exit;
   FileName:=Core.SelectFileName();
   if FileName='' then Exit;
-  //Chat.
+  // Extract preview for file
+  s:=GetFilePreview(FileName, FileInfo);
+  if Length(s)>0 then
+  begin
+    Chat.SendFileToContact(Contact, FileName, FileInfo, s);
+  end
+  else
+  begin
+    Chat.SendFileToContact(Contact, FileName);
+  end;
 end;
 
 procedure TFrameDnmpContacts.edChatSayKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 var
   i: integer;
+  FileInfo: string;
+  s: AnsiString;
 begin
   if not Assigned(Contact) then Exit;
   if Key = VK_RETURN then
@@ -608,6 +633,15 @@ begin
     //Update();
     //ScrollBox.Visible:=True;
     Key:=0;
+  end;
+  if ((Key = VK_INSERT) or (Key = VK_V)) and (ssCtrl in Shift) then
+  begin
+    // insert picture
+    s:=GetFilePreview('', FileInfo);
+    if Length(s)>0 then
+    begin
+      Chat.SendFileToContact(Contact, '', FileInfo, s);
+    end
   end;
 end;
 
@@ -996,12 +1030,21 @@ begin
   y:=LastChatY+2;
   i:=VisualChatItems.Count;
 
-  Result:=TVisualChatItem.Create(ScrollBoxChat);
+  if (Item is TDnmpChatFileMessage) then
+  begin
+    Result:=TVisualChatFileItem.Create(ScrollBoxChat);
+    (Result as TVisualChatFileItem).Item:=(Item as TDnmpChatFileMessage);
+  end
+  else
+  begin
+    Result:=TVisualChatItem.Create(ScrollBoxChat);
+    Result.Item:=Item;
+  end;
+
   Result.Name:='vchi'+IntToStr(i);
   VisualChatItems.Add(Result);
 
   Result.Chat:=Chat;
-  Result.Item:=Item;
 
   Result.Parent:=ScrollBoxChat;
   Result.Top:=y;
@@ -1232,11 +1275,12 @@ begin
   begin
     for i:=0 to ChatSession.MessagesList.Count-1 do
     begin
+      // find items, that not have visual control
       Item:=ChatSession.MessagesList.Items[i];
       Found:=False;
       for ii:=n to VisualChatItems.Count-1 do
       begin
-        if (VisualChatItems.Items[ii] as TVisualChatItem).Item=Item then
+        if (VisualChatItems.Items[ii] as TVisualChatItem).Item.ID = Item.ID then
         begin
           Found:=True;
           n:=ii+1;

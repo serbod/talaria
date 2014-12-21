@@ -72,6 +72,7 @@ type
   // Serializable
   TDnmpChatMessage = class(TInterfacedObject)
   public
+    ID: integer;
     Timestamp: TDateTime;
     IsIncoming: boolean;
     RemoteAddr: TAddr;
@@ -80,6 +81,7 @@ type
     Text: string;
     function ToStorage(): TDnmpStorage; virtual;
     function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+    procedure FillFromContact(AContact: TDnmpContact; ATimestamp: TDateTime; AIncoming: boolean; AText: string);
   end;
 
   { TDnmpChatFileMessage }
@@ -91,6 +93,7 @@ type
     FileName: string;
     FileDate: TDateTime;
     FileSize: Cardinal;
+    FileInfo: string;
     FileContent: TStream;
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
@@ -177,6 +180,10 @@ type
     function SayToContact(AContact: TDnmpContact; sText: string): string;
     { send file to Contact }
     function SendFileToContact(AContact: TDnmpContact; AFileName: string): string;
+    { send file to Contact (with preview)
+      AFileInfo - parameters for message
+      APreviewData - preview data bytes }
+    function SendFileToContact(AContact: TDnmpContact; AFileName, AFileInfo: string; APreviewData: AnsiString): string; overload;
     { return messages list for contact }
     function GetChatSessionForContact(AContact: TDnmpContact): TDnmpChatSession;
     //function Msg(Msg: TDnmpMsg): string; override;
@@ -245,6 +252,20 @@ begin
   // Self.Author:=??;
   Self.Text:=Storage.GetString('text');
   Result:=True;
+end;
+
+procedure TDnmpChatMessage.FillFromContact(AContact: TDnmpContact;
+  ATimestamp: TDateTime; AIncoming: boolean; AText: string);
+begin
+  Self.Timestamp:=ATimestamp;
+  Self.IsIncoming:=AIncoming;
+  Self.Text:=AText;
+  if Assigned(AContact) then
+  begin
+    Self.RemoteGUID:=AContact.GUID;
+    Self.RemoteName:=AContact.Name;
+    Self.RemoteAddr:=AContact.Addr;
+  end
 end;
 
 { TDnmpChatMessagesList }
@@ -339,12 +360,14 @@ begin
   end
   else
   begin
+    // parented list, not contain items, only Contact
     if Assigned(Contact) then
     begin
       if not SameAddr(Contact.Addr, Item.RemoteAddr) then Exit;
     end;
     Result:=ParentList.AddItem(Item);
   end;
+  Item.ID:=Result;
 end;
 
 function TDnmpChatMessagesList.AddItem(Timestamp: TDateTime;
@@ -359,22 +382,14 @@ begin
     // { TODO : find }
     // add
     Result:=TDnmpChatMessage.Create();
-    FItems.Add(Result);
-    Result.Timestamp:=Timestamp;
-    Result.IsIncoming:=IsIncoming;
-    Result.Text:=Text;
-    if Assigned(RemoteContact) then
-    begin
-      Result.RemoteGUID:=RemoteContact.GUID;
-      Result.RemoteName:=RemoteContact.Name;
-      Result.RemoteAddr:=RemoteContact.Addr;
-    end
-    else
+    Result.FillFromContact(RemoteContact, Timestamp, IsIncoming, Text);
+    if not Assigned(RemoteContact) then
     begin
       Result.RemoteAddr:=RemoteAddr;
       Result.RemoteName:='';
       Result.RemoteGUID:='';
     end;
+    Self.AddItem(Result);
   end
 
   else
@@ -400,17 +415,8 @@ begin
     // { TODO : find }
     // add
     Result:=TDnmpChatFileMessage.Create();
-    FItems.Add(Result);
-    Result.Timestamp:=Timestamp;
-    Result.IsIncoming:=IsIncoming;
-    Result.Text:='';
-    if Assigned(RemoteContact) then
-    begin
-      Result.RemoteGUID:=RemoteContact.GUID;
-      Result.RemoteName:=RemoteContact.Name;
-      Result.RemoteAddr:=RemoteContact.Addr;
-    end
-    else
+    Result.FillFromContact(RemoteContact, Timestamp, IsIncoming, '');
+    if not Assigned(RemoteContact) then
     begin
       Result.RemoteAddr:=RemoteAddr;
       Result.RemoteName:='';
@@ -419,6 +425,7 @@ begin
     Result.FileName:=AFileName;
     Result.FileSize:=AFileSize;
     Result.FileDate:=AFileDate;
+    Self.AddItem(Result);
     //Result.FileContent;
   end
 
@@ -576,38 +583,77 @@ end;
 
 function TDnmpChat.SendFileToContact(AContact: TDnmpContact; AFileName: string
   ): string;
+begin
+  Result:=Self.SendFileToContact(AContact, AFileName, '', '');
+end;
+
+function TDnmpChat.SendFileToContact(AContact: TDnmpContact; AFileName,
+  AFileInfo: string; APreviewData: AnsiString): string;
 var
   ChatFileMessage: TDnmpChatFileMessage;
   fs: TFileStream;
   ChatSession: TDnmpChatSession;
   sParams: string;
 begin
+  Result:='';
   ChatSession:=Self.GetChatSessionForContact(AContact);
   if not Assigned(ChatSession) then Exit;
 
-  if not FileExistsUTF8(AFileName) then Exit;
   ChatFileMessage:=TDnmpChatFileMessage.Create();
-  ChatFileMessage.FileName:=AFileName;
-  ChatFileMessage.FileDate:=FileDateToDateTime(FileAgeUTF8(AFileName));
+  ChatFileMessage.FillFromContact(AContact, Now(), False, '');
   ChatFileMessage.FileSize:=0;
-  try
-    fs:=TFileStream.Create(AFileName, fmOpenRead);
-  except
-    fs:=nil;
-  end;
-  if Assigned(fs) then
+
+  if (Length(AFileName)=0) and (Length(APreviewData)>0) then
   begin
-    ChatFileMessage.FileSize:=fs.Size;
-    if ChatFileMessage.FileSize < 64000 then
-    begin
-      ChatFileMessage.FileContent.CopyFrom(fs, fs.Size);
+    // preview only
+    ChatFileMessage.FileName:='';
+    ChatFileMessage.FileDate:=Now();
+    ChatFileMessage.FileInfo:=AFileInfo;
+    ChatFileMessage.FileSize:=Length(APreviewData);
+    StrToStream(APreviewData, ChatFileMessage.FileContent);
+  end
+
+  else if (Length(AFileName)>0) and FileExistsUTF8(AFileName) then
+  begin
+    // file
+    ChatFileMessage.FileName:=AFileName;
+    ChatFileMessage.FileDate:=FileDateToDateTime(FileAgeUTF8(AFileName));
+    try
+      fs:=TFileStream.Create(AFileName, fmOpenRead);
+    except
+      fs:=nil;
     end;
-    FreeAndNil(fs);
+    if Assigned(fs) then
+    begin
+      ChatFileMessage.FileSize:=fs.Size;
+
+      if Length(APreviewData)>0 then
+      begin
+        ChatFileMessage.FileInfo:=AFileInfo;
+        StrToStream(APreviewData, ChatFileMessage.FileContent);
+      end
+      else // no preview data specified, get preview from file
+      begin
+        if ChatFileMessage.FileSize < 64000 then
+        begin
+          ChatFileMessage.FileContent.CopyFrom(fs, fs.Size);
+        end;
+      end;
+      FreeAndNil(fs);
+    end;
+  end;
+
+  if ChatFileMessage.FileSize=0 then
+  begin
+    FreeAndNil(ChatFileMessage);
+    Result:='Empty file to send';
+    Exit;
   end;
 
   // add to local messages list
   ChatSession.MessagesList.AddItem(ChatFileMessage);
   ChatSession.MessagesList.UpdateView();
+
   // send message to remote contact
   {
   === FILE ===
@@ -625,10 +671,11 @@ begin
     file contents
   }
   sParams:='cmd=FILE'+CRLF;
-  sParams:=sParams+'file_name='+ChatFileMessage.FileName;
-  sParams:=sParams+'file_size='+IntToStr(ChatFileMessage.FileSize);
-  sParams:=sParams+'file_date='+FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', ChatFileMessage.FileDate);
-  Mgr.SendDataMsg(AContact.Addr, 'CHAT', 'cmd=FILE', sText);
+  sParams:=sParams+'file_name='+ChatFileMessage.FileName+CRLF;
+  sParams:=sParams+'file_size='+IntToStr(ChatFileMessage.FileSize)+CRLF;
+  sParams:=sParams+'file_date='+FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', ChatFileMessage.FileDate)+CRLF;
+  sParams:=sParams+AFileInfo+CRLF;
+  Mgr.SendDataMsg(AContact.Addr, 'CHAT', sParams, StreamToStr(ChatFileMessage.FileContent));
 
 end;
 
