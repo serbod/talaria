@@ -335,22 +335,24 @@ begin
   s:=FormatDateTime('YYYY-MM-DD HH:NN:SS', Item.Timestamp);
   Self.Canvas.TextOut(x, y, s);
 
-  // file name
-  x:=6;
   y:=y+h;
-  Self.Canvas.Font.Size:=10;
-  Self.Canvas.Font.Style:=[];
-  Self.Canvas.TextOut(x, y, FFileItem.FileName);
+  // image
+  x:=4;
+  Self.Canvas.Draw(x, y, Self.Bmp);
 
   // file size
-  x:=x+200;
+  x:=x+64+8;
   //y:=;
   Self.Canvas.Font.Size:=10;
   Self.Canvas.Font.Style:=[];
   Self.Canvas.TextOut(x, y, 'Size: '+IntToStr(FFileItem.FileSize)+' bytes');
 
-  // image
-  Self.Canvas.Draw(x, y, Self.Bmp);
+  // file name
+  x:=x+100;
+  Self.Canvas.Font.Size:=10;
+  Self.Canvas.Font.Style:=[];
+  Self.Canvas.TextOut(x, y, FFileItem.FileName);
+
 
 end;
 

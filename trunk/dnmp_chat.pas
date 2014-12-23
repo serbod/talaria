@@ -166,6 +166,7 @@ type
   protected
     FOnSay: TNotifyEvent;
     procedure AddChatMessage(AContact: TDnmpContact; IsIncoming: boolean; sText: string);
+    procedure AddChatFileFromMsg(AContact: TDnmpContact; AMsg: TDnmpMsg);
   public
     Author: TDnmpContact;
     MessagesList: TDnmpChatMessagesList;
@@ -522,6 +523,28 @@ begin
   ChatSession.MessagesList.UpdateView();
 end;
 
+procedure TDnmpChat.AddChatFileFromMsg(AContact: TDnmpContact; AMsg: TDnmpMsg);
+var
+  ChatSession: TDnmpChatSession;
+  ChatFileMessage: TDnmpChatFileMessage;
+begin
+  ChatSession:=Self.GetChatSessionForContact(AContact);
+  if not Assigned(ChatSession) then Exit;
+
+  ChatFileMessage:=TDnmpChatFileMessage.Create();
+  ChatFileMessage.FillFromContact(AContact, Now(), True, '');
+  ChatFileMessage.FileSize:=StrToIntDef(AMsg.Info.Values['file_size'], 0);
+  ChatFileMessage.FileDate:=StrToTimestamp(AMsg.Info.Values['file_date']);
+  ChatFileMessage.FileName:=AMsg.Info.Values['file_name'];
+  ChatFileMessage.FileInfo:=AMsg.Info.Values['file_info'];
+  AMsg.Data.Position:=0;
+  ChatFileMessage.FileContent.CopyFrom(AMsg.Data, AMsg.Data.Size);
+
+  // add to local messages list
+  ChatSession.MessagesList.AddItem(ChatFileMessage);
+  ChatSession.MessagesList.UpdateView();
+end;
+
 constructor TDnmpChat.Create(AMgr: TDnmpManager;
   AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo);
 begin
@@ -666,6 +689,7 @@ begin
     * file_size - file size
     * file_date - file creation date
     * file_params - (optional) file params
+    * file_info - (optional) file content description
     * offset - (optional, default=0) offset from beginning of file, bytes
   Data:
     file contents
@@ -673,8 +697,9 @@ begin
   sParams:='cmd=FILE'+CRLF;
   sParams:=sParams+'file_name='+ChatFileMessage.FileName+CRLF;
   sParams:=sParams+'file_size='+IntToStr(ChatFileMessage.FileSize)+CRLF;
-  sParams:=sParams+'file_date='+FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', ChatFileMessage.FileDate)+CRLF;
-  sParams:=sParams+AFileInfo+CRLF;
+  //sParams:=sParams+'file_date='+FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', ChatFileMessage.FileDate)+CRLF;
+  sParams:=sParams+'file_date='+TimestampToStr(ChatFileMessage.FileDate)+CRLF;
+  sParams:=sParams+'file_info='+AFileInfo+CRLF;
   Mgr.SendDataMsg(AContact.Addr, 'CHAT', sParams, StreamToStr(ChatFileMessage.FileContent));
 
 end;
@@ -748,6 +773,9 @@ begin
 
   else if sCmd = 'FILE' then // Это файл
   begin
+    // update chat session
+    RemoteContact.IncomingChat:=True;
+    AddChatFileFromMsg(RemoteContact, AMsg);
     if Assigned(OnEvent) then OnEvent('FILE', Self);
   end;
 end;

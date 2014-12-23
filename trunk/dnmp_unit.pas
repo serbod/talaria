@@ -662,12 +662,20 @@ end;
 
 function TimestampToStr(dt: TDateTime): string;
 begin
-  result:=IntToStr(DateTimeToFileDate(dt));
+  // Filesystem timestamp
+  Result:=IntToStr(DateTimeToFileDate(dt));
+
+  // ISO 8601
+  //Result:=FormatDateTime('YYYY-MM-DD"T"HH:NN:SS', dt);
 end;
 
 function StrToTimestamp(s: string): TDateTime;
 begin
-  result:=FileDateToDateTime(StrToIntDef(s, 0));
+  // Filesystem timestamp
+  Result:=FileDateToDateTime(StrToIntDef(s, 0));
+
+  // ISO 8601
+  { TODO : standart timestamp }
 end;
 
 function StreamToStr(AStream: TStream): AnsiString;
