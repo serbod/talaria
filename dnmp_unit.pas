@@ -698,11 +698,14 @@ var
   ss: TStringStream;
 begin
   ss:=TStringStream.Create(s);
-  ss.Seek(0, soFromBeginning);
-  AStream.Seek(0, soFromBeginning);
-  AStream.CopyFrom(ss, ss.Size);
-  ss.Free();
-  Result:=true;
+  try
+    ss.Seek(0, soFromBeginning);
+    AStream.Seek(0, soFromBeginning);
+    AStream.CopyFrom(ss, ss.Size);
+    Result:=True;
+  finally
+    ss.Free();
+  end;
 end;
 
 function StrToFile(FileName, Str: AnsiString): Boolean;
@@ -712,11 +715,17 @@ begin
   Result:=False;
   try
     fs:=TFileStream.Create(FileName, fmCreate);
+  except
+    fs:=nil;
+  end;
+
+  if not Assigned(fs) then Exit;
+  try
     StrToStream(Str, fs);
+    Result:=True;
   finally
     FreeAndNil(fs);
   end;
-  Result:=True;
 end;
 
 function FileToStr(FileName: string): AnsiString;
@@ -727,6 +736,12 @@ begin
   if not FileExists(FileName) then Exit;
   try
     fs:=TFileStream.Create(FileName, fmOpenRead);
+  except
+    fs:=nil;
+  end;
+
+  if not Assigned(fs) then Exit;
+  try
     Result:=StreamToStr(fs);
   finally
     fs.Free();
