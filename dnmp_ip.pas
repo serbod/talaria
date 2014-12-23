@@ -258,7 +258,7 @@ begin
   RemoteInfo.State:=TDnmpContactState.asOnline;
   Mgr.DebugText('IpLink.Connect() OK');
   if Assigned(OnConnect) then OnConnect(Self);
-  Mgr.Cmd('EVENT MGR UPDATE LINKS');
+  Mgr.AddCmd('EVENT MGR UPDATE LINKS');
   Result:=True;
 end;
 
@@ -297,7 +297,7 @@ begin
   RemoteInfo.Name:=IpProto+' listener '+LinkHost+':'+LinkPort;
 
   FActive:=true;
-  Mgr.Cmd('EVENT MGR UPDATE LINKS');
+  Mgr.AddCmd('EVENT MGR UPDATE LINKS');
   Result:=true;
 end;
 
@@ -331,7 +331,7 @@ begin
   //if Assigned(Socket) then FreeAndNil(Socket);
   Mgr.DebugText('IpLink.Disconnect() OK');
   if Assigned(OnDisconnect) then OnDisconnect(Self);
-  Mgr.Cmd('EVENT MGR UPDATE LINKS');
+  Mgr.AddCmd('EVENT MGR UPDATE LINKS');
   Result:=True;
 end;
 
@@ -444,7 +444,7 @@ begin
     NewIpLink.RemoteInfo.State:=asOffline;
 
   Mgr.AddLink(NewIpLink);
-  Mgr.Cmd('EVENT MGR UPDATE LINKS');
+  Mgr.AddCmd('EVENT MGR UPDATE LINKS');
 end;
 
 
