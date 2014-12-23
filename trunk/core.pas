@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, LinkInfoListFrame,
-  Misc, dnmp_mail, Controls, dnmp_serializers, Graphics, Dialogs;
+  Misc, dnmp_mail, Controls, dnmp_serializers, Graphics, Dialogs, ExtCtrls;
 
 type
 
@@ -28,7 +28,7 @@ type
   end;
 
   { TContactItem }
-
+  { адаптер между отображаемым контактом и контактом чата }
   TContactItem = class(TInterfacedObject)
   protected
     function FGetCaption(): string; virtual;
@@ -83,10 +83,12 @@ type
     FOnLog: TGetStrProc;
     FOnEvent: TMgrEvent;
     FOnIncomingMsg: TIncomingMsgEvent;
+    Timer1ms: TTimer;
     procedure UpdateInfo();
     procedure LogHandler(Sender: TObject; LogMsg: string);
     procedure EventHandler(Sender, Text: string);
     procedure MsgHandler(Sender: TObject; Msg: TDnmpMsg);
+    procedure OnTimerHandler(Sender: TObject);
   public
     AppName: string;
     Mgr: TDnmpManager;
@@ -607,6 +609,11 @@ begin
   if Assigned(OnIncomingMsg) then OnIncomingMsg(Sender, Msg);
 end;
 
+procedure TServiceDnmp.OnTimerHandler(Sender: TObject);
+begin
+  if Assigned(Mgr) then Mgr.Tick();
+end;
+
 constructor TServiceDnmp.Create(ConfigName: string);
 var
   s: string;
@@ -627,10 +634,16 @@ begin
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   //ServMgr.LoadFromFile();
   //ServMgr.Start();
+
+  Timer1ms:=TTimer.Create(nil);
+  Timer1ms.OnTimer:=@OnTimerHandler;
+  Timer1ms.Interval:=1;
+  Timer1ms.Enabled:=True;
 end;
 
 destructor TServiceDnmp.Destroy();
 begin
+  FreeAndNil(Timer1ms);
   Mgr.OnLog:=nil;
   Mgr.OnEvent:=nil;
   Mgr.OnIncomingMsg:=nil;

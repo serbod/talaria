@@ -40,6 +40,7 @@ Params:
   * file_name - file name
   * file_size - file size (bytes)
   * file_date - file creation date (ISO 8601)
+  * file_info - (optional) file content description
   * file_params - (optional) file params
   * offset - (optional, default=0) offset from beginning of file, bytes
 Data:
@@ -214,6 +215,7 @@ begin
   Result.Add('file_name', FileName);
   Result.Add('file_size', FileSize);
   Result.Add('file_date', FileDate);
+  Result.Add('file_info', FileInfo);
   Result.Add('file_content', StreamToStr(FileContent));
 end;
 
@@ -224,6 +226,7 @@ begin
   Self.FileName:=Storage.GetString('file_name');
   Self.FileSize:=Storage.GetInteger('file_size');
   Self.FileDate:=Storage.GetReal('file_date');
+  Self.FileInfo:=Storage.GetString('file_info');
   Result:=StrToStream(Storage.GetString('file_content'), Self.FileContent);
 end;
 
@@ -474,9 +477,10 @@ end;
 
 function TDnmpChatMessagesList.FromStorage(Storage: TDnmpStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage, SubStorageItem: TDnmpStorage;
   i: Integer;
   Item: TDnmpChatMessage;
+  Done: boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -486,11 +490,19 @@ begin
   if SubStorage.StorageType <> stDictionary then Exit;
   for i:=0 to SubStorage.Count-1 do
   begin
-    if SubStorage.HaveName('file_name') then
-      Item:=TDnmpChatFileMessage.Create()
+    SubStorageItem:=SubStorage.GetObject(i);
+
+    if SubStorageItem.HaveName('file_size') then
+    begin
+      Item:=TDnmpChatFileMessage.Create();
+      Done:=(Item as TDnmpChatFileMessage).FromStorage(SubStorageItem);
+    end
     else
+    begin
       Item:=TDnmpChatMessage.Create();
-    if not Item.FromStorage(SubStorage.GetObject(i)) then
+      Done:=Item.FromStorage(SubStorageItem);
+    end;
+    if not Done then
     begin
       Item.Free();
       Continue;
@@ -598,6 +610,7 @@ end;
 
 function TDnmpChat.SayToContact(AContact: TDnmpContact; sText: string): string;
 begin
+  Result:='';
   // add to local messages list
   AddChatMessage(AContact, False, sText);
   // send message to remote contact
