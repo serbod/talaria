@@ -17,14 +17,13 @@ type
   TDnmpInfoService = class(TDnmpMsgHandler)
   private
     //=====================================
-    // Сервер -> Сервер
     // NLRQ (Nodelist request)
-    procedure SendNodelistRequest(Addr: TAddr); // [SС]
     procedure OnNodelistRequest(Msg: TDnmpMsg); // [S]
+    // NLST (Nodelist)
+    procedure OnNodelistResponse(Msg: TDnmpMsg); // [SC]
 
     // GINF (Get info)
     procedure OnGetInfoRequest(Msg: TDnmpMsg); // [SC]
-    procedure SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr); // [S]
     // CINF (Contact info)
     procedure OnContactInfo(Msg: TDnmpMsg); // [SC]
 
@@ -59,20 +58,21 @@ type
     function Start(): Boolean; override;
     // Разбор сообщения и выполнение требуемых действий
     function ParseMsg(Msg: TDnmpMsg): Boolean; override;
+    // Send NLRQ (Nodelist request)
+    procedure SendNodelistRequest(Addr: TAddr); // [SС]
+    // Send CINF (Contact info) to TargetAddr
+    procedure SendContactInfo(ALinkInfo: TDnmpContact; TargetAddr: TAddr); // [S]
   end;
 
 implementation
 
 //=====================================
-// Клиент -> Сервер
 // Запрос списка узлов
 procedure TDnmpInfoService.SendNodelistRequest(Addr: TAddr);
 begin
   Mgr.SendDataMsg(Addr, 'INFO', 'cmd=NLRQ', '');
 end;
 
-// Клиент -> Сервер
-// Запрос списка узлов
 procedure TDnmpInfoService.OnNodelistRequest(Msg: TDnmpMsg);
 var
   sInfo, sData: string;
@@ -91,6 +91,32 @@ begin
     sData:=Mgr.Serializer.StorageToString(Mgr.NodeList.ToStorage(ctPublic));
   end;
   Mgr.SendDataMsg(Msg.SourceAddr, 'INFO', sInfo, sData);
+end;
+
+procedure TDnmpInfoService.OnNodelistResponse(Msg: TDnmpMsg);
+var
+  Storage: TDnmpStorage;
+  TmpNodelist: TNodeList; // non-parented
+  i: integer;
+begin
+  // Handle NLST message (Nodelist)
+  Storage:=Mgr.MsgDataToStorage(Msg);
+  if not Assigned(Storage) then Exit;
+  TmpNodelist:=TNodeList.Create(nil);
+  try
+    if TmpNodelist.FromStorage(Storage) then
+    begin
+      // update nodes
+      for i:=0 to TmpNodelist.Count-1 do
+      begin
+        Mgr.NodeList.UpdateItem(TmpNodelist.Items[i]);
+      end;
+    end;
+  finally
+    FreeAndNil(TmpNodelist);
+    FreeAndNil(Storage);
+  end;
+  Mgr.AddCmd('EVENT MGR UPDATE NODELIST');
 end;
 
 procedure TDnmpInfoService.OnGetInfoRequest(Msg: TDnmpMsg);

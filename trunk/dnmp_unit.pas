@@ -143,10 +143,15 @@ type
   { Generic contact info }
   TDnmpContactInfo = class(TCollectionItem)
   public
+    { item name }
     Name: string;
+    { item value }
     Value: AnsiString;
+    { item value type (stUnknown, stString, stInteger, stNumber, stList, stDictionary) }
     ValueType: TDnmpStorageType;
+    { info type (ctPublic, ctPrivate) }
     InfoType: TDnmpContactInfoType;
+    { parent item name }
     ParentName: string;
   end;
 
@@ -191,7 +196,7 @@ type
     Key: AnsiString;
     { === Extra info === }
     IncomingChat: Boolean; // has unread incoming CHAT message or invite
-    IncomingFile: Boolean;
+    IncomingFile: Boolean; // has unread incoming file
     IsNode: Boolean;
     { Online state }
     //Online: boolean;
@@ -200,9 +205,13 @@ type
     constructor Create();
     destructor Destroy(); override;
     property Info[AName: string]: string read FGetInfo write FSetInfo;
+    { additional data count }
     function InfoCount(): integer;
+    { additional info name by index }
     function GetInfoName(Index: integer): string;
+    { additional info value by index }
     function GetInfo(Index: integer): string;
+    { address string }
     function AddrStr(): string;
     function SameAddr(AAddr: TAddr): boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
@@ -211,6 +220,8 @@ type
     function StateFromStr(s: string): boolean;
     // Assign data from Item
     procedure Assign(Item: TDnmpContact); virtual;
+    // Update data from Item
+    procedure UpdateFrom(Item: TDnmpContact); virtual;
   end;
 
   { TDnmpContactList }
@@ -232,6 +243,7 @@ type
     procedure AddItem(Item: TDnmpContact);
     function AddByGUID(sGUID: string): TDnmpContact;
     function DelByGUID(sGUID: string): TDnmpContact;
+    { Find item by GUID or Addr, if found then update, if not found then add }
     function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName, sState, sStatus: string): TDnmpContact; overload;
     { Find item by GUID or Addr, if found then update, if not found then add }
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
@@ -359,15 +371,6 @@ type
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
 
-  {// Список поддерживаемых типов сообщений
-  TDnmpMsgTypes = class(TList)
-  public
-    constructor Create(sTypes: string);
-    function AddType(sType: string): Boolean;
-    function DelType(sType: string): Boolean;
-    function HasType(sType: string): Boolean;
-  end;}
-
   { TDnmpMsgHandler }
   { Базовый класс обработчика входящих сообщений
     Если при вызове Create указан Link, то сервис привязывается к данному линку }
@@ -399,10 +402,11 @@ type
   TLogEvent = procedure(Sender: TObject; LogMsg: string) of object;
   TMgrEvent = procedure(Sender, AText: string) of object;
 
-  // Manager base class
 
   { TDnmpManager }
-
+  { DNMP Manager (messenger, mailer)
+    Maintain contacts, links, messages queues, routing tables, messages handlers
+  }
   TDnmpManager = class(TObject)
   private
     FOnLog: TLogEvent;
@@ -467,6 +471,7 @@ type
 
     constructor Create(ConfName: string);
     destructor Destroy(); override;
+    { True if incoming connections allowed }
     property ServerMode: Boolean read FServerMode;
     procedure LoadList(List: TObject);
     procedure WriteList(List: TObject; AInfoType: TDnmpContactInfoType);
@@ -489,12 +494,16 @@ type
     procedure Stop();
     procedure StartServer();
     procedure StartClient();
+    { Initiate connection to specified node }
     procedure StartNodeConnection(NodeInfo: TDnmpContact);
+    { Disconnect from specified node }
     procedure StopNodeConnection(NodeInfo: TDnmpContact);
+    { Log messages }
     property OnLog: TLogEvent read FOnLog write FOnLog;
     property OnCmd: TLogEvent read FOnCmd write FOnCmd;
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
+    { Handler for OnIncomingMsg from links, execute IncomingMsg() }
     procedure IncomingMsgHandler(Sender: TObject; Msg: TDnmpMsg);
     // Triggers OnLog
     procedure DebugText(s: string);
@@ -519,12 +528,21 @@ type
     procedure AddCmd(CmdText: string);
     // Execute text command from commands queue
     procedure Tick();
+    { Add link to link list, create and attach AUTH handler to link }
     function AddLink(Link: TDnmpLink): integer;
+    { Remove link from links list }
     function DelLink(Link: TDnmpLink): Boolean;
     function GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
     function GetContactByGUID(SomeGUID: string): TDnmpContact;
     function GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpContact;
     function GetLinkInfoByGUID(SomeGUID: string): TDnmpContact;
+    { Approve specified link
+    if link is Point: assign new point number, add to pointlist
+    if link is Node:
+    - check node info, check connection to node
+    - assign new node number, add to nodelist
+    - send info to other nodes
+    }
     function Approve(ALinkInfo: TDnmpContact): boolean;
     // Return maximum point ID +1
     function GetFreePointID(): TPointID;
@@ -1006,7 +1024,7 @@ begin
       Exit;
     end;
   end;
-  Result.Assign(Item);
+  Result.UpdateFrom(Item);
 end;
 
 function TDnmpContactList.ToStorage(InfoType: TDnmpContactInfoType
@@ -1286,6 +1304,40 @@ begin
   begin
     InfoItem1:=(Item.FInfoList.Items[i] as TDnmpContactInfo);
     Self.Info[InfoItem1.Name]:=InfoItem1.Value;
+  end;
+  // Temp
+  //Self.Online:=Item.Online;
+  //Self.LinkType:=Item.LinkType;
+end;
+
+procedure TDnmpContact.UpdateFrom(Item: TDnmpContact);
+var
+  i: integer;
+  InfoItem1, InfoItem2: TDnmpContactInfo;
+begin
+  if not Assigned(Item) then Exit;
+  // Brief
+  if Item.Name<>'' then Self.Name:=Item.Name;
+  if not SameAddr(Item.Addr, EmptyAddr()) then Self.Addr:=Item.Addr;
+  if Item.GUID<>'' then Self.GUID:=Item.GUID;
+  Self.State:=Item.State;
+  // Public
+  if Item.SeniorGUID<>'' then Self.SeniorGUID:=Item.SeniorGUID;
+  if Item.StatusMessage<>'' then Self.StatusMessage:=Item.StatusMessage;
+  if Item.Picture<>'' then Self.Picture:=Item.Picture;
+  if Item.Rating<>0 then Self.Rating:=Item.Rating;
+  // Private
+  if Item.Owner<>'' then Self.Owner:=Item.Owner;
+  if Item.Location<>'' then Self.Location:=Item.Location;
+  if Item.IpAddr<>'' then Self.IpAddr:=Item.IpAddr;
+  if Item.PhoneNo<>'' then Self.PhoneNo:=Item.PhoneNo;
+  if Item.OtherInfo<>'' then Self.OtherInfo:=Item.OtherInfo;
+  if Item.Key<>'' then Self.Key:=Item.Key;
+  // Info
+  for i:=0 to Item.FInfoList.Count-1 do
+  begin
+    InfoItem1:=(Item.FInfoList.Items[i] as TDnmpContactInfo);
+    if InfoItem1.Value<>'' then Self.Info[InfoItem1.Name]:=InfoItem1.Value;
   end;
   // Temp
   //Self.Online:=Item.Online;
@@ -2901,11 +2953,12 @@ begin
 
   else // ALinkInfo.Info['addr_type'] = 'node'
   begin
+    { TODO : Нужна проверка подключения к узлу }
+
     // Выделяем новый номер узла (!!!)
-    // { TODO : Нужна проверка незанятости номера узла в сегменте }
+    { TODO : Нужна проверка незанятости номера узла в сегменте }
     if NodeList.IndexOf(ALinkInfo)>=0 then Exit;
     ALinkInfo.Addr.Node:=Self.GetFreeNodeID();
-    { TODO : Нужно учитывать свой адрес в нодлисте }
     if SameNode(ALinkInfo.Addr, MyInfo.Addr) then Inc(ALinkInfo.Addr.Node);
     ALinkInfo.Addr.Point:=0;
     NodeList.Add(ALinkInfo);
