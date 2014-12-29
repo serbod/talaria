@@ -99,7 +99,10 @@ begin
   if not Assigned(tvUserList.Selected) then Exit;
   if not Assigned(tvUserList.Selected.Data) then Exit;
   Item:=TContactItem(tvUserList.Selected.Data);
-  Core.PictureFromString(imgAvatar.Picture, Item.Picture);
+  try
+    Core.PictureFromString(imgAvatar.Picture, Item.Picture);
+  except
+  end;
 end;
 
 procedure TFrameChat.FSetChatRoom(Value: TChatRoom);

@@ -68,6 +68,7 @@
         <ComponentName Value="FrameChat"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="ChatFrame"/>
       </Unit3>
       <Unit4>
         <Filename Value="dnmp_unit.pas"/>

@@ -77,7 +77,7 @@ type
   end;
 
   { TServiceDnmp }
-
+  { Объект DNMP - включает в себя Mgr и ServMgr }
   TServiceDnmp = class(TObject)
   private
     FOnLog: TGetStrProc;

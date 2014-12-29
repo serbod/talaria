@@ -162,8 +162,11 @@ type
     // Возвращает True если сообщение обработано и дальнейшая обработка не требуется
     // Try to create service !!!
     function ParseMsg(AMsg: TDnmpMsg): boolean; override;
+    // Send to uplink request for list of supported services types
     procedure RequestTypes();
+    // Send to uplink request for list of services with specified type
     procedure RequestList(sType: string);
+    // Send to uplink request of specified service info
     procedure RequestInfo(sType, sName: string);
     // Default owner
     function DefaultOwner(): TDnmpContact;
