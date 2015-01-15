@@ -179,6 +179,7 @@
         <ComponentName Value="FormDnmpWizard"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DnmpWizardFrame"/>
       </Unit21>
       <Unit22>
         <Filename Value="dnmp_chat.pas"/>

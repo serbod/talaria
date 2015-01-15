@@ -245,7 +245,9 @@ type
     function DelByGUID(sGUID: string): TDnmpContact;
     { Find item by GUID or Addr, if found then update, if not found then add }
     function UpdateItem(Addr: TAddr; sGUID, sSeniorGUID, sName, sState, sStatus: string): TDnmpContact; overload;
-    { Find item by GUID or Addr, if found then update, if not found then add }
+    { Find item by GUID or Addr, if found then update, if not found then add
+      Items with addr 0.0 and empty GUID not compared
+      If item not found in this list, search in parent list }
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
@@ -558,6 +560,8 @@ type
 
   // Return addr 0.0
   function EmptyAddr(): TAddr;
+  // Return True if Addr=0.0
+  function IsEmptyAddr(Addr: TAddr): Boolean;
   // Return node addr from given addr: 1.2 -> 1.0
   function NodeAddr(Addr: TAddr): TAddr;
   function AddrToStr(Addr: TAddr): string;
@@ -628,6 +632,11 @@ begin
   Result.Point:=0;
 end;
 
+function IsEmptyAddr(Addr: TAddr): Boolean;
+begin
+  Result:=((Addr.Node=0) and (Addr.Point=0));
+end;
+
 function NodeAddr(Addr: TAddr): TAddr;
 begin
   Result.Node:=Addr.Node;
@@ -650,12 +659,12 @@ end;
 
 function SameAddr(Addr1, Addr2: TAddr): boolean;
 begin
-  Result := ((Addr1.Node=Addr2.Node) and (Addr1.Point=Addr2.Point));
+  Result:=((Addr1.Node=Addr2.Node) and (Addr1.Point=Addr2.Point));
 end;
 
 function SameNode(Addr1, Addr2: TAddr): boolean;
 begin
-  Result := (Addr1.Node=Addr2.Node);
+  Result:=(Addr1.Node=Addr2.Node);
 end;
 
 function LinkTypeToStr(lt: TDnmpLinkType): string;
@@ -996,15 +1005,16 @@ end;
 
 function TDnmpContactList.UpdateItem(Item: TDnmpContact): TDnmpContact;
 begin
-  Result:=Self.GetByGUID(Item.GUID);
-  if not Assigned(Result) then Result:=Self.GetByAddr(Item.Addr);
+  Result:=nil;
+  if Trim(Item.GUID)<>'' then Result:=Self.GetByGUID(Item.GUID);
+  if (not Assigned(Result)) and (not IsEmptyAddr(Item.Addr)) then Result:=Self.GetByAddr(Item.Addr);
   if not Assigned(Result) then
   begin
     // Not found in this list, look in parent list
     if Assigned(ParentList) then
     begin
-      Result:=ParentList.GetByGUID(Item.GUID);
-      if not Assigned(Result) then Result:=ParentList.GetByAddr(Item.Addr);
+      if Trim(Item.GUID)<>'' then Result:=ParentList.GetByGUID(Item.GUID);
+      if not Assigned(Result) and (not IsEmptyAddr(Item.Addr)) then Result:=ParentList.GetByAddr(Item.Addr);
     end;
     if Assigned(Result) then
     begin
@@ -2549,7 +2559,7 @@ var
   i, n: Integer;
   Storage: TDnmpStorage;
 begin
-  FServerMode:=Conf.ReadBool('Main','IsNode', False);
+  //FServerMode:=Conf.ReadBool('Main','IsNode', False);
   if Assigned(Serializer) then
   begin
     // MyInfo
@@ -2557,6 +2567,8 @@ begin
     DebugText('Load MyInfo from '+csMyInfoFileName);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
     Storage.Free();
+
+    FServerMode:=MyInfo.IsNode;
 
     // MyPassport
     Storage:=TDnmpStorage.Create(stUnknown);
