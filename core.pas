@@ -121,6 +121,7 @@ procedure AddPage(AFrame: TFrame; ACaption: string; ADataObject: TObject);
 procedure ShowForm(AFrame: TFrame; ACaption: string);
 
 procedure PictureFromString(Picture: TPicture; sPic: AnsiString);
+function PictureToString(Picture: TPicture; var sPic: AnsiString): Boolean;
 procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
 procedure SetDefaultContactPicture(Picture: TPicture);
 
@@ -249,6 +250,27 @@ begin
       ss.Free();
     end;
   end;
+end;
+
+function PictureToString(Picture: TPicture; var sPic: AnsiString): Boolean;
+var
+  ss: TStringStream;
+begin
+  Result:=False;
+  sPic:='';
+  // picture
+  ss:=TStringStream.Create('');
+  try
+    //Picture.Jpeg.SaveToStream(ss);
+    Picture.PNG.SaveToStream(ss);
+    //Picture.SaveToStreamWithFileExt(ss, 'jpg');
+    sPic:=ss.DataString;
+    Result:=True;
+  finally
+    ss.Free;
+  end;
+  if Length(sPic)<5 then sPic:='';
+
 end;
 
 procedure ShrinkPhoto(Picture: TPicture; x, y: integer);

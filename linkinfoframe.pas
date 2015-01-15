@@ -152,8 +152,6 @@ begin
 end;
 
 procedure TFrameLinkInfo.LinkInfoFromForm();
-var
-  ss: TStringStream;
 begin
   LinkInfo.Addr:=StrToAddr(Trim(edAddr.Text));
   LinkInfo.Name:=Trim(edName.Text);
@@ -162,13 +160,7 @@ begin
   LinkInfo.StatusMessage:=Trim(edStatusMessage.Text);
 
   // picture
-  ss:=TStringStream.Create('');
-  //imgPicture.Picture.Jpeg.SaveToStream(ss);
-  imgPicture.Picture.PNG.SaveToStream(ss);
-  //imgPicture.Picture.SaveToStreamWithFileExt(ss, 'jpg');
-  LinkInfo.Picture:=ss.DataString;
-  ss.Free;
-  if Length(LinkInfo.Picture)<4 then LinkInfo.Picture:='';
+  Core.PictureToString(imgPicture.Picture, LinkInfo.Picture);
 
   LinkInfo.Owner:=Trim(edOwner.Text);
   LinkInfo.Location:=Trim(edLocation.Text);

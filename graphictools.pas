@@ -12,11 +12,12 @@ uses
   picture, archive, executable, audio, video }
 function GetFileType(AFileName: string): string;
 
-{ Fill APreviewData stream with preview data from AFileName file
+{ Return bytes string with preview data from AFileName file
   if AFileName='' then get preview from clipboard
+  AImageSize is desired width and height
   AFileInfo returns file type and properties: "picture bitmap 640x480"
   }
-function GetFilePreview(AFileName: string; var AFileInfo: string): AnsiString;
+function GetFilePreview(AFileName: string; AImageSize: TPoint; var AFileInfo: string): AnsiString;
 
 { Open picture file from AFileName and resize it to given ABitmap
   original image resolution info written to AImageInfo }
@@ -42,7 +43,8 @@ begin
   else Result:='unknown';
 end;
 
-function GetFilePreview(AFileName: string; var AFileInfo: string): AnsiString;
+function GetFilePreview(AFileName: string; AImageSize: TPoint;
+  var AFileInfo: string): AnsiString;
 var
   ssData: TStringStream;
   sFileType, sImgInfo: string;
@@ -60,8 +62,8 @@ begin
   if sFileType='picture' then
   begin
     bmp:=TBitmap.Create();
-    bmp.Height:=64;
-    bmp.Width:=64;
+    bmp.Height:=AImageSize.y;
+    bmp.Width:=AImageSize.x;
     try
       sImgInfo:='';
       Done:=False;

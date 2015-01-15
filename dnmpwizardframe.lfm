@@ -6,13 +6,13 @@ object FormDnmpWizard: TFormDnmpWizard
   Caption = 'FormDnmpWizard'
   ClientHeight = 310
   ClientWidth = 485
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.2.6.0'
   object nbPages: TNotebook
     Left = 0
     Height = 276
     Top = 0
     Width = 485
-    PageIndex = 0
+    PageIndex = 1
     Align = alClient
     TabOrder = 0
     TabStop = True
@@ -32,7 +32,7 @@ object FormDnmpWizard: TFormDnmpWizard
         Height = 173
         Top = 83
         Width = 304
-        Caption = 'Сервер'
+        Caption = 'К кому подключаемся'
         ClientHeight = 155
         ClientWidth = 300
         TabOrder = 0
@@ -83,33 +83,101 @@ object FormDnmpWizard: TFormDnmpWizard
           TabOrder = 2
         end
       end
+      object gbListen: TGroupBox
+        Left = 320
+        Height = 173
+        Top = 83
+        Width = 152
+        Caption = 'Входящие подключения'
+        ClientHeight = 155
+        ClientWidth = 148
+        TabOrder = 1
+        object lbListenPort: TLabel
+          Left = 5
+          Height = 31
+          Top = 40
+          Width = 134
+          AutoSize = False
+          Caption = 'номер порта (необязательно)'
+          ParentColor = False
+          WordWrap = True
+        end
+        object edListenPort: TEdit
+          Left = 8
+          Height = 23
+          Top = 80
+          Width = 134
+          TabOrder = 0
+        end
+        object btnListenPortDefault: TButton
+          Left = 5
+          Height = 23
+          Top = 107
+          Width = 134
+          Caption = 'по умолчанию'
+          OnClick = btnListenPortDefaultClick
+          TabOrder = 1
+        end
+      end
+      object lbListenerkInfo: TLabel
+        Left = 320
+        Height = 66
+        Top = 14
+        Width = 152
+        AutoSize = False
+        Caption = 'Чтобы стать узлом и принимать входящие подключения, укажите номер порта.'
+        ParentColor = False
+        WordWrap = True
+      end
     end
     object PageUser: TPage
       object gbPicture: TGroupBox
         Left = 280
-        Height = 239
+        Height = 263
         Top = 9
         Width = 192
         Caption = 'Картинка (аватар)'
-        ClientHeight = 221
+        ClientHeight = 245
         ClientWidth = 188
         TabOrder = 0
         object imgPicture: TImage
           Left = 8
-          Height = 205
+          Height = 200
           Top = 8
           Width = 172
-          Align = alClient
+          Align = alCustom
+          Anchors = [akTop, akLeft, akRight, akBottom]
           BorderSpacing.Around = 8
+        end
+        object btnAvatarFromFile: TButton
+          Left = 8
+          Height = 25
+          Top = 215
+          Width = 75
+          Anchors = [akLeft, akBottom]
+          Caption = 'из файла'
+          Enabled = False
+          OnClick = btnAvatarFromFileClick
+          TabOrder = 0
+        end
+        object btnAvatarFromClipboard: TButton
+          Left = 105
+          Height = 25
+          Top = 216
+          Width = 75
+          Anchors = [akLeft, akBottom]
+          Caption = 'из буфера'
+          OnClick = btnAvatarFromClipboardClick
+          TabOrder = 1
         end
       end
       object gbUserInfo: TGroupBox
         Left = 8
-        Height = 185
+        Height = 233
         Top = 9
         Width = 264
         Caption = 'Информация о пользователе'
-        ClientHeight = 167
+        ClientHeight = 215
         ClientWidth = 260
         TabOrder = 1
         object lbName: TLabel
@@ -156,6 +224,21 @@ object FormDnmpWizard: TFormDnmpWizard
           Top = 131
           Width = 248
           TabOrder = 2
+        end
+        object lbGUID: TLabel
+          Left = 8
+          Height = 15
+          Top = 160
+          Width = 198
+          Caption = 'GUID (не меняйте, если не уверены)'
+          ParentColor = False
+        end
+        object edGUID: TEdit
+          Left = 8
+          Height = 23
+          Top = 184
+          Width = 248
+          TabOrder = 3
         end
       end
     end

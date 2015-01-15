@@ -595,7 +595,7 @@ begin
   FileName:=Core.SelectFileName();
   if FileName='' then Exit;
   // Extract preview for file
-  s:=GetFilePreview(FileName, FileInfo);
+  s:=GetFilePreview(FileName, Point(64,64), FileInfo);
   if Length(s)>0 then
   begin
     Chat.SendFileToContact(Contact, FileName, FileInfo, s);
@@ -639,7 +639,7 @@ begin
   if ((Key = VK_INSERT) or (Key = VK_V)) and (ssCtrl in Shift) then
   begin
     // insert picture
-    s:=GetFilePreview('', FileInfo);
+    s:=GetFilePreview('', Point(64, 64), FileInfo);
     if Length(s)>0 then
     begin
       Chat.SendFileToContact(Contact, '', FileInfo, s);
