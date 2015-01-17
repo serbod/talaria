@@ -444,7 +444,7 @@ procedure TVisualContactItem.Paint();
 var
   i, x, y, h: integer;
   //Pan: TPanel;
-  //Image: TImage;
+  StateImage: TBitmap;
   lb: TLabel;
   ss: TStringStream;
   s: string;
@@ -465,10 +465,20 @@ begin
   //Self.Canvas.Rectangle(Self.BoundsRect);
   Self.Canvas.Rectangle(Self.ClientRect);
 
-  // copy image
+  // state image
+  i:=ciIconUserRed;
+  if Item.State=TDnmpContactState.asOnline then i:=ciIconUserBlue
+  else if Item.State=TDnmpContactState.asBusy then i:=ciIconUserAway;
+  StateImage:=TBitmap.Create();
+  Icon16ToBitmap(StateImage, i);
+  x:=2;
+  y:=(h div 2)-(StateImage.Height div 2);
+  Self.Canvas.Draw(x, y, StateImage);
+
+  // avatar image
   if Assigned(Image) then
   begin
-    x:=2;
+    x:=2+StateImage.Width+4;
     y:=2;
     r1:=Rect(x, y, x+h-2, y+h-2);
     //r2:=Image.BoundsRect;
@@ -695,8 +705,9 @@ begin
   begin
     ChatSession:=Chat.GetChatSessionForContact(Contact);
     ChatSession.MessagesList.AddObserver(Self);
+    UpdateChat();
   end;
-  UpdateChat();
+  // else clear chat
 end;
 
 procedure TFrameDnmpContacts.FSetContact(Value: TDnmpContact);

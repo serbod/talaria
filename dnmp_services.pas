@@ -474,7 +474,7 @@ begin
 
   if not Assigned(Result) then
   begin
-    li:=Mgr.GetLinkInfoByGUID(sGUID);
+    li:=Mgr.GetContactByGUID(sGUID);
     if Assigned(li) and Assigned(Self.ServiceInfo) then
     begin
       //Result:=Self.ServiceInfo.Abonents.UpdateAbonent(sGUID, li.Name, 'NONE', '', '', li.Addr);
@@ -1039,7 +1039,7 @@ begin
     s:='';
     if Length(Params) = 3 then
     begin
-      li:=Mgr.GetLinkInfoByAddr(Addr);
+      li:=Mgr.GetContactByAddr(Addr);
       if Assigned(li) then s:=li.GUID;
     end
     else s:=Params[3];

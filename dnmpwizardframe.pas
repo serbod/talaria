@@ -24,7 +24,7 @@ type
     edUplinkPassword: TEdit;
     edUplunkHost: TEdit;
     edName: TEdit;
-    edFullName: TEdit;
+    edOwnerName: TEdit;
     edLocation: TEdit;
     gbPicture: TGroupBox;
     gbUserInfo: TGroupBox;
@@ -39,7 +39,7 @@ type
     lbUplinkKey: TLabel;
     lbUplinkHost: TLabel;
     lbUplinkInfo: TLabel;
-    lbFullName: TLabel;
+    lbOwnerName: TLabel;
     lbName: TLabel;
     lbLocation: TLabel;
     lbLanguageInfo: TLabel;
@@ -134,7 +134,7 @@ begin
 
   // set user
   edName.Text:=Serv.Mgr.MyInfo.Name;
-  edFullName.Text:=Serv.Mgr.MyInfo.Owner;
+  edOwnerName.Text:=Serv.Mgr.MyInfo.Owner;
   edLocation.Text:=Serv.Mgr.MyInfo.Location;
   edGUID.Text:=Trim(Serv.Mgr.MyInfo.GUID);
   if Trim(edGUID.Text)='' then edGUID.Text:=GenerateGUID();
@@ -177,7 +177,7 @@ begin
   if not Assigned(Serv.Mgr) then Exit;
   // set user
   Serv.Mgr.MyInfo.Name:=edName.Text;
-  Serv.Mgr.MyInfo.Owner:=edFullName.Text;
+  Serv.Mgr.MyInfo.Owner:=edOwnerName.Text;
   Serv.Mgr.MyInfo.Location:=edLocation.Text;
   Serv.Mgr.MyInfo.GUID:=Trim(edGUID.Text);
   // set listen port
@@ -211,7 +211,7 @@ begin
     Item:=TDnmpContact.Create();
     Serv.Mgr.NodeList.AddItem(Item);
     Item.Name:='Uplink';
-    Item.GUID:=GenerateGUID();
+    Item.GUID:=GenerateTemporaryGUID();
   end;
   Item.IpAddr:=Trim(edUplunkHost.Text);
   Item.Key:=Trim(edUplinkKey.Text);
