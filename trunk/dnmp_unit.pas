@@ -438,6 +438,8 @@ type
     }
     function CmdHandler(CmdText: string): string;
     procedure IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
+    // срабатывает когда нет ни одного активного линка
+    procedure OnAllDisconnected();
   public
     // Serializer for objects
     Serializer: TDnmpSerializer;
@@ -534,10 +536,6 @@ type
     function AddLink(Link: TDnmpLink): integer;
     { Remove link from links list }
     function DelLink(Link: TDnmpLink): Boolean;
-    function GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
-    function GetContactByGUID(SomeGUID: string): TDnmpContact;
-    function GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpContact;
-    function GetLinkInfoByGUID(SomeGUID: string): TDnmpContact;
     { Approve specified link
     if link is Point: assign new point number, add to pointlist
     if link is Node:
@@ -553,9 +551,17 @@ type
     // De-serialize data from message body to storage
     function MsgDataToStorage(Msg: TDnmpMsg): TDnmpStorage;
     // ==== Сервисные функции
+    function GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
+    function GetContactByGUID(SomeGUID: string): TDnmpContact;
+    // запрос информации об указанном адресе
     procedure RequestInfoByAddr(Addr: TAddr);
+    // запрос поинтлиста с указанного адреса
     procedure RequestPointlist(Addr: TAddr);
+    // запрос (поиск) контактов по имени
     procedure RequestContactsByName(AName: string);
+    // ==== Приемники событий от модулей
+    // когда к нам контакт подключился
+    procedure ContactConnectedIn(AContact: TDnmpContact);
   end;
 
   // Return addr 0.0
@@ -595,8 +601,12 @@ type
   // {TODO: full random long key}
   function GenerateKey(): AnsiString;
   function GenerateGUID(): string;
+  function GenerateTemporaryGUID(): string;
+  function IsTemporaryGUID(sGUID: string): Boolean;
   // Extract and return first word from string
   function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
+  // Проверяет заданный путь. Создает каталоги, если их нет
+  function CheckPath(sPath: string): Boolean;
 
 
 const
@@ -615,7 +625,7 @@ var
   sDnmpDataDir: string = 'data';
 
 implementation
-uses RC4, dnmp_ip, Misc, dnmp_info, dnmp_auth;
+uses RC4, dnmp_ip, dnmp_info, dnmp_auth;
 
 // === Functions ===
 {
@@ -795,6 +805,26 @@ begin
   if CreateGUID(NewGuid)=0 then Result:=GUIDToString(NewGuid);
 end;
 
+function GenerateTemporaryGUID(): string;
+var
+  NewGuid: TGuid;
+begin
+  Result:='';
+  if CreateGUID(NewGuid)=0 then
+  begin
+    NewGuid.D1:=0;
+    Result:=GUIDToString(NewGuid);
+  end;
+end;
+
+function IsTemporaryGUID(sGUID: string): Boolean;
+var
+  TmpGuid: TGuid;
+begin
+  Result:=True;
+  if TryStringToGUID(sGUID, TmpGuid) then Result:=(TmpGuid.D1=0);
+end;
+
 function ExtractFirstWord(var s: string; delimiter: string = ' '): string;
 var
   i: integer;
@@ -810,6 +840,16 @@ begin
   begin
     Result:=s;
     s:='';
+  end;
+end;
+
+// Проверяет заданный путь. Создает каталоги, если их нет
+function CheckPath(sPath: string): Boolean;
+begin
+  Result:=True;
+  if (not DirectoryExists(sPath)) then
+  begin
+    if (not CreateDir(sPath)) then Result:=False;
   end;
 end;
 
@@ -1074,8 +1114,11 @@ begin
       Item.Free();
       Continue;
     end;
-    //self.Add(Item);
-    self.UpdateItem(Item);
+    if Length(Item.GUID)>=4 then
+    begin
+      //self.Add(Item);
+      self.UpdateItem(Item);
+    end;
   end;
   Result:=True;
 end;
@@ -1328,7 +1371,7 @@ begin
   if not Assigned(Item) then Exit;
   // Brief
   if Item.Name<>'' then Self.Name:=Item.Name;
-  if not SameAddr(Item.Addr, EmptyAddr()) then Self.Addr:=Item.Addr;
+  if not IsEmptyAddr(Item.Addr) then Self.Addr:=Item.Addr;
   if Item.GUID<>'' then Self.GUID:=Item.GUID;
   Self.State:=Item.State;
   // Public
@@ -2168,7 +2211,7 @@ constructor TDnmpManager.Create(ConfName: string);
 begin
   inherited Create();
   sDataPath:=IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(sDnmpDataDir)+ConfName);
-  Misc.CheckPath(sDataPath);
+  CheckPath(sDataPath);
 
   DebugText('Config file='+sDataPath+csConfigFileName);
   Conf:=TDnmpConf.Create(sDataPath+csConfigFileName);
@@ -2290,6 +2333,7 @@ begin
       ListenerLink:=tmpLink;
       LinkList.Add(tmpLink);
       DebugText('Server started. '+TIpLink(tmpLink).LinkHost+':'+TIpLink(tmpLink).LinkPort);
+      MyInfo.State:=TDnmpContactState.asOnline;
       Event('MGR','REFRESH');
     end
     else FreeAndNil(tmpLink);
@@ -2338,6 +2382,7 @@ begin
   end;
   Uplink:=nil;
   LinkList.Clear();
+  OnAllDisconnected();
 end;
 
 procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpContact);
@@ -2354,24 +2399,12 @@ begin
   tmpLink.LinkType:=ltOutcoming;
   tmpLink.MsgHandler:=TDnmpAuthService.Create(Self, tmpLink);
 
-  {
-  if self.ServerMode then
-  begin
-    tmpLink.LinkType:=ltNode;
-    tmpLink.MsgHandler:=TDnmpParserServer.Create(Self, tmpLink);
-  end
-  else
-  begin
-    tmpLink.LinkType:=ltPoint;
-    tmpLink.MsgHandler:=TDnmpParserClient.Create(Self, tmpLink);
-  end;
-  }
-
   if tmpLink.Connect() then
   begin
     if not Assigned(UpLink) then UpLink:=tmpLink;
     LinkList.Add(tmpLink);
     DebugText('Node link started. '+tmpLink.LinkHost+':'+tmpLink.LinkPort);
+    MyInfo.State:=TDnmpContactState.asOnline;
     Event('MGR','REFRESH');
   end
   else FreeAndNil(tmpLink);
@@ -2394,7 +2427,7 @@ begin
     begin
       DebugText('Removing node link: '+AddrToStr(NodeInfo.Addr)+' '+NodeInfo.Name);
       tmpLink.OnIncomingMsg:=nil;
-      LinkList.Delete(i);
+      DelLink(tmpLink);
       Event('MGR','REFRESH');
       Exit;
     end;
@@ -2405,25 +2438,15 @@ function TDnmpManager.AddLink(Link: TDnmpLink): integer;
 begin
   Result:=self.LinkList.Add(Link);
   Link.MsgHandler:=TDnmpAuthService.Create(Self, Link);
-  {
-  if ServerMode then
-  begin
-    Link.MsgHandler:=TDnmpParserServer.Create(Self, Link);
-  end
-  else
-  begin
-    Link.MsgHandler:=TDnmpParserClient.Create(Self, Link);
-  end;
-  }
   if Assigned(Link.MsgHandler) then Link.MsgHandler.Start();
 end;
 
 function TDnmpManager.DelLink(Link: TDnmpLink): Boolean;
 begin
-  //Result:=self.LinkList.Remove(Link);
   Result:=True;
   Link.OnIncomingMsg:=nil;
-  self.LinkList.Extract(Link);
+  Self.LinkList.Extract(Link);
+  if Self.LinkList.Count=0 then OnAllDisconnected();
 end;
 
 procedure TDnmpManager.DebugText(s: string);
@@ -2480,6 +2503,37 @@ begin
   end;
 
   if Assigned(OnIncomingMsg) then OnIncomingMsg(Link, Msg);
+end;
+
+procedure TDnmpManager.OnAllDisconnected();
+var
+  i: integer;
+begin
+  // если не осталось связей, то помечаем статусы контактов как неизвестные
+  if Self.LinkList.Count=0 then
+  begin
+    MyInfo.State:=TDnmpContactState.asOffline;
+    for i:=0 to Self.ContactList.Count-1 do
+    begin
+      Self.ContactList.Items[i].State:=asUnknown;
+    end;
+  end;
+end;
+
+procedure TDnmpManager.ContactConnectedIn(AContact: TDnmpContact);
+begin
+  AContact.State:=asOnline;
+
+  // Запрашиваем информацию о контакте
+  RequestInfoByAddr(AContact.Addr);
+
+  { При подключении узла Гость к узлу Хозяин:
+
+  1. Гость сообщает Хозяину список всех своих нижестоящих узлов.
+  2. Хозяин сообщает Гостю свой список узлов.
+  3. Хозяин отсылает своему аплинку эхо-запрос с информацией о Госте.
+  4. Гость отсылает своим даунлинкам эхо-запрос с информацией о Хозяине.
+  }
 end;
 
 procedure TDnmpManager.IncomingMsgHandler(Sender: TObject; Msg: TDnmpMsg);
@@ -2816,7 +2870,7 @@ end;
 function TDnmpManager.CmdHandler(CmdText: string): string;
 var
   sCmd, sParams, s, s2: string;
-  saParams: TStringArray;
+  //saParams: TStringArray;
   i: Integer;
   TraceID: Cardinal;
   Msg: TDnmpMsg;
@@ -2824,27 +2878,46 @@ var
 begin
   Result:='';
   sCmd:='';
-  sParams:='';
-  ExtractCmd(CmdText, sCmd, sParams);
+  sParams:=CmdText;
+  sCmd:=ExtractFirstWord(sParams);
   if sCmd='AUTH' then
   begin
     if sParams='OK' then
     begin
-      // Кто-то успешно авторизировался
+      // Мы успешно авторизировались
       DebugText('AUTH OK');
     end
 
     else if sParams='FAIL' then
     begin
-      // Кто-то не авторизировался
+      // Мы не авторизировались
       DebugText('AUTH FAIL');
+    end;
+    Event('MGR','REFRESH');
+  end
+
+  else if sCmd='IN_AUTH' then
+  begin
+    DebugText('IN_AUTH '+sParams);
+    s:=ExtractFirstWord(sParams); // IN_AUTH result
+    if s='OK' then
+    begin
+      // Кто-то успешно авторизировался
+      s2:=ExtractFirstWord(sParams); // remote addr
+      TmpInfo:=GetContactByGUID(sParams);
+      ContactConnectedIn(TmpInfo);
+    end
+
+    else if s='FAIL' then
+    begin
+      // Кто-то не авторизировался
     end;
     Event('MGR','REFRESH');
   end
 
   else if sCmd='EVENT' then
   begin
-    ExtractCmd(sParams, sCmd, sParams);
+    sCmd:=ExtractFirstWord(sParams);
     Event(sCmd, sParams);
   end
 
@@ -2862,7 +2935,7 @@ begin
     // APPROVE <GUID>
     // Подтверждает авторизацию линка с указанным GUID
     if sParams='' then Exit;
-    TmpInfo:=GetLinkInfoByGUID(sParams);
+    TmpInfo:=GetContactByGUID(sParams);
     if Assigned(TmpInfo) then Approve(TmpInfo);
   end
 
@@ -2892,22 +2965,32 @@ begin
     // Удаляет маршруты на указанные узлы
     //
     if sParams='' then Exit;
-    saParams:=ParseStr(sParams);
-    if saParams[0]='VIA' then
+    sCmd:=ExtractFirstWord(sParams);
+    if sCmd='VIA' then
     begin
       TraceID:=DateTimeToFileDate(Now());
-      for i:=2 to Length(saParams)-1 do
+      s:=ExtractFirstWord(sParams); // node_id
+      s2:=ExtractFirstWord(sParams); // next node_id
+      while s2<>'' do
       begin
-        RoutingTable.AddItem(StrToIntDef(saParams[1], 0), StrToIntDef(saParams[i], 0), TraceID);
+        RoutingTable.AddItem(StrToIntDef(s, 0), StrToIntDef(s2, 0), TraceID);
+        s2:=ExtractFirstWord(sParams); // next node_id
       end;
     end
 
-    else if saParams[0]='DEL' then
+    else if sCmd='DEL' then
     begin
-      for i:=1 to Length(saParams)-1 do
+      s:=ExtractFirstWord(sParams); // node_id | ALL
+      while s<>'' do
       begin
-        if (i=1) and (UpperCase(saParams[i])='ALL') then RoutingTable.Clear()
-        else RoutingTable.DelDest(StrToIntDef(saParams[i], 0));
+        if (UpperCase(s)='ALL') then
+        begin
+          RoutingTable.Clear();
+          Break;
+        end
+        else
+          RoutingTable.DelDest(StrToIntDef(s, 0));
+        s:=ExtractFirstWord(sParams); // node_id | ALL
       end;
 
     end;
@@ -2918,15 +3001,7 @@ end;
 function TDnmpManager.GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
 begin
   Result:=ContactList.GetByAddr(SomeAddr);
-end;
-
-function TDnmpManager.GetContactByGUID(SomeGUID: string): TDnmpContact;
-begin
-  Result:=ContactList.GetByGUID(SomeGUID);
-end;
-
-function TDnmpManager.GetLinkInfoByAddr(SomeAddr: TAddr): TDnmpContact;
-begin
+  {
   Result:=nil;
   if SameAddr(SomeAddr, MyInfo.Addr) then Result:=MyInfo;
 
@@ -2935,15 +3010,14 @@ begin
     if SomeAddr.Point=0 then Result:=NodeList.GetByAddr(SomeAddr)
     else Result:=PointList.GetByAddr(SomeAddr);
   end;
-
+  }
   if not Assigned(Result) then Result:=UnapprovedList.GetByAddr(SomeAddr);
 end;
 
-function TDnmpManager.GetLinkInfoByGUID(SomeGUID: string): TDnmpContact;
+function TDnmpManager.GetContactByGUID(SomeGUID: string): TDnmpContact;
 begin
-  Result:=UnapprovedList.GetByGUID(SomeGUID);
-  if not Assigned(Result) then Result:=PointList.GetByGUID(SomeGUID);
-  if not Assigned(Result) then Result:=NodeList.GetByGUID(SomeGUID);
+  Result:=ContactList.GetByGUID(SomeGUID);
+  if not Assigned(Result) then Result:=UnapprovedList.GetByGUID(SomeGUID);
 end;
 
 function TDnmpManager.Approve(ALinkInfo: TDnmpContact): boolean;

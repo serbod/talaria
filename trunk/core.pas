@@ -125,6 +125,8 @@ function PictureToString(Picture: TPicture; var sPic: AnsiString): Boolean;
 procedure ShrinkPhoto(Picture: TPicture; x, y: integer);
 procedure SetDefaultContactPicture(Picture: TPicture);
 
+procedure Icon16ToBitmap(ABitmap: TBitmap; IconIndex: integer);
+
 function SelectFileName(): string;
 
 // DNMP-specific
@@ -136,6 +138,7 @@ const
   ciIconNote = 18;
   ciIconUserBlue = 20;
   ciIconUserRed = 21;
+  ciIconUserAway = 22;
 
 implementation
 
@@ -309,6 +312,11 @@ end;
 procedure SetDefaultContactPicture(Picture: TPicture);
 begin
   FormMain.ImageList24.GetBitmap(4, Picture.Bitmap);
+end;
+
+procedure Icon16ToBitmap(ABitmap: TBitmap; IconIndex: integer);
+begin
+  FormMain.ImageList16.GetBitmap(IconIndex, ABitmap);
 end;
 
 function SelectFileName(): string;

@@ -184,30 +184,26 @@ begin
   FoundInfo:=nil;
   Found:=False;
   Approved:=False;
-  if RemoteInfo.Addr.Node<>0 then
+
+  // Ищем по GUID среди известных контактов
+  FoundInfo:=Mgr.ContactList.GetByGUID(RemoteInfo.GUID);
+  if Assigned(FoundInfo) then
   begin
-    // Ищем по адресу
-    if RemoteInfo.Addr.Node = MyInfo.Addr.Node then
-    begin
-      FoundInfo:=Mgr.PointList.GetByAddr(RemoteInfo.Addr);
-      if Assigned(FoundInfo) then Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
-      Approved:=Found;
-    end
-    else
-    begin
-      FoundInfo:=Mgr.NodeList.GetByAddr(RemoteInfo.Addr);
-      if Assigned(FoundInfo) then Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
-      Approved:=Found;
-    end;
+    Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
+    Approved:=Found;
   end
   else
   begin
-    // Ищем в списке неавторизованных контактов
-    FoundInfo:=Mgr.ContactList.GetByGUID(RemoteInfo.GUID);
+    // Среди известных не нашли, ищем в списке неавторизованных контактов
+    FoundInfo:=Mgr.UnapprovedList.GetByGUID(RemoteInfo.GUID);
     if Assigned(FoundInfo) then Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
   end;
 
+  { TODO : Проверка подлинности гостевого контакта с другого узла }
+  // Если у гостя есть "прописка" на другом узле
+
   {
+  // Поиск методом подбора ключа
   // Возможно, этот блок не нужен..
   if not Found then
   begin
@@ -218,22 +214,6 @@ begin
       FoundInfo:=Mgr.ContactList[i];
       Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
     end;
-
-    // Подбираем ключ из поинтлиста
-    for i:=0 to Mgr.PointList.Count-1 do
-    begin
-      if Found then Break;
-      FoundInfo:=Mgr.PointList[i];
-      Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
-    end;
-
-    // Подбираем ключ из нодлиста
-    for i:=0 to Mgr.NodeList.Count-1 do
-    begin
-      if Found then Break;
-      FoundInfo:=Mgr.NodeList[i];
-      Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
-    end;
   end;
   }
 
@@ -242,7 +222,7 @@ begin
   begin
     FoundInfo:=RemoteInfo;
     FoundInfo.Key:=TestPhrase;
-    FoundInfo.GUID:=GenerateGUID();
+    //FoundInfo.GUID:=GenerateGUID();
     //FoundInfo.Addr:=EmptyAddr();
     // Сохраняем информацию линка в списке контактов
     Mgr.UnapprovedList.AddItem(FoundInfo);
@@ -252,6 +232,7 @@ begin
   if FoundInfo <> RemoteInfo then
   begin
     // Сохраняем полученную от клиента второстепенную информацию (имя, владелец, статус, итд..)
+    //FoundInfo.GUID:=RemoteInfo.GUID; // уже нашли по GUID
     FoundInfo.Name:=RemoteInfo.Name;
     FoundInfo.Owner:=RemoteInfo.Owner;
     FoundInfo.Location:=RemoteInfo.Location;
@@ -277,14 +258,14 @@ begin
   if Approved then
   begin
     SendAuthResult('OK');
-    Mgr.Cmd('AUTH OK '+AddrToStr(FoundInfo.Addr)+' '+FoundInfo.GUID);
+    Mgr.Cmd('IN_AUTH OK '+AddrToStr(FoundInfo.Addr)+' '+FoundInfo.GUID);
     //
     if RemoteInfo.Addr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
   end
   else
   begin
     SendAuthResult(sAuthResult);
-    Mgr.Cmd('AUTH FAIL '+AddrToStr(FoundInfo.Addr)+FoundInfo.GUID);
+    Mgr.Cmd('IN_AUTH FAIL '+AddrToStr(FoundInfo.Addr)+FoundInfo.GUID);
     Link.Disconnect();
   end;
   Mgr.Cmd('EVENT MGR UPDATE LINKS');

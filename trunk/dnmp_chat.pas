@@ -235,6 +235,7 @@ end;
 function TDnmpChatMessage.ToStorage: TDnmpStorage;
 begin
   Result:=TDnmpStorage.Create(stDictionary);
+  Result.Add('id', ID);
   Result.Add('time', Timestamp);
   Result.Add('in', IsIncoming);
   Result.Add('addr', AddrToStr(RemoteAddr));
@@ -248,6 +249,7 @@ begin
   Result:=False;
   if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
+  Self.ID:=Storage.GetInteger('id');
   Self.Timestamp:=Storage.GetReal('time');
   Self.IsIncoming:=Storage.GetBool('in');
   Self.RemoteAddr:=StrToAddr(Storage.GetString('addr'));
@@ -507,6 +509,7 @@ begin
       Item.Free();
       Continue;
     end;
+    Item.ID:=FItems.Count;
     FItems.Add(Item);
   end;
   Result:=True;
