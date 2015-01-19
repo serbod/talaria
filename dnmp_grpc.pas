@@ -637,7 +637,7 @@ begin
 
   else if sState='ON' then
   begin
-    self.UsersList.Add(Result);
+    self.UsersList.AddItem(Result);
   end;
 
 end;

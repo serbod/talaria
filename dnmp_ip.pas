@@ -21,6 +21,9 @@ type
   end;
 
   TSockListenerEvent = procedure(Sock: TSocket; LastError: integer; Data: string) of object;
+
+  { TSockListener }
+
   TSockListener = class(TThread)
   private
     FOnEvent: TSockListenerEvent;
@@ -29,7 +32,9 @@ type
     Socket: TTCPBlockSocket;
     //Socket: TBlockSocket;
     NewSocket: TSocket;
-    constructor Create(BSock: TTCPBlockSocket; EventHandler: TSockListenerEvent);
+    LinkHost: string;
+    LinkPort: string;
+    constructor Create();
     destructor Destroy(); override;
     property OnEvent: TSockListenerEvent read FOnEvent write FOnEvent;
     procedure SyncProc();
@@ -146,11 +151,11 @@ begin
 end;
 
 // === TSockListener ===
-constructor TSockListener.Create(BSock: TTCPBlockSocket; EventHandler: TSockListenerEvent);
+constructor TSockListener.Create();
 begin
-  FreeOnTerminate:=true;
-  Socket:=BSock;
-  OnEvent:=EventHandler;
+  FreeOnTerminate:=True;
+  Str:='';
+  NewSocket:=0;
   inherited Create(True);
 end;
 
@@ -170,7 +175,17 @@ end;
 
 procedure TSockListener.Execute();
 begin
-  Socket.Listen();
+  Socket:=TTCPBlockSocket.Create();
+  Socket.Bind(self.LinkHost, self.LinkPort);
+  if Socket.LastError<>0 then
+  begin
+    Str:=Socket.LastErrorDesc;
+    Synchronize(@SyncProc);
+    FreeAndNil(Socket);
+    Terminate();
+  end
+  else
+    Socket.Listen();
   while not Terminated do
   begin
     if Assigned(Socket) then
@@ -188,6 +203,7 @@ begin
     end;
     Sleep(1);
   end;
+  FreeAndNil(Socket);
 end;
 
 // ===================
@@ -273,32 +289,30 @@ begin
   IdleTimestamp:=Now();
   if (IpProto = 'TCP') then
   begin
-    Socket:=TTCPBlockSocket.Create();
     IgnoreTimeout:=False;
-    Socket.bind(self.LinkHost, self.LinkPort);
-    if Socket.LastError<>0 then
-    begin
-      Exit;
-    end;
-    Listener:=TSockListener.Create(TTCPBlockSocket(self.Socket), @ListenerEventHandler);
+    Listener:=TSockListener.Create();
+    Listener.LinkHost:=Self.LinkHost;
+    Listener.LinkPort:=Self.LinkPort;
+    Listener.OnEvent:=@ListenerEventHandler;
     Listener.Suspended:=False;
   end
   else if (IpProto = 'UDP') then
   begin
     Socket:=TUDPBlockSocket.Create();
     IgnoreTimeout:=True;
-    Socket.bind(self.LinkHost, self.LinkPort);
+    Socket.Bind(self.LinkHost, self.LinkPort);
     if Socket.LastError<>0 then
     begin
+      FreeAndNil(Socket);
       Exit;
     end;
     StartReader();
   end;
   RemoteInfo.Name:=IpProto+' listener '+LinkHost+':'+LinkPort;
 
-  FActive:=true;
+  FActive:=True;
   Mgr.AddCmd('EVENT MGR UPDATE LINKS');
-  Result:=true;
+  Result:=True;
 end;
 
 function TIpLink.Disconnect(): boolean;

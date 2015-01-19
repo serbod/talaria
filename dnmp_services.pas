@@ -913,7 +913,7 @@ begin
     ab:=item.Owners.GetByGUID(sParams);
     if Assigned(ab) then
     begin
-      item.Owners.Remove(ab);
+      item.Owners.Extract(ab);
     end;
   end;
   Result:=True;

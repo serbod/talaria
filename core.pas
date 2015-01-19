@@ -5,7 +5,7 @@ unit Core;
 interface
 
 uses
-  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, LinkInfoListFrame,
+  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc,
   Misc, dnmp_mail, Controls, dnmp_serializers, Graphics, Dialogs, ExtCtrls;
 
 type

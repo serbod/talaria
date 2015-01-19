@@ -125,7 +125,8 @@ var
 begin
   if not Assigned(InfoList) then Exit;
   Item:=TDnmpContact.Create();
-  InfoList.Add(Item);
+  Item.GUID:=GenerateTemporaryGUID();
+  InfoList.AddItem(Item);
   UpdateInfoList();
 end;
 

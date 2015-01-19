@@ -62,6 +62,10 @@ type
     function ParseMsg(Msg: TDnmpMsg): Boolean; override;
   end;
 
+const
+  csAuthResultKeyNotFound = 'KEY_NOT_FOUND';
+  csAuthResultNotApproved = 'NOT_APPROVED';
+
 
 implementation
 uses RC4, dnmp_services;
@@ -152,7 +156,7 @@ procedure TDnmpAuthService.OnAuthReply(Msg: TDnmpMsg);
 var
   sRemoteCypher: AnsiString;
   i: Integer;
-  Found, Approved: Boolean;
+  Approved: Boolean;
   FoundInfo: TDnmpContact;
   sPassword, sAuthResult: string;
 
@@ -181,22 +185,37 @@ begin
   RemoteInfo.OtherInfo:=Msg.Info.Values['other_info'];
   if Msg.Info.Values['type']='node' then self.RemoteInfo.Info['addr_type']:='node';
 
-  FoundInfo:=nil;
-  Found:=False;
-  Approved:=False;
+  FoundInfo:=nil;  // ссылка на ранее известный нам контакт
+  Approved:=False; // признак авторизации контакта
+  sAuthResult:=csAuthResultNotApproved;
 
   // Ищем по GUID среди известных контактов
   FoundInfo:=Mgr.ContactList.GetByGUID(RemoteInfo.GUID);
   if Assigned(FoundInfo) then
   begin
-    Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
-    Approved:=Found;
+    if FoundInfo.Key='' then
+    begin
+      // У нас не было ключа, поэтому делаем ключом тестовую фразу и сообщаем об
+      // этом удаленной стороне
+      FoundInfo.Key:=TestPhrase;
+      sAuthResult:=csAuthResultKeyNotFound;
+    end
+    else
+    begin
+      // сверим ключи
+      Approved:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);;
+      if not Approved then
+      begin
+        // Ключи не сошлись.
+        sAuthResult:='WRONG_KEY';
+      end;
+    end;
   end
   else
   begin
     // Среди известных не нашли, ищем в списке неавторизованных контактов
     FoundInfo:=Mgr.UnapprovedList.GetByGUID(RemoteInfo.GUID);
-    if Assigned(FoundInfo) then Found:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
+    //if Assigned(FoundInfo) then Approved:=CheckKey(FoundInfo.Key, sRemoteCypher, TestPhrase);
   end;
 
   { TODO : Проверка подлинности гостевого контакта с другого узла }
@@ -217,8 +236,7 @@ begin
   end;
   }
 
-  sAuthResult:='NOT_APPROVED';
-  if not Found then
+  if not Assigned(FoundInfo) then
   begin
     FoundInfo:=RemoteInfo;
     FoundInfo.Key:=TestPhrase;
@@ -226,7 +244,7 @@ begin
     //FoundInfo.Addr:=EmptyAddr();
     // Сохраняем информацию линка в списке контактов
     Mgr.UnapprovedList.AddItem(FoundInfo);
-    sAuthResult:='KEY_NOT_FOUND';
+    sAuthResult:=csAuthResultKeyNotFound;
   end;
 
   if FoundInfo <> RemoteInfo then
@@ -248,24 +266,22 @@ begin
     sPassword:=Mgr.Conf.ReadString('Main', 'AutoApprovePassword', '');
     if (sPassword='') or (sPassword=Msg.Info.Values['password']) then
     begin
-      FoundInfo.Addr:=EmptyAddr();
-      Mgr.Approve(FoundInfo);
-      //Link.Approve();
-      Approved:=True;
+      //RemoteInfo.Addr:=EmptyAddr();
+      Approved:=Mgr.Approve(RemoteInfo);
     end;
   end;
 
   if Approved then
   begin
     SendAuthResult('OK');
-    Mgr.Cmd('IN_AUTH OK '+AddrToStr(FoundInfo.Addr)+' '+FoundInfo.GUID);
+    Mgr.Cmd('IN_AUTH OK '+AddrToStr(RemoteInfo.Addr)+' '+RemoteInfo.GUID);
     //
     if RemoteInfo.Addr.Point=0 then OnAuthOkNodeIn() else OnAuthOkPointIn();
   end
   else
   begin
     SendAuthResult(sAuthResult);
-    Mgr.Cmd('IN_AUTH FAIL '+AddrToStr(FoundInfo.Addr)+FoundInfo.GUID);
+    Mgr.Cmd('IN_AUTH FAIL '+AddrToStr(RemoteInfo.Addr)+' '+RemoteInfo.GUID);
     Link.Disconnect();
   end;
   Mgr.Cmd('EVENT MGR UPDATE LINKS');
@@ -293,9 +309,6 @@ end;
 
 // Сервер -> Клиент
 // результат опознания
-// Если клиент известен:
-// Хеширует ключ клиента ключом опознания, сравнивает результаты
-// Если клиент неизвестен, то ключ опознания становится ключом клиента.
 procedure TDnmpAuthService.OnAuthResult(Msg: TDnmpMsg);
 var
   sResult: string;
@@ -304,24 +317,30 @@ begin
   if sResult='OK' then
   begin
     // Опознание успешно
-    { TODO : А вдруг у нас уже был корректный адрес и GUID? }
-    MyInfo.Addr:=Msg.TargetAddr;
-    MyInfo.GUID:=Msg.Info.Values['guid'];
-    MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+    if not SameAddr(MyInfo.Addr, Msg.TargetAddr) then
+    begin
+      // новый адрес
+      if IsEmptyAddr(MyInfo.Addr) then
+        // мой адрес был пустым
+        MyInfo.Addr:=Msg.TargetAddr
+      else if (Msg.TargetAddr.Point<>0) and (not MyInfo.IsNode) then
+        // я поинт
+        MyInfo.Addr:=Msg.TargetAddr;
+    end;
+
+    if MyInfo.SeniorGUID='' then MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
 
     Mgr.Cmd('AUTH OK');
     if MyInfo.Addr.Point=0 then OnAuthOkAsNode() else OnAuthOkAsPoint();
   end
-  else if sResult='KEY_NOT_FOUND' then
+  else if sResult=csAuthResultKeyNotFound then
   begin
-    // Линк не подтвержден
-    // Сохраняем ключ сервера как свой
-    if RemoteInfo.Key='' then RemoteInfo.Key:=TestPhrase;
-    MyInfo.GUID:=Msg.Info.Values['guid'];
-    //MyInfo.SeniorGUID:=Msg.Info.Values['senior_guid'];
+    // Сервер не нашел ключ
+    // Сохраняем фразу сервера как свой ключ
+    RemoteInfo.Key:=TestPhrase;
     Mgr.Cmd('AUTH FAIL');
   end
-  else if sResult='NOT_APPROVED' then
+  else if sResult=csAuthResultNotApproved then
   begin
     // Линк не подтвержден
     Mgr.Cmd('AUTH FAIL');

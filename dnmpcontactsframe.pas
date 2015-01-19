@@ -504,6 +504,12 @@ procedure TFrameDnmpContacts.actDeleteContactExecute(Sender: TObject);
 begin
   if MessageDlg('Delete item', 'Are you sure?', mtConfirmation, mbYesNo, 0)<>mrYes then Exit;
   if Assigned(ContactList) and Assigned(Contact) then ContactList.Extract(Contact);
+  if Self.ContactList = Mgr.ContactList then
+  begin
+    Mgr.NodeList.Extract(Contact);
+    Mgr.PointList.Extract(Contact);
+    Mgr.MyPassport.ContactsList.Extract(Contact);
+  end;
   UpdateContactsList();
 end;
 
