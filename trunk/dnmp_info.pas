@@ -201,47 +201,62 @@ procedure TDnmpInfoService.OnContactInfo(Msg: TDnmpMsg);
 var
   //i: integer;
   SomeAddr: TAddr;
-  TmpInfo: TDnmpContact;
+  TmpInfo, FoundInfo: TDnmpContact;
   Storage: TDnmpStorage;
   s: string;
+  Done: boolean;
 begin
+  { Msg.Data - serialized Contact
+
+  }
   TmpInfo:=nil;
+  FoundInfo:=nil;
   s:='';
-  SomeAddr:=StrToAddr(Msg.Info.Values['addr']);
+
+  Storage:=Mgr.MsgDataToStorage(Msg);
+  if not Assigned(Storage) then Exit;
+  TmpInfo:=TDnmpContact.Create();
+  Done:=TmpInfo.FromStorage(Storage);
+  FreeAndNil(Storage);
+  if not Done then
+  begin
+    FreeAndNil(TmpInfo);
+    Exit;
+  end;
+
+  //SomeAddr:=StrToAddr(Msg.Info.Values['addr']);
+  SomeAddr:=TmpInfo.Addr;
   if SomeAddr.Point=0 then
   begin
     s:='NODELIST';
-    TmpInfo:=Mgr.NodeList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then
+    FoundInfo:=Mgr.NodeList.GetByAddr(SomeAddr);
+    if not Assigned(FoundInfo) then
     begin
-      TmpInfo:=TDnmpContact.Create();
-      Mgr.NodeList.Add(TmpInfo);
+      Mgr.NodeList.AddItem(TmpInfo);
     end;
   end
   // Server only
   else if Mgr.ServerMode and SameNode(SomeAddr, Mgr.MyInfo.Addr) then
   begin
     s:='POINTLIST';
-    TmpInfo:=Mgr.PointList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then Exit; // ???
+    FoundInfo:=Mgr.PointList.GetByAddr(SomeAddr);
+    if not Assigned(FoundInfo) then
+    begin
+      // Local point not found? Maybe that is fake point?
+
+    end;
   end
   else
   begin
     s:='CONTACTS';
-    TmpInfo:=Mgr.ContactList.GetByAddr(SomeAddr);
-    if not Assigned(TmpInfo) then
+    FoundInfo:=Mgr.ContactList.GetByAddr(SomeAddr);
+    if not Assigned(FoundInfo) then
     begin
-      TmpInfo:=TDnmpContact.Create();
-      Mgr.ContactList.Add(TmpInfo);
+      Mgr.ContactList.AddItem(TmpInfo);
     end;
   end;
 
-  Storage:=Mgr.MsgDataToStorage(Msg);
-  if Assigned(Storage) then
-  begin
-    TmpInfo.FromStorage(Storage);
-    Storage.Free();
-  end;
+  if Assigned(FoundInfo) then FoundInfo.UpdateFrom(TmpInfo);
 
   Mgr.AddCmd('EVENT MGR UPDATE '+s);
 end;
@@ -274,12 +289,12 @@ begin
   end;
 
   // Добавляем инфо о себе
-  if Pos(SomeName, LowerCase(Mgr.MyInfo.Name))>0 then TmpItemList.Add(Mgr.MyInfo);
+  if Pos(SomeName, LowerCase(Mgr.MyInfo.Name))>0 then TmpItemList.AddItem(Mgr.MyInfo);
 
   // Pointlist
   for i:=0 to Mgr.PointList.Count-1 do
   begin
-    if Pos(SomeName, LowerCase(Mgr.PointList[i].Name))>0 then TmpItemList.Add(Mgr.PointList[i]);
+    if Pos(SomeName, LowerCase(Mgr.PointList[i].Name))>0 then TmpItemList.AddItem(Mgr.PointList[i]);
   end;
 
   // готовим ответ
@@ -289,7 +304,6 @@ begin
       +'name='+Msg.Info.Values['name']+CRLF
       +'format='+Mgr.Serializer.GetName();
     sData:=Mgr.Serializer.StorageToString(TmpItemList.ToStorage(ctPublic));
-    TmpItemList.Clear();
 
     // шлем ответ отправителю
     Mgr.SendDataMsg(Msg.SourceAddr, 'INFO', sInfo, sData);

@@ -93,6 +93,7 @@ type
   public
     MsgType: AnsiString;
     TimeStamp: TDateTime;
+    SerialNum: LongWord; // uint32
     SourceAddr: TAddr;
     TargetAddr: TAddr;
     Info: TStringList;
@@ -115,6 +116,8 @@ type
     function HaveSeenBy(Addr: TAddr): boolean;
     /// Добавляет адрес в синбаи
     function AddSeenBy(Addr: TAddr): boolean;
+    /// Устанавливает timestamp
+    procedure SetTimestamp(var CurTimestamp: Integer);
   //private
   end;
 
@@ -226,15 +229,19 @@ type
 
   { TDnmpContactList }
 
-  TDnmpContactList = class(TObjectList)
+  TDnmpContactList = class(TInterfacedObject)
   private
+    FObjectList: TObjectList;
     function GetItem(Index: Integer): TDnmpContact;
     procedure SetItem(Index: Integer; Value: TDnmpContact);
+    function FGetCount(): Integer;
   public
     ParentList: TDnmpContactList;
     Filename: string;
     constructor Create(AParentList: TDnmpContactList); reintroduce;
+    destructor Destroy(); override;
     property Items[Index: Integer]: TDnmpContact read GetItem write SetItem; default;
+    property Count: Integer read FGetCount;
     // Search only in this list
     function GetByAddr(AAddr: TAddr): TDnmpContact;
     // Search only in this list
@@ -249,6 +256,12 @@ type
       Items with addr 0.0 and empty GUID not compared
       If item not found in this list, search in parent list }
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
+    // remove item from this list, not affected to parent
+    function Extract(Item: TDnmpContact): Boolean;
+    // clear all items in this list, parent not affected
+    procedure Clear();
+    // return True if this list have specified Item
+    function HaveItem(Item: TDnmpContact): Boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): boolean;
   end;
@@ -445,14 +458,14 @@ type
     Serializer: TDnmpSerializer;
     MyPassport: TDnmpPassport;
     MyInfo: TDnmpContact;
-    // Known linkable nodes
-    NodeList: TNodeList;
-    // Owned points (Server only)
-    PointList: TPointList;
-    // Unapproved links (Server only)
-    UnapprovedList: TDnmpContactList;
     // Global contact list
     ContactList: TDnmpContactList;
+    // Known linkable nodes, parented to ContactList
+    NodeList: TNodeList;
+    // Owned points (Server only), parented to ContactList
+    PointList: TPointList;
+    // Unapproved links (Server only), not parented to ContactList
+    UnapprovedList: TDnmpContactList;
     // Temporary contacts (from contacts search requests)
     // not parented to global contacts
     TmpContactList: TDnmpContactList;
@@ -472,11 +485,13 @@ type
     // Listener (Server only)
     property ListenerLink: TDnmpLink read FListenerLink write FSetListenerLink;
     property Active: boolean read FActive;
+    { True if incoming connections allowed }
+    property ServerMode: Boolean read FServerMode;
 
     constructor Create(ConfName: string);
     destructor Destroy(); override;
-    { True if incoming connections allowed }
-    property ServerMode: Boolean read FServerMode;
+    // Reset all data to default, load data from storage
+    procedure Init();
     procedure LoadList(List: TObject);
     procedure WriteList(List: TObject; AInfoType: TDnmpContactInfoType);
     procedure LoadFromFile();
@@ -940,18 +955,30 @@ end;
 
 function TDnmpContactList.GetItem(Index: Integer): TDnmpContact;
 begin
-  Result:=TDnmpContact(inherited Items[index]);
+  Result:=TDnmpContact(FObjectList.Items[index]);
 end;
 
 procedure TDnmpContactList.SetItem(Index: Integer; Value: TDnmpContact);
 begin
-  inherited Items[Index]:=Value;
+  FObjectList.Items[Index]:=Value;
+end;
+
+function TDnmpContactList.FGetCount(): Integer;
+begin
+  Result:=FObjectList.Count;
 end;
 
 constructor TDnmpContactList.Create(AParentList: TDnmpContactList);
 begin
-  inherited Create(False);
+  inherited Create();
+  FObjectList:=TObjectList.Create(False);
   ParentList:=AParentList;
+end;
+
+destructor TDnmpContactList.Destroy();
+begin
+  FreeAndNil(FObjectList);
+  inherited Destroy();
 end;
 
 function TDnmpContactList.GetByAddr(AAddr: TAddr): TDnmpContact;
@@ -982,18 +1009,17 @@ end;
 
 procedure TDnmpContactList.AddItem(Item: TDnmpContact);
 begin
-  if Self.IndexOf(Item)<>-1 then Exit;
   if Assigned(ParentList) then
   begin
-    if ParentList.IndexOf(Item)=-1 then ParentList.Add(Item);
+    if not ParentList.HaveItem(Item) then ParentList.AddItem(Item);
   end;
-  Self.Add(Item);
+  if FObjectList.IndexOf(Item)=-1 then FObjectList.Add(Item);
 end;
 
 function TDnmpContactList.AddByGUID(sGUID: string): TDnmpContact;
 begin
   Result:=nil;
-  if sGuid='' then Exit;
+  if Trim(sGuid)='' then Exit;
   // Search in this list and parent list
   Result:=GetByGUID(sGUID);
   if Assigned(Result) then Exit;
@@ -1003,9 +1029,9 @@ begin
   begin
     Result:=TDnmpContact.Create();
     Result.GUID:=sGUID;
-    if Assigned(ParentList) then ParentList.Add(Result);
+    if Assigned(ParentList) then ParentList.AddItem(Result);
   end;
-  Self.Add(Result);
+  FObjectList.Add(Result);
 end;
 
 function TDnmpContactList.DelByGUID(sGUID: string): TDnmpContact;
@@ -1013,7 +1039,7 @@ begin
   Result:=GetByGUID(sGUID);
   if Assigned(Result) then
   begin
-    self.Extract(Result);
+    FObjectList.Extract(Result);
   end;
 end;
 
@@ -1025,7 +1051,7 @@ begin
   begin
     // Not found in this list, look in parent list
     if Assigned(ParentList) then Result:=ParentList.GetByGUID(sGUID);
-    if Assigned(Result) then self.Add(Result);
+    if Assigned(Result) then Self.AddItem(Result);
   end;
 
   if not Assigned(Result) then
@@ -1033,10 +1059,9 @@ begin
     // Contact not found anywhere, create new
     Result:=TDnmpContact.Create();
     Result.GUID:=sGUID;
-    Result.SeniorGUID:=sSeniorGUID;
-    self.Add(Result);
-    if Assigned(ParentList) then ParentList.Add(Result);
+    Self.AddItem(Result);
   end;
+  Result.SeniorGUID:=sSeniorGUID;
   Result.Name:=sName;
   Result.Addr:=Addr;
   Result.StateFromStr(sState);
@@ -1047,19 +1072,16 @@ function TDnmpContactList.UpdateItem(Item: TDnmpContact): TDnmpContact;
 begin
   Result:=nil;
   if Trim(Item.GUID)<>'' then Result:=Self.GetByGUID(Item.GUID);
-  if (not Assigned(Result)) and (not IsEmptyAddr(Item.Addr)) then Result:=Self.GetByAddr(Item.Addr);
   if not Assigned(Result) then
   begin
     // Not found in this list, look in parent list
     if Assigned(ParentList) then
     begin
       if Trim(Item.GUID)<>'' then Result:=ParentList.GetByGUID(Item.GUID);
-      if not Assigned(Result) and (not IsEmptyAddr(Item.Addr)) then Result:=ParentList.GetByAddr(Item.Addr);
-    end;
-    if Assigned(Result) then
-    begin
-      self.Add(Result);
-      Exit;
+      if Assigned(Result) then
+      begin
+        Self.AddItem(Result);
+      end;
     end;
   end;
 
@@ -1067,14 +1089,24 @@ begin
   begin
     // Contact not found anywhere (fishy!)
     Result:=Item;
-    self.Add(Result);
-    if Assigned(ParentList) then
-    begin
-      ParentList.Add(Result);
-      Exit;
-    end;
+    Self.AddItem(Result);
   end;
   Result.UpdateFrom(Item);
+end;
+
+function TDnmpContactList.Extract(Item: TDnmpContact): Boolean;
+begin
+  Result:=Assigned(FObjectList.Extract(Item));
+end;
+
+procedure TDnmpContactList.Clear();
+begin
+  FObjectList.Clear();
+end;
+
+function TDnmpContactList.HaveItem(Item: TDnmpContact): Boolean;
+begin
+  Result:=not (FObjectList.IndexOf(Item) = -1);
 end;
 
 function TDnmpContactList.ToStorage(InfoType: TDnmpContactInfoType
@@ -1117,7 +1149,7 @@ begin
     if Length(Item.GUID)>=4 then
     begin
       //self.Add(Item);
-      self.UpdateItem(Item);
+      Self.UpdateItem(Item);
     end;
   end;
   Result:=True;
@@ -1656,7 +1688,7 @@ begin
   AStream.Read(TmpMsgType, SizeOf(TmpMsgType));
   Self.MsgType:=TmpMsgType;
   AStream.Read(Self.TimeStamp, SizeOf(Self.TimeStamp));
-  AStream.Read(self.SourceAddr, SizeOf(self.SourceAddr));
+  AStream.Read(Self.SourceAddr, SizeOf(self.SourceAddr));
   AStream.Read(Self.TargetAddr, SizeOf(Self.TargetAddr));
   AStream.Read(iSeenbyOffset, SizeOf(iSeenbyOffset));
   AStream.Read(iParamsSize, SizeOf(iParamsSize));
@@ -1760,6 +1792,18 @@ begin
   SetLength(Self.SeenBy, Length(Self.SeenBy)+1);
   Self.SeenBy[Length(Self.SeenBy)-1]:=Addr.Node;
   Result:=True;
+end;
+
+procedure TDnmpMsg.SetTimestamp(var CurTimestamp: Integer);
+var
+  Intervals: Word; // 10-seconds intervals from beginning of week
+  WeekStart: TDate;
+begin
+  //WeekStart:=Trunc(ATimestamp)-(DayOfWeek(ATimestamp)-1);
+  //Intervals:=Trunc((ATimestamp-WeekStart)/(1/8640)); // (24*60*6)
+
+  //Inc(CurTimestamp);
+  //Self.TimeStamp:=CurTimestamp;
 end;
 
 
@@ -2222,7 +2266,7 @@ begin
   TmpContactList:=TDnmpContactList.Create(nil);
 
   MyInfo:=TDnmpContact.Create();
-  ContactList.Add(MyInfo);
+  ContactList.AddItem(MyInfo);
 
   MyPassport:=TDnmpPassport.Create(MyInfo, ContactList);
 
@@ -2232,7 +2276,7 @@ begin
   PointList:=TPointList.Create(ContactList);
   PointList.Filename:=csPointlistFileName;
 
-  UnapprovedList:=TDnmpContactList.Create(ContactList);
+  UnapprovedList:=TDnmpContactList.Create(nil);
   UnapprovedList.Filename:=csUnapprovedFileName;
 
   LinkList:=TDnmpLinkList.Create();
@@ -2255,7 +2299,9 @@ destructor TDnmpManager.Destroy();
 var
   i: integer;
 begin
+  Stop();
   SaveToFile();
+
   // remove events
   Self.OnLog:=nil;
   Self.OnCmd:=nil;
@@ -2288,6 +2334,24 @@ begin
   FreeAndNil(ContactList);
   FreeAndNil(Conf);
   inherited Destroy();
+end;
+
+procedure TDnmpManager.Init();
+begin
+  // clear commands
+  CmdQueue.Clear();
+  MsgQueue.Clear();
+  // clear links
+  LinkList.Clear();
+  // clear contacts
+  UnapprovedList.Clear();
+  PointList.Clear();
+  Nodelist.Clear();
+  ContactList.Clear();
+
+  //MyInfo;
+  //MyPassport;
+  ContactList.AddItem(MyInfo);
 end;
 
 procedure TDnmpManager.StartServer();
@@ -2365,14 +2429,17 @@ begin
 end;
 
 procedure TDnmpManager.Stop();
+var
+  i: integer;
 begin
   if Assigned(ListenerLink) then
   begin
     ListenerLink.OnIncomingMsg:=nil;
     //FreeAndNil(ListenerLink);
-    ListenerLink:=nil;
     DebugText('Server stopped.');
   end;
+  ListenerLink:=nil;
+
   if Assigned(Uplink) then
   begin
     UpLink.OnIncomingMsg:=nil;
@@ -2381,8 +2448,12 @@ begin
     DebugText('Uplink stopped.');
   end;
   Uplink:=nil;
-  LinkList.Clear();
-  OnAllDisconnected();
+
+  // disconnect all links
+  for i:=LinkList.Count-1 downto 0 do
+  begin
+    DelLink(LinkList.Items[i]);
+  end;
 end;
 
 procedure TDnmpManager.StartNodeConnection(NodeInfo: TDnmpContact);
@@ -2445,6 +2516,7 @@ function TDnmpManager.DelLink(Link: TDnmpLink): Boolean;
 begin
   Result:=True;
   Link.OnIncomingMsg:=nil;
+  if Link.Active then Link.Disconnect();
   Self.LinkList.Extract(Link);
   if Self.LinkList.Count=0 then OnAllDisconnected();
 end;
@@ -2678,7 +2750,7 @@ begin
     WriteList(PointList, ctBrief);
 
     // UnapprovedList
-    WriteList(UnapprovedList, ctBrief);
+    WriteList(UnapprovedList, ctAll);
   end;
 end;
 
@@ -3031,10 +3103,10 @@ begin
   if ALinkInfo.Info['addr_type'] <> 'node' then
   begin
     // Выделяем новый номер поинта
-    if PointList.IndexOf(ALinkInfo)<>-1 then Exit;
+    if PointList.HaveItem(ALinkInfo) then Exit;
     ALinkInfo.Addr.Node:=MyInfo.Addr.Node;
     ALinkInfo.Addr.Point:=Self.GetFreePointID();
-    PointList.Add(ALinkInfo);
+    PointList.AddItem(ALinkInfo);
   end
 
   else // ALinkInfo.Info['addr_type'] = 'node'
@@ -3043,16 +3115,16 @@ begin
 
     // Выделяем новый номер узла (!!!)
     { TODO : Нужна проверка незанятости номера узла в сегменте }
-    if NodeList.IndexOf(ALinkInfo)>=0 then Exit;
+    if NodeList.HaveItem(ALinkInfo) then Exit;
     ALinkInfo.Addr.Node:=Self.GetFreeNodeID();
     if SameNode(ALinkInfo.Addr, MyInfo.Addr) then Inc(ALinkInfo.Addr.Node);
     ALinkInfo.Addr.Point:=0;
-    NodeList.Add(ALinkInfo);
+    NodeList.AddItem(ALinkInfo);
     // TODO : Сообщаем другим узлам данные нового узла
     //Mgr.SendLinkInfo(LinkInfo, EmptyAddr());
   end;
-  if UnapprovedList.IndexOf(ALinkInfo)>=0 then UnapprovedList.Extract(ALinkInfo);
-  Result:=true;
+  UnapprovedList.Extract(ALinkInfo);
+  Result:=True;
   self.Event('MGR','APPROVE');
 end;
 
