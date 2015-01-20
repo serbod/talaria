@@ -1,5 +1,3 @@
-#summary Wiki Navigation bar
-
   * [Talaria Talaria - распределенная сеть обмена информацией]
   * [proto_descr Описание протокола DNMP]
     * [msg_format Формат сообщений]
