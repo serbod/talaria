@@ -1,0 +1,14 @@
+#summary Wiki Navigation bar
+
+  * [Talaria Talaria - распределенная сеть обмена информацией]
+  * [proto_descr Описание протокола DNMP]
+    * [msg_format Формат сообщений]
+    * [routing Маршрутизация]
+    * [containers Контейнеры и метаданные]
+    * [passport Паспорт]
+  * [services Сервисы]
+    * [auth Аутентификация и авторизация]
+    * [srvd Каталог сервисов (Services Directory)]
+    * [chat Обмен короткими сообщениями (чат)]
+    * [grpc Канал (групповой чат)]
+  * [FAQ Вопросы и ответы (FAQ)]
