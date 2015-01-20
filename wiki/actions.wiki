@@ -7,7 +7,7 @@
 
 <p>Sergey Bodrov, 2015-01-20</p>
 
-<wiki:toc max_depth="1" />
+<wiki:toc max_depth="3" />
 
 =DNMP - описание основных действий=
 
