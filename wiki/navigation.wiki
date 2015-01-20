@@ -4,6 +4,7 @@
     * [routing Маршрутизация]
     * [containers Контейнеры и метаданные]
     * [passport Паспорт]
+    * [actions описание основных действий]
   * [services Сервисы]
     * [auth Аутентификация и авторизация]
     * [srvd Каталог сервисов (Services Directory)]
