@@ -41,7 +41,7 @@ type
     procedure Add(AName, AValue: string); overload;
     procedure Add(AName: string; AValue: Integer); overload;
     procedure Add(AName: string; AValue: Real); overload;
-    procedure Add(AName: string; AValue: boolean); overload;
+    procedure Add(AName: string; AValue: Boolean); overload;
     { Get storage item by name }
     function GetObject(AName: string): TDnmpStorage;
     { Get storage item by index }
@@ -53,21 +53,21 @@ type
     function GetInteger(AName: string = ''): Integer;
     function GetCardinal(AName: string = ''): Cardinal;
     function GetReal(AName: string = ''): Real;
-    function GetBool(AName: string = ''): boolean;
-    function HaveName(AName: string): boolean;
+    function GetBool(AName: string = ''): Boolean;
+    function HaveName(AName: string): Boolean;
   end;
 
   {
   TDnmpSerializableObject = class(TInterfacedObject)
   public
     function ToStorage(): TDnmpStorage; virtual;
-    function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+    function FromStorage(Storage: TDnmpStorage): Boolean; virtual;
     // Читает из цифрового потока AStream
-    function FromStream(AStream: TStream): boolean; virtual;
+    function FromStream(AStream: TStream): Boolean; virtual;
     // Пишет в цифровой поток AStream
-    function ToStream(AStream: TStream): boolean; virtual;
+    function ToStream(AStream: TStream): Boolean; virtual;
     // Читает из строки Str. Формат строки - цифровой поток
-    function FromString(Str: AnsiString): boolean; virtual;
+    function FromString(Str: AnsiString): Boolean; virtual;
     // Возвращает в виде строки. Формат строки - цифровой поток
     function ToString(): AnsiString; reintroduce;
   end;
@@ -80,16 +80,17 @@ type
     // Serialize storage to string
     function StorageToString(AStorage: TDnmpStorage): AnsiString; virtual;
     // De-serialize storage from string
-    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString): boolean; virtual;
+    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString): Boolean; virtual;
     // Save storage to file. Filename must be without extension
-    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
+    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): Boolean; virtual;
     // Load storage from file. Filename must be without extension
-    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): boolean; virtual;
+    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): Boolean; virtual;
   end;
 
   { TDnmpMsg Single message. Refcounted. }
 
   TDnmpMsg = class(TInterfacedObject)
+  //private
   public
     MsgType: AnsiString;
     TimeStamp: TDateTime;
@@ -103,22 +104,19 @@ type
     constructor Create(SAddr, TAddr: TAddr; AMsgType, Params, DataStr: string); overload;
     destructor Destroy(); override;
     /// Читает сообщение из цифрового потока AStream
-    function FromStream(AStream: TStream): boolean;
+    function FromStream(AStream: TStream): Boolean;
     /// Пишет сообщение в цифровой поток AStream
-    function ToStream(AStream: TStream): boolean;
+    function ToStream(AStream: TStream): Boolean;
     /// Читает сообщение из строки Str. Формат строки - цифровой поток
-    function FromString(Str: AnsiString): boolean;
+    function FromString(Str: AnsiString): Boolean;
     /// Возвращает сообщение в виде строки. Формат строки - цифровой поток
     function ToString(): AnsiString; reintroduce;
     /// Заполняет секцию параметров из строки, разделенной символами "|"
-    function ParseInfo(Str: string): boolean;
+    function ParseInfo(Str: string): Boolean;
     /// Проверяет наличие адреса в синбаях
-    function HaveSeenBy(Addr: TAddr): boolean;
+    function HaveSeenBy(Addr: TAddr): Boolean;
     /// Добавляет адрес в синбаи
-    function AddSeenBy(Addr: TAddr): boolean;
-    /// Устанавливает timestamp
-    procedure SetTimestamp(var CurTimestamp: Integer);
-  //private
+    function AddSeenBy(Addr: TAddr): Boolean;
   end;
 
 
@@ -132,7 +130,7 @@ type
     property Items[Index: Integer]: TDnmpMsg read GetMsg write SetMsg; default;
     function GetMsgByAddr(FAddr: TAddr): TDnmpMsg;
     function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorage(Storage: TDnmpStorage): Boolean;
     procedure SaveToFile(Filename: string);
     function LoadFromFile(Filename: string): Boolean;
   end;
@@ -202,7 +200,7 @@ type
     IncomingFile: Boolean; // has unread incoming file
     IsNode: Boolean;
     { Online state }
-    //Online: boolean;
+    //Online: Boolean;
     { ltPoint, ltNode, ltTemporary }
     //LinkType: TDnmpLinkType;
     constructor Create();
@@ -216,11 +214,11 @@ type
     function GetInfo(Index: integer): string;
     { address string }
     function AddrStr(): string;
-    function SameAddr(AAddr: TAddr): boolean;
+    function SameAddr(AAddr: TAddr): Boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorage(Storage: TDnmpStorage): Boolean;
     function StateStr(): string;
-    function StateFromStr(s: string): boolean;
+    function StateFromStr(s: string): Boolean;
     // Assign data from Item
     procedure Assign(Item: TDnmpContact); virtual;
     // Update data from Item
@@ -263,7 +261,7 @@ type
     // return True if this list have specified Item
     function HaveItem(Item: TDnmpContact): Boolean;
     function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorage(Storage: TDnmpStorage): Boolean;
   end;
 
   { TDnmpPassport }
@@ -281,7 +279,7 @@ type
     constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList);
     destructor Destroy; override;
     function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorage(Storage: TDnmpStorage): Boolean;
   end;
 
   TNodeList = class(TDnmpContactList);
@@ -295,7 +293,7 @@ type
     FOnIncomingMsg: TIncomingMsgEvent;
     FOnConnect: TNotifyEvent;
     FOnDisconnect: TNotifyEvent;
-    FActive: boolean;
+    FActive: Boolean;
   public
     Mgr: TDnmpManager;
     // my info from Mgr
@@ -305,6 +303,8 @@ type
     // link type, default ltTemporary
     LinkType: TDnmpLinkType;
     Speed: Integer;
+    // nodes under this remote contact
+    NodesUnder: TNodeList;
 
     // link-specific incoming message handler
     MsgHandler: TDnmpMsgHandler;
@@ -312,15 +312,15 @@ type
     constructor Create(AMgr: TDnmpManager; ARemoteInfo: TDnmpContact = nil); virtual;
     destructor Destroy(); override;
     // Установить соединение
-    function Connect(): boolean; virtual;
+    function Connect(): Boolean; virtual;
     // Разорвать соединение
-    function Disconnect(): boolean; virtual;
+    function Disconnect(): Boolean; virtual;
     // Принимать входящие подключения
-    function Listen(): boolean; virtual;
+    function Listen(): Boolean; virtual;
     // Проверить соединение. Возвращает FALSE, если соединение невозможно восстановить
-    function Check(): boolean; virtual;
+    function Check(): Boolean; virtual;
     // Отправить сообщение через этот линк
-    function SendMsg(Msg: TDnmpMsg): boolean; virtual;
+    function SendMsg(Msg: TDnmpMsg): Boolean; virtual;
     // Утвердить линк, принять его в сеть
     function Approve(): Boolean;
     { True when link connected or listening }
@@ -362,7 +362,7 @@ type
   private
     FItems: TDnmpRoutingTableRecordArray;
     FCount: Integer;
-    function FGetGateForDest(DestID: TNodeID; var GateID: TNodeID): boolean;
+    function FGetGateForDest(DestID: TNodeID; var GateID: TNodeID): Boolean;
   public
     Links: TDnmpLinkList;
     constructor Create(ALinks: TDnmpLinkList);
@@ -383,7 +383,7 @@ type
     procedure Clear();
     { save to storage }
     function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function FromStorage(Storage: TDnmpStorage): Boolean;
   end;
 
   { TDnmpMsgHandler }
@@ -434,7 +434,7 @@ type
     FListenerLink: TDnmpLink;
     procedure FSetUplink(Value: TDnmpLink);
     procedure FSetListenerLink(Value: TDnmpLink);
-    function FActive(): boolean;
+    function FActive(): Boolean;
     { Commands handler:
     AUTH_OK - someone succesfully authorised
     EVENT <sender> <text> - internal event
@@ -450,7 +450,6 @@ type
       Удаляет маршруты на указанные узлы
     }
     function CmdHandler(CmdText: string): string;
-    procedure IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
     // срабатывает когда нет ни одного активного линка
     procedure OnAllDisconnected();
   public
@@ -484,7 +483,7 @@ type
     property Uplink: TDnmpLink read FUplink write FSetUplink;
     // Listener (Server only)
     property ListenerLink: TDnmpLink read FListenerLink write FSetListenerLink;
-    property Active: boolean read FActive;
+    property Active: Boolean read FActive;
     { True if incoming connections allowed }
     property ServerMode: Boolean read FServerMode;
 
@@ -494,12 +493,14 @@ type
     procedure Init();
     procedure LoadList(List: TObject);
     procedure WriteList(List: TObject; AInfoType: TDnmpContactInfoType);
+    // Load all data from storage
     procedure LoadFromFile();
+    // Save all data to storage
     procedure SaveToFile();
     // ==== Base functions
     // Send message, autodetect link for sending
     // if Msg.TargetAddr = EmptyAddr then send to all nodes links
-    function SendMsg(Msg: TDnmpMsg): boolean;
+    function SendMsg(Msg: TDnmpMsg): Boolean;
     // Create and send message with given data
     procedure SendDataMsg(DestAddr: TAddr; MsgType, Info, Text: string);
     // Create and send error reply message
@@ -508,7 +509,7 @@ type
     // all - to all points and nodes
     // points - to all points
     // nodes - to all nodes
-    function SendBroadcastMsg(Msg: TDnmpMsg; Destinations: string): boolean;
+    function SendBroadcastMsg(Msg: TDnmpMsg; Destinations: string): Boolean;
     procedure Start();
     procedure Stop();
     procedure StartServer();
@@ -522,7 +523,7 @@ type
     property OnCmd: TLogEvent read FOnCmd write FOnCmd;
     property OnEvent: TMgrEvent read FOnEvent write FOnEvent;
     property OnIncomingMsg: TIncomingMsgEvent read FOnIncomingMsg write FOnIncomingMsg;
-    { Handler for OnIncomingMsg from links, execute IncomingMsg() }
+    { Handler for OnIncomingMsg from links, process incoming Msg to MsgHandlers }
     procedure IncomingMsgHandler(Sender: TObject; Msg: TDnmpMsg);
     // Triggers OnLog
     procedure DebugText(s: string);
@@ -558,7 +559,7 @@ type
     - assign new node number, add to nodelist
     - send info to other nodes
     }
-    function Approve(ALinkInfo: TDnmpContact): boolean;
+    function Approve(ALinkInfo: TDnmpContact): Boolean;
     // Return maximum point ID +1
     function GetFreePointID(): TPointID;
     // Return maximum node ID +1
@@ -575,8 +576,10 @@ type
     // запрос (поиск) контактов по имени
     procedure RequestContactsByName(AName: string);
     // ==== Приемники событий от модулей
-    // когда к нам контакт подключился
+    // когда контакт успешно подключился к нам
     procedure ContactConnectedIn(AContact: TDnmpContact);
+    // когда мы успешно подключились к контакту
+    procedure ContactConnectedOut(AContact: TDnmpContact);
   end;
 
   // Return addr 0.0
@@ -588,9 +591,9 @@ type
   function AddrToStr(Addr: TAddr): string;
   function StrToAddr(StrAddr: string): TAddr;
   // Return True, if given addresses equal
-  function SameAddr(Addr1, Addr2: TAddr): boolean;
+  function SameAddr(Addr1, Addr2: TAddr): Boolean;
   // Return True, if given addresses have equal nodes
-  function SameNode(Addr1, Addr2: TAddr): boolean;
+  function SameNode(Addr1, Addr2: TAddr): Boolean;
   // Return link type as string
   function LinkTypeToStr(lt: TDnmpLinkType): string;
   function StrToLinkType(s: string): TDnmpLinkType;
@@ -603,7 +606,7 @@ type
   // convert Stream to AnsiString
   function StreamToStr(AStream: TStream): AnsiString;
   // convert AnsiString to Stream
-  function StrToStream(s: AnsiString; AStream: TStream): boolean;
+  function StrToStream(s: AnsiString; AStream: TStream): Boolean;
 
   /// Save string to file with given Filename
   /// Return True on succes
@@ -638,19 +641,13 @@ const
 
 var
   sDnmpDataDir: string = 'data';
+  // next msg serial number (global)
+  iMsgSerialNum: integer = 0;
 
 implementation
 uses RC4, dnmp_ip, dnmp_info, dnmp_auth;
 
 // === Functions ===
-{
-function DWordToStr(x: Longword): AnsiString;
-begin
-  result:='0000';
-  Move(X, result[1], SizeOf(x));
-end;
-}
-
 function EmptyAddr(): TAddr;
 begin
   Result.Node:=0;
@@ -678,16 +675,16 @@ var
   i: integer;
 begin
   i:=Pos('.', StrAddr);
-  result.Node:=StrToIntDef(Copy(StrAddr, 1, i-1), 0);
-  result.Point:=StrToIntDef(Copy(StrAddr, i+1, maxint), 0);
+  Result.Node:=StrToIntDef(Copy(StrAddr, 1, i-1), 0);
+  Result.Point:=StrToIntDef(Copy(StrAddr, i+1, maxint), 0);
 end;
 
-function SameAddr(Addr1, Addr2: TAddr): boolean;
+function SameAddr(Addr1, Addr2: TAddr): Boolean;
 begin
   Result:=((Addr1.Node=Addr2.Node) and (Addr1.Point=Addr2.Point));
 end;
 
-function SameNode(Addr1, Addr2: TAddr): boolean;
+function SameNode(Addr1, Addr2: TAddr): Boolean;
 begin
   Result:=(Addr1.Node=Addr2.Node);
 end;
@@ -745,7 +742,7 @@ begin
   end;
 end;
 
-function StrToStream(s: AnsiString; AStream: TStream): boolean;
+function StrToStream(s: AnsiString; AStream: TStream): Boolean;
 var
   ss: TStringStream;
 begin
@@ -881,19 +878,19 @@ begin
 end;
 
 function TDnmpSerializer.StorageFromString(AStorage: TDnmpStorage;
-  AString: AnsiString): boolean;
+  AString: AnsiString): Boolean;
 begin
   Result:=False;
 end;
 
 function TDnmpSerializer.StorageToFile(AStorage: TDnmpStorage; AFileName: string
-  ): boolean;
+  ): Boolean;
 begin
   Result:=False;
 end;
 
 function TDnmpSerializer.StorageFromFile(AStorage: TDnmpStorage;
-  AFileName: string): boolean;
+  AFileName: string): Boolean;
 begin
   Result:=False;
 end;
@@ -929,7 +926,7 @@ begin
 
 end;
 
-function TDnmpPassport.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpPassport.FromStorage(Storage: TDnmpStorage): Boolean;
 var
   SubStorage: TDnmpStorage;
 begin
@@ -1126,7 +1123,7 @@ begin
   Result.Add('items', Storage);
 end;
 
-function TDnmpContactList.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpContactList.FromStorage(Storage: TDnmpStorage): Boolean;
 var
   SubStorage: TDnmpStorage;
   i: Integer;
@@ -1232,7 +1229,7 @@ begin
   Result:=AddrToStr(Self.Addr);
 end;
 
-function TDnmpContact.SameAddr(AAddr: TAddr): boolean;
+function TDnmpContact.SameAddr(AAddr: TAddr): Boolean;
 begin
   Result:=((Self.Addr.Node=AAddr.Node) and (Self.Addr.Point=AAddr.Point));
 end;
@@ -1280,7 +1277,7 @@ begin
   //Result.Add('link_type', LinkTypeToStr(Self.LinkType));
 end;
 
-function TDnmpContact.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpContact.FromStorage(Storage: TDnmpStorage): Boolean;
 var
   i: integer;
   //InfoItem: TDnmpContactInfo;
@@ -1351,7 +1348,7 @@ begin
   end;
 end;
 
-function TDnmpContact.StateFromStr(s: string): boolean;
+function TDnmpContact.StateFromStr(s: string): Boolean;
 begin
   Result:=True;
   if s='Unknown' then State:=asUnknown
@@ -1502,7 +1499,7 @@ begin
   else Self.Value:=FloatToStr(AValue);
 end;
 
-procedure TDnmpStorage.Add(AName: string; AValue: boolean);
+procedure TDnmpStorage.Add(AName: string; AValue: Boolean);
 begin
   Self.Add(AName, BoolToStr(AValue, '1', '0'));
 end;
@@ -1570,12 +1567,12 @@ begin
   Result:=StrToFloatDef(GetString(AName), 0);
 end;
 
-function TDnmpStorage.GetBool(AName: string): boolean;
+function TDnmpStorage.GetBool(AName: string): Boolean;
 begin
   Result:=(GetString(AName)='1');
 end;
 
-function TDnmpStorage.HaveName(AName: string): boolean;
+function TDnmpStorage.HaveName(AName: string): Boolean;
 begin
   Result:=(FItems.IndexOf(AName)<>-1);
 end;
@@ -1595,15 +1592,18 @@ constructor TDnmpMsg.Create(SAddr, TAddr: TAddr; AMsgType, Params,
 var
   ss: TStringStream;
 begin
+  inherited Create();
   Self.SourceAddr:=SAddr;
   Self.TargetAddr:=TAddr;
   Self.MsgType:=AMsgType;
-  self.TimeStamp:=Now();
-  self.Info:=TStringList.Create();
-  self.Info.Text:=Params;
+  Inc(iMsgSerialNum);
+  Self.SerialNum:=iMsgSerialNum;
+  Self.TimeStamp:=Now();
+  Self.Info:=TStringList.Create();
+  Self.Info.Text:=Params;
   //self.Info.Values['timestamp']:=Misc.GetTimestampStr();
-  self.Data:=TMemoryStream.Create();
-  self.Data.Clear();
+  Self.Data:=TMemoryStream.Create();
+  Self.Data.Clear();
   if Length(DataStr)>0 then
   begin
     ss:=TStringStream.Create(DataStr);
@@ -1622,7 +1622,7 @@ begin
   inherited Destroy();
 end;
 
-function TDnmpMsg.FromString(Str: AnsiString): boolean;
+function TDnmpMsg.FromString(Str: AnsiString): Boolean;
 var
   ss: TStringStream;
 begin
@@ -1632,7 +1632,7 @@ begin
   ss.Free();
 end;
 
-{function TDnmpMsg.FromString(Str: string): boolean;
+{function TDnmpMsg.FromString(Str: string): Boolean;
 var
   n, i: integer;
   s, s2: string;
@@ -1671,7 +1671,7 @@ begin
   ss.Free();
 end;
 
-function TDnmpMsg.FromStream(AStream: TStream): boolean;
+function TDnmpMsg.FromStream(AStream: TStream): Boolean;
 var
   ms: TMemoryStream;
   iMsgSize, iParamsSize, iDataSize, iSeenbyOffset, iSeenbySize: Cardinal;
@@ -1687,8 +1687,9 @@ begin
   //if iMsgSize<>(AStream.Size-SizeOf(iMsgSize)) then Exit;
   AStream.Read(TmpMsgType, SizeOf(TmpMsgType));
   Self.MsgType:=TmpMsgType;
-  AStream.Read(Self.TimeStamp, SizeOf(Self.TimeStamp));
-  AStream.Read(Self.SourceAddr, SizeOf(self.SourceAddr));
+  //AStream.Read(Self.TimeStamp, SizeOf(Self.TimeStamp));
+  AStream.Read(Self.SerialNum, SizeOf(Self.SerialNum));
+  AStream.Read(Self.SourceAddr, SizeOf(Self.SourceAddr));
   AStream.Read(Self.TargetAddr, SizeOf(Self.TargetAddr));
   AStream.Read(iSeenbyOffset, SizeOf(iSeenbyOffset));
   AStream.Read(iParamsSize, SizeOf(iParamsSize));
@@ -1713,7 +1714,7 @@ begin
   Result:=True;
 end;
 
-function TDnmpMsg.ToStream(AStream: TStream): boolean;
+function TDnmpMsg.ToStream(AStream: TStream): Boolean;
 var
   ms: TMemoryStream;
   iParamsSize, iDataSize, iSeenbyOffset: Cardinal;
@@ -1725,14 +1726,13 @@ begin
   iParamsSize:=Length(Self.Info.Text);
   iDataSize:=Self.Data.Size;
   iSeenbyOffset:=iParamsSize+iDataSize+24;
-  FourCC:='';
-  n:=Length(MsgType);
-  if n>4 then n:=4;
-  for i:=0 to n-1 do FourCC[i]:=MsgType[i+1];
+  SetLength(MsgType, 4);
+  for i:=0 to 3 do FourCC[i]:=MsgType[i+1];
 
   ms:=TMemoryStream.Create();
   ms.Write(FourCC, SizeOf(FourCC));
-  ms.Write(Self.TimeStamp, SizeOf(Self.TimeStamp));
+  //ms.Write(Self.TimeStamp, SizeOf(Self.TimeStamp));
+  ms.Write(Self.SerialNum, SizeOf(Self.TimeStamp));
   ms.Write(Self.SourceAddr, SizeOf(Self.SourceAddr));
   ms.Write(Self.TargetAddr, SizeOf(Self.TargetAddr));
   ms.Write(iSeenbyOffset, SizeOf(iSeenbyOffset));
@@ -1752,10 +1752,10 @@ begin
   AStream.Seek(0, soFromBeginning);
   ms.SaveToStream(AStream);
   FreeAndNil(ms);
-  Result:=true;
+  Result:=True;
 end;
 
-function TDnmpMsg.ParseInfo(Str: string): boolean;
+function TDnmpMsg.ParseInfo(Str: string): Boolean;
 var
   sl: TStringList;
   i: integer;
@@ -1769,7 +1769,7 @@ begin
 end;
 
 /// Проверяет наличие адреса в синбаях
-function TDnmpMsg.HaveSeenBy(Addr: TAddr): boolean;
+function TDnmpMsg.HaveSeenBy(Addr: TAddr): Boolean;
 var
   i: Integer;
 begin
@@ -1785,25 +1785,13 @@ begin
 end;
 
 /// Добавляет адрес в синбаи
-function TDnmpMsg.AddSeenBy(Addr: TAddr): boolean;
+function TDnmpMsg.AddSeenBy(Addr: TAddr): Boolean;
 begin
   Result:=False;
   if HaveSeenBy(Addr) then Exit;
   SetLength(Self.SeenBy, Length(Self.SeenBy)+1);
   Self.SeenBy[Length(Self.SeenBy)-1]:=Addr.Node;
   Result:=True;
-end;
-
-procedure TDnmpMsg.SetTimestamp(var CurTimestamp: Integer);
-var
-  Intervals: Word; // 10-seconds intervals from beginning of week
-  WeekStart: TDate;
-begin
-  //WeekStart:=Trunc(ATimestamp)-(DayOfWeek(ATimestamp)-1);
-  //Intervals:=Trunc((ATimestamp-WeekStart)/(1/8640)); // (24*60*6)
-
-  //Inc(CurTimestamp);
-  //Self.TimeStamp:=CurTimestamp;
 end;
 
 
@@ -1849,7 +1837,7 @@ begin
   Result.Add('items', Storage);
 end;
 
-function TDnmpMsgQueue.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpMsgQueue.FromStorage(Storage: TDnmpStorage): Boolean;
 var
   SubStorage: TDnmpStorage;
   i: Integer;
@@ -1990,7 +1978,7 @@ begin
   SetLength(FItems, 0);
 end;
 
-function TDnmpRoutingTable.FGetGateForDest(DestID: TNodeID; var GateID: TNodeID): boolean;
+function TDnmpRoutingTable.FGetGateForDest(DestID: TNodeID; var GateID: TNodeID): Boolean;
 var
   i: Integer;
 begin
@@ -2123,7 +2111,7 @@ begin
   Result.Add('items', Storage);
 end;
 
-function TDnmpRoutingTable.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpRoutingTable.FromStorage(Storage: TDnmpStorage): Boolean;
 var
   SubStorage, AStorage: TDnmpStorage;
   i: Integer;
@@ -2154,6 +2142,7 @@ constructor TDnmpLink.Create(AMgr: TDnmpManager; ARemoteInfo: TDnmpContact);
 begin
   inherited Create();
   Mgr:=AMgr;
+  NodesUnder:=TNodeList.Create(Mgr.ContactList);
   MyInfo:=Mgr.MyInfo;
   LinkType:=ltTemporary;
   RemoteInfo:=ARemoteInfo;
@@ -2167,19 +2156,11 @@ begin
   OnDisconnect:=nil;
   OnIncomingMsg:=nil;
 
-  // Инфа о линке может попасть в поинтлист или нодлист
-  // Если мы ее убьем здесь, то в другом месте может возникнуть ошибка при попытке
-  // убить инфу второй раз
-  { // больше неактуально
-  if (Mgr.PointList.IndexOf(RemoteInfo)=-1) and (Mgr.NodeList.IndexOf(RemoteInfo)=-1) then
-  begin
-    FreeAndNil(RemoteInfo);
-  end;
-  }
+  FreeAndNil(NodesUnder);
   inherited Destroy();
 end;
 
-function TDnmpLink.SendMsg(Msg: TDnmpMsg): boolean;
+function TDnmpLink.SendMsg(Msg: TDnmpMsg): Boolean;
 begin
   if Assigned(Mgr) then Mgr.DebugMsg(Msg, Self, '@>');
   //Msg.AddSeenBy(MyInfo.Addr);
@@ -2193,24 +2174,24 @@ begin
   Result:=Mgr.Approve(RemoteInfo);
 end;
 
-function TDnmpLink.Connect(): boolean;
+function TDnmpLink.Connect(): Boolean;
 begin
   Result:=Assigned(MsgHandler);
 end;
 
-function TDnmpLink.Disconnect(): boolean;
+function TDnmpLink.Disconnect(): Boolean;
 begin
   FActive:=False;
   Result:=True;
 end;
 
-function TDnmpLink.Listen(): boolean;
+function TDnmpLink.Listen(): Boolean;
 begin
   Self.LinkType:=ltListener;
   Result:=Assigned(MsgHandler);
 end;
 
-function TDnmpLink.Check(): boolean;
+function TDnmpLink.Check(): Boolean;
 begin
   Result:=Active;
 end;
@@ -2551,32 +2532,6 @@ begin
   end;
 end;
 
-procedure TDnmpManager.IncomingMsg(Msg: TDnmpMsg; Link: TDnmpLink);
-var
-  i: Integer;
-begin
-  // Log message
-  //DebugMsg(Msg, Link, '<<');
-
-  // Pre-parse incomong msg
-  if not Link.MsgHandler.ParseMsg(Msg) then
-  begin
-    // Message type unknown for parser, maybe it's service
-    if SameAddr(Msg.TargetAddr, MyInfo.Addr) then
-    begin
-      if Assigned(MsgHandlers) then
-      begin
-        for i:=0 to MsgHandlers.Count-1 do
-        begin
-          if (MsgHandlers[i] as TDnmpMsgHandler).ParseMsg(Msg) then Break;
-        end;
-      end;
-    end;
-  end;
-
-  if Assigned(OnIncomingMsg) then OnIncomingMsg(Link, Msg);
-end;
-
 procedure TDnmpManager.OnAllDisconnected();
 var
   i: integer;
@@ -2599,21 +2554,52 @@ begin
   // Запрашиваем информацию о контакте
   RequestInfoByAddr(AContact.Addr);
 
-  { При подключении узла Гость к узлу Хозяин:
+end;
 
-  1. Гость сообщает Хозяину список всех своих нижестоящих узлов.
-  2. Хозяин сообщает Гостю свой список узлов.
-  3. Хозяин отсылает своему аплинку эхо-запрос с информацией о Госте.
-  4. Гость отсылает своим даунлинкам эхо-запрос с информацией о Хозяине.
-  }
+procedure TDnmpManager.ContactConnectedOut(AContact: TDnmpContact);
+begin
+  if IsEmptyAddr(MyInfo.Addr) then
+  begin
+    // такого быть не должно
+    DebugText('Error - connected to uplink and have empty addr!');
+  end;
+
+  { Если мы узел, то отправим информацию об узлах-даунлинках }
+  if MyInfo.Addr.Point=0 then
+  begin
+    //SendRoutingTable();
+  end;
 end;
 
 procedure TDnmpManager.IncomingMsgHandler(Sender: TObject; Msg: TDnmpMsg);
+var
+  i: Integer;
+  Link: TDnmpLink;
 begin
   if (Sender is TDnmpLink) then
+    Link:=(Sender as TDnmpLink)
+  else
+    Exit;
+  // Log message
+  //DebugMsg(Msg, Link, '<<');
+
+  // Pre-parse incomong msg
+  if not Link.MsgHandler.ParseMsg(Msg) then
   begin
-    IncomingMsg(Msg, (Sender as TDnmpLink));
+    // Message type unknown for parser, maybe it's service
+    if SameAddr(Msg.TargetAddr, MyInfo.Addr) then
+    begin
+      if Assigned(MsgHandlers) then
+      begin
+        for i:=0 to MsgHandlers.Count-1 do
+        begin
+          if (MsgHandlers[i] as TDnmpMsgHandler).ParseMsg(Msg) then Break;
+        end;
+      end;
+    end;
   end;
+
+  if Assigned(OnIncomingMsg) then OnIncomingMsg(Link, Msg);
 end;
 
 procedure TDnmpManager.Event(Sender, Text: string);
@@ -2754,7 +2740,7 @@ begin
   end;
 end;
 
-function TDnmpManager.SendMsg(Msg: TDnmpMsg): boolean;
+function TDnmpManager.SendMsg(Msg: TDnmpMsg): Boolean;
 var
   i: integer;
   TargetPoint: TPointID;
@@ -2776,7 +2762,6 @@ begin
       // Сообщение самому узлу
       if TargetPoint = MyInfo.Addr.Point then
       begin
-        //Mgr.IncomingMsg(Msg, Link);
         Exit;
       end;
 
@@ -2890,7 +2875,7 @@ begin
 end;
 
 function TDnmpManager.SendBroadcastMsg(Msg: TDnmpMsg; Destinations: string
-  ): boolean;
+  ): Boolean;
 var
   i: integer;
 begin
@@ -2933,7 +2918,7 @@ begin
   if Assigned(FListenerLink) then FListenerLink.OnIncomingMsg:=@IncomingMsgHandler;
 end;
 
-function TDnmpManager.FActive(): boolean;
+function TDnmpManager.FActive(): Boolean;
 begin
   if Self.ServerMode then Result:=Assigned(ListenerLink);
   if not Self.ServerMode then Result:=Assigned(Uplink);
@@ -3092,7 +3077,7 @@ begin
   if not Assigned(Result) then Result:=UnapprovedList.GetByGUID(SomeGUID);
 end;
 
-function TDnmpManager.Approve(ALinkInfo: TDnmpContact): boolean;
+function TDnmpManager.Approve(ALinkInfo: TDnmpContact): Boolean;
 begin
   Result:=false;
   if not ServerMode then Exit;
