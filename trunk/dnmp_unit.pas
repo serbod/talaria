@@ -156,6 +156,8 @@ type
     ParentName: string;
   end;
 
+  TDnmpPassport = class;
+
   { TDnmpContact }
 
   TDnmpContact = class(TInterfacedObject)
@@ -196,6 +198,8 @@ type
     { Private key }
     Key: AnsiString;
     { === Extra info === }
+    // Assigned only for points
+    Passport: TDnmpPassport;
     IncomingChat: Boolean; // has unread incoming CHAT message or invite
     IncomingFile: Boolean; // has unread incoming file
     IsNode: Boolean;
@@ -245,7 +249,7 @@ type
     // Search only in this list
     function GetByGUID(sGUID: string): TDnmpContact;
     // Add in this list and parent list
-    procedure AddItem(Item: TDnmpContact);
+    procedure AddItem(Item: TDnmpContact); virtual;
     function AddByGUID(sGUID: string): TDnmpContact;
     function DelByGUID(sGUID: string): TDnmpContact;
     { Find item by GUID or Addr, if found then update, if not found then add }
@@ -255,13 +259,13 @@ type
       If item not found in this list, search in parent list }
     function UpdateItem(Item: TDnmpContact): TDnmpContact; overload;
     // remove item from this list, not affected to parent
-    function Extract(Item: TDnmpContact): Boolean;
+    function Extract(Item: TDnmpContact): Boolean; virtual;
     // clear all items in this list, parent not affected
     procedure Clear();
     // return True if this list have specified Item
     function HaveItem(Item: TDnmpContact): Boolean;
-    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): Boolean;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage; virtual;
+    function FromStorage(Storage: TDnmpStorage): Boolean; virtual;
   end;
 
   { TDnmpPassport }
@@ -270,20 +274,46 @@ type
   public
     { Owner contact }
     Contact: TDnmpContact;
-    { Owner favorites contacts }
-    ContactsList: TDnmpContactList;
-    { Subscribed services }
+    { Owner favorites contacts (parented to Mgr.ContactList) }
+    FavoriteContactsList: TDnmpContactList;
+    { Subscribed services names }
     ServicesList: TStringList;
+    // incoming messages box (to this contact)
     MsgInbox: TDnmpMsgQueue;
+    // outcoming messages box (from this contact)
     MsgOutbox: TDnmpMsgQueue;
-    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList);
+    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList); override;
     destructor Destroy; override;
     function ToStorage(): TDnmpStorage;
     function FromStorage(Storage: TDnmpStorage): Boolean;
   end;
 
   TNodeList = class(TDnmpContactList);
-  TPointList = class(TDnmpContactList);
+
+  { TPointList }
+
+  TPointList = class(TDnmpContactList)
+  private
+    FPassportList: TObjectList;
+    function GetPassport(Index: Integer): TDnmpPassport;
+    procedure SetPassport(Index: Integer; Value: TDnmpPassport);
+    function FGetPassportCount(): Integer;
+  public
+    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList); override;
+    destructor Destroy; override;
+    // Passport items list
+    property PassportItems[Index: Integer]: TDnmpPassport read GetPassport write SetPassport;
+    // Number of passport items
+    property PassportCount: Integer read FGetPassportCount;
+    // Add passport in this list
+    procedure AddPassport(Item: TDnmpPassport);
+    // Add contact in this list and parent list
+    procedure AddItem(Item: TDnmpContact); override;
+    // remove item from this list, not affected to parent
+    function Extract(Item: TDnmpContact): Boolean; override;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage; override;
+    function FromStorage(Storage: TDnmpStorage): Boolean; override;
+  end;
 
   TIncomingMsgEvent = procedure(Sender: TObject; Msg: TDnmpMsg) of object;
 
@@ -865,6 +895,110 @@ begin
   end;
 end;
 
+{ TPointList }
+
+function TPointList.GetPassport(Index: Integer): TDnmpPassport;
+begin
+  Result:=(FPassportList.Items[Index] as TDnmpPassport);
+end;
+
+procedure TPointList.SetPassport(Index: Integer; Value: TDnmpPassport);
+begin
+  FPassportList.Items[Index]:=Value;
+end;
+
+function TPointList.FGetPassportCount(): Integer;
+begin
+  Result:=FPassportList.Count;
+end;
+
+constructor TPointList.Create(AContact: TDnmpContact;
+  AParentContactsList: TDnmpContactList);
+begin
+  inherited Create(AContact, AParentContactsList);
+  FPassportList:=TObjectList.Create(False);
+end;
+
+destructor TPointList.Destroy();
+begin
+  FreeAndNil(FPassportList);
+  inherited Destroy;
+end;
+
+procedure TPointList.AddPassport(Item: TDnmpPassport);
+var
+  i: integer;
+  TmpPassport: TDnmpPassport;
+  TmpContact: TDnmpContact;
+begin
+  if not Assigned(Item) then Exit;
+  if not Assigned(Item.Contact) then Exit;
+  // проверим наличие контакта в списке
+  TmpContact:=GetByGUID(Item.Contact.GUID);
+  if not Assigned(TmpContact) then
+  begin
+    AddItem(Item.Contact);
+    Exit;
+  end;
+
+  for i:=0 to PassportCount-1 do
+  begin
+    TmpPassport:=PassportItems[i];
+    if TmpPassport.Contact.GUID=Item.Contact.GUID then
+    begin
+      // такой паспорт уже есть
+      Exit;
+    end;
+  end;
+  // добавляем недостающий паспорт
+  FPassportList.Add(Item);
+end;
+
+procedure TPointList.AddItem(Item: TDnmpContact);
+begin
+  inherited AddItem(Item);
+  // после добавления контакта проверяем наличие паспорта и добавляем при
+  // необходимости
+  if not Assigned(Item.Passport) then
+  begin
+    Item.Passport:=TDnmpPassport.Create(Item, ParentList);
+  end;
+
+  if FPassportList.IndexOf(Item.Passport) = -1 then FPassportList.AddPassport(Item.Passport);
+end;
+
+function TPointList.Extract(Item: TDnmpContact): Boolean;
+var
+  i: integer;
+  TmpPassport: TDnmpPassport;
+begin
+  Result:=inherited Extract(Item);
+  // убираем паспорт
+  for i:=0 to PassportCount-1 do
+  begin
+    TmpPassport:=PassportItems[i];
+    if TmpPassport.Contact.GUID=Item.Contact.GUID then
+    begin
+      // нашли паспорт
+      FPassportList.Delete(i);
+      Exit;
+    end;
+  end;
+
+end;
+
+function TPointList.ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
+begin
+  Result:=inherited ToStorage(InfoType);
+  // выгружаем паспорта
+  // ....
+end;
+
+function TPointList.FromStorage(Storage: TDnmpStorage): Boolean;
+begin
+  Result:=inherited FromStorage(Storage);
+end;
+
 { TDnmpSerializer }
 
 function TDnmpSerializer.GetName: string;
@@ -902,7 +1036,7 @@ constructor TDnmpPassport.Create(AContact: TDnmpContact;
 begin
   inherited Create();
   Contact:=AContact;
-  ContactsList:=TDnmpContactList.Create(AParentContactsList);
+  FavoriteContactsList:=TDnmpContactList.Create(AParentContactsList);
   ServicesList:=TStringList.Create();
   MsgInbox:=TDnmpMsgQueue.Create();
   MsgOutbox:=TDnmpMsgQueue.Create();
@@ -913,7 +1047,7 @@ begin
   FreeAndNil(MsgOutbox);
   FreeAndNil(MsgInbox);
   FreeAndNil(ServicesList);
-  FreeAndNil(ContactsList);
+  FreeAndNil(FavoriteContactsList);
   inherited Destroy;
 end;
 
@@ -922,7 +1056,7 @@ begin
   Result:=TDnmpStorage.Create(stDictionary);
   Result.Add('type', 'DnmpPassport');
   Result.Add('contact', Self.Contact.ToStorage(ctAll));
-  Result.Add('contacts_list', Self.ContactsList.ToStorage(ctBrief));
+  Result.Add('contacts_list', Self.FavoriteContactsList.ToStorage(ctBrief));
 
 end;
 
@@ -940,9 +1074,9 @@ begin
   if Assigned(SubStorage) then Self.Contact.FromStorage(SubStorage);
   //if Assigned(SubStorage) then SubStorage.Free();
 
-  // ContactsList
+  // FavoriteContactsList
   SubStorage:=Storage.GetObject('contacts_list');
-  if Assigned(SubStorage) then Self.ContactsList.FromStorage(SubStorage);
+  if Assigned(SubStorage) then Self.FavoriteContactsList.FromStorage(SubStorage);
   //if Assigned(SubStorage) then SubStorage.Free();
 
   Result:=True;
@@ -2748,8 +2882,9 @@ var
 begin
   Result:=true;
 
-  if self.ServerMode then
+  if self.ServerMode then // If we are node
   begin
+    // Add seen-by to transit message
     if (not SameNode(Msg.SourceAddr, MyInfo.Addr))
     and (not SameNode(Msg.TargetAddr, MyInfo.Addr))
     then Msg.AddSeenBy(MyInfo.Addr);
@@ -2770,7 +2905,7 @@ begin
       begin
         if not LinkList[i].Active then Continue;
         if not LinkList[i].RemoteInfo.SameAddr(Msg.TargetAddr) then Continue;
-        // Отправка сообщения поинту
+        // Отправка сообщения поинту через установленный линк
         LinkList[i].SendMsg(Msg);
         Exit;
       end;
@@ -2782,6 +2917,7 @@ begin
         begin
           // Помещаем сообщение в очередь отправки поинту
           //DelayMsg(Msg);
+          // отправляем уведомление о задержке сообщения
           //SendInfoMsg(Msg, '201', 'Message delayed');
           DebugText('201 - Message delayed');
           Exit;
@@ -3091,6 +3227,7 @@ begin
     if PointList.HaveItem(ALinkInfo) then Exit;
     ALinkInfo.Addr.Node:=MyInfo.Addr.Node;
     ALinkInfo.Addr.Point:=Self.GetFreePointID();
+    // Добавляем в поинтлист, при этом создается новый паспорт
     PointList.AddItem(ALinkInfo);
   end
 
