@@ -508,7 +508,7 @@ begin
   begin
     Mgr.NodeList.Extract(Contact);
     Mgr.PointList.Extract(Contact);
-    Mgr.MyPassport.ContactsList.Extract(Contact);
+    Mgr.MyPassport.FavoriteContactsList.Extract(Contact);
   end;
   UpdateContactsList();
 end;
@@ -521,7 +521,7 @@ end;
 procedure TFrameDnmpContacts.actAddToFavoritesExecute(Sender: TObject);
 begin
   if not Assigned(Mgr) then Exit;
-  if Assigned(Contact) then Mgr.MyPassport.ContactsList.AddItem(Contact);
+  if Assigned(Contact) then Mgr.MyPassport.FavoriteContactsList.AddItem(Contact);
   UpdateContactsList();
 end;
 
@@ -558,7 +558,7 @@ end;
 
 procedure TFrameDnmpContacts.actContactsFavoritesExecute(Sender: TObject);
 begin
-  ContactList:=Mgr.MyPassport.ContactsList;
+  ContactList:=Mgr.MyPassport.FavoriteContactsList;
 end;
 
 procedure TFrameDnmpContacts.actContactsFoundExecute(Sender: TObject);
