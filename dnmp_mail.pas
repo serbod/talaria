@@ -5,7 +5,7 @@ unit dnmp_mail;
 interface
 
 uses
-  Classes, SysUtils, contnrs, dnmp_unit, dnmp_services;
+  Classes, SysUtils, contnrs, dnmp_unit, dnmp_services, DataStorage;
 
 type
   { TDnmpMailMessage }
@@ -23,8 +23,8 @@ type
     Text: string;
     Unread: boolean;
     procedure FillMsg(Msg: TDnmpMsg);
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   TDnmpMail = class;
@@ -61,8 +61,8 @@ type
       Abonent - Author record (optional), for name and address }
     function AddItem(ATimestamp: TDateTime; ATopic: string; AText: string; AAuthorGUID: string; AAbonent: TDnmpContact = nil): TDnmpMailMessage; overload;
     function DeleteItem(Item: TDnmpMailMessage): boolean;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   { TDnmpMail }
@@ -82,8 +82,8 @@ type
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
     function SendCmd(Text: string; Addr: TAddr): string;
-    function ToStorage(): TDnmpStorage; override;
-    function FromStorage(Storage: TDnmpStorage): boolean; override;
+    function ToStorage(): TDataStorage; override;
+    function FromStorage(Storage: TDataStorage): boolean; override;
     function MailboxCount(): integer;
     function GetMailbox(Index: integer): TDnmpMailbox;
   end;
@@ -168,26 +168,26 @@ begin
   Result:=(self.FMessagesList.Remove(Item) <> -1);
 end;
 
-function TDnmpMailbox.ToStorage(): TDnmpStorage;
+function TDnmpMailbox.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpMailbox');
   Result.Add('name', Self.Name);
   Result.Add('items', Storage);
 end;
 
-function TDnmpMailbox.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpMailbox.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpMailMessage;
 begin
@@ -298,12 +298,12 @@ begin
 
 end;
 
-function TDnmpMail.ToStorage: TDnmpStorage;
+function TDnmpMail.ToStorage: TDataStorage;
 begin
   Result:=inherited ToStorage;
 end;
 
-function TDnmpMail.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpMail.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=inherited FromStorage(Storage);
 end;
@@ -334,9 +334,9 @@ begin
   StrToStream(Text, Msg.Data);
 end;
 
-function TDnmpMailMessage.ToStorage(): TDnmpStorage;
+function TDnmpMailMessage.ToStorage(): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('timestamp', Timestamp);
   //Result.Add('', Author);
   Result.Add('author_addr', AddrToStr(AuthorAddr));
@@ -346,7 +346,7 @@ begin
   Result.Add('text', Text);
 end;
 
-function TDnmpMailMessage.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpMailMessage.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;

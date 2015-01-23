@@ -69,9 +69,6 @@ type
   end;
 
   TVisualInfoItem = class(TCollectionItem)
-  private
-    FSelected: boolean;
-    FActive: boolean;
   public
     Name: string;
     Rect: TRect;

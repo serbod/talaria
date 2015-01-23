@@ -397,6 +397,7 @@ begin
         Self.Socket.SendStream(ms);
       except
         Mgr.DebugText('IpLink error: '+IntToStr(Self.Socket.LastError)+' '+Self.Socket.LastErrorDesc);
+        Result:=False;
       end;
     end;
     FreeAndNil(ms);

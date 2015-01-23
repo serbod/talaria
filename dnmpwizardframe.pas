@@ -113,6 +113,7 @@ var
   s: AnsiString;
   sInfo: string;
 begin
+  sInfo:='';
   s:=GetFilePreview('', Point(imgPicture.Width, imgPicture.Height), sInfo);
   if Length(s)>4 then Core.PictureFromString(imgPicture.Picture, s);
 end;

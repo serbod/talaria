@@ -1,7 +1,7 @@
 unit dnmp_grpc;
 
 interface
-uses SysUtils, Classes, Contnrs, dnmp_unit, dnmp_services;
+uses SysUtils, Classes, Contnrs, dnmp_unit, dnmp_services, DataStorage;
 
 type
   { TDnmpChannelMessage }
@@ -18,8 +18,8 @@ type
     AuthorGUID: string;
     Text: string;
     procedure FillMsg(Msg: TDnmpMsg);
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   { TDnmpChannelMessagesList }
@@ -42,8 +42,8 @@ type
       Abonent - Author record (optional), for name and address }
     function AddItem(Timestamp: TDateTime; MessageType: Integer; Text: string; AuthorGUID: string; Author: TDnmpContact = nil): TDnmpChannelMessage; overload;
     //function GetAbonentByGUID(sGUID: string): TDnmpChannelMessage;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   { TGrpcBanItem }
@@ -54,8 +54,8 @@ type
     AbonentGUID: string;
     Reason: string;
     EndDate: TDateTime;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   { TGrpcBanList }
@@ -68,8 +68,8 @@ type
     function UpdateBan(AAbonentGUID, AReason: string; AEndDate: TDateTime): boolean;
     function DelBan(AAbonentGUID: string): boolean;
     function GetBan(AAbonentGUID: string): TGrpcBanItem;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
     { Read BANLIST response CSV
     [0] author_guid - GUID автора
     [1] abonent_guid - GUID абонента
@@ -124,8 +124,8 @@ type
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
     function SendCmd(Text: string; Addr: TAddr): string;
-    function ToStorage(): TDnmpStorage; override;
-    function FromStorage(Storage: TDnmpStorage): boolean; override;
+    function ToStorage(): TDataStorage; override;
+    function FromStorage(Storage: TDataStorage): boolean; override;
     { Add abonent to users list }
     function JoinAbonent(AbonentGUID: string): string;
     function Join(): string;
@@ -222,16 +222,16 @@ implementation
 
 { TGrpcBanItem }
 
-function TGrpcBanItem.ToStorage(): TDnmpStorage;
+function TGrpcBanItem.ToStorage(): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('author_guid', self.AuthorGUID);
   Result.Add('abonent_guid', self.AbonentGUID);
   Result.Add('reason', self.Reason);
   Result.Add('end_date', self.EndDate);
 end;
 
-function TGrpcBanItem.FromStorage(Storage: TDnmpStorage): boolean;
+function TGrpcBanItem.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -321,25 +321,25 @@ begin
   Result:=nil;
 end;
 
-function TGrpcBanList.ToStorage(): TDnmpStorage;
+function TGrpcBanList.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.GetItem(i).ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'GrpcBanList');
   Result.Add('items', Storage);
 end;
 
-function TGrpcBanList.FromStorage(Storage: TDnmpStorage): boolean;
+function TGrpcBanList.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TGrpcBanItem;
 begin
@@ -395,9 +395,9 @@ begin
 end;
 
 
-function TDnmpChannelMessage.ToStorage(): TDnmpStorage;
+function TDnmpChannelMessage.ToStorage(): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('timestamp', Timestamp);
   Result.Add('msg_type', MessageType);
   //Result.Add('', Author);
@@ -407,7 +407,7 @@ begin
   Result.Add('text', Text);
 end;
 
-function TDnmpChannelMessage.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChannelMessage.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -479,25 +479,25 @@ begin
   Result:=TempItem;
 end;
 
-function TDnmpChannelMessagesList.ToStorage(): TDnmpStorage;
+function TDnmpChannelMessagesList.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpChannelMessagesList');
   Result.Add('items', Storage);
 end;
 
-function TDnmpChannelMessagesList.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChannelMessagesList.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpChannelMessage;
 begin
@@ -642,11 +642,11 @@ begin
 
 end;
 
-function TDnmpGrpc.ToStorage(): TDnmpStorage;
+function TDnmpGrpc.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpGrpc');
   Result.Add('topic', self.Topic);
 
@@ -663,9 +663,9 @@ begin
   Result.Add('messages_list', Storage);
 end;
 
-function TDnmpGrpc.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpGrpc.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;

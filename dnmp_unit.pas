@@ -1,7 +1,7 @@
 unit dnmp_unit;
 
 interface
-uses SysUtils, Classes, Contnrs, IniFiles;
+uses SysUtils, Classes, Contnrs, IniFiles, DataStorage;
 
 type
   TNodeID = Cardinal;
@@ -21,47 +21,11 @@ type
 
   TDnmpConf = class(TMemIniFile);
 
-  TDnmpStorageType = (stUnknown, stString, stInteger, stNumber, stList, stDictionary);
-
-  { TDnmpStorage }
-  TDnmpStorage = class(TInterfacedObject)
-  private
-    { [name:object] items storage }
-    FItems: TStringList;
-  public
-    { stUnknown, stString, stInteger, stNumber, stList, stDictionary }
-    StorageType: TDnmpStorageType;
-    { Value for (String, Integer, Number) types }
-    Value: AnsiString;
-    constructor Create(AStorageType: TDnmpStorageType);
-    destructor Destroy; override;
-    { Items count for (List, Dictionary) types }
-    function Count(): integer;
-    procedure Add(AName: string; AValue: TDnmpStorage);
-    procedure Add(AName, AValue: string); overload;
-    procedure Add(AName: string; AValue: Integer); overload;
-    procedure Add(AName: string; AValue: Real); overload;
-    procedure Add(AName: string; AValue: Boolean); overload;
-    { Get storage item by name }
-    function GetObject(AName: string): TDnmpStorage;
-    { Get storage item by index }
-    function GetObject(Index: integer): TDnmpStorage; overload;
-    { Get name by index }
-    function GetObjectName(Index: integer): string;
-    { Get string by name (from dictionary). If name empty, get value }
-    function GetString(AName: string = ''): string;
-    function GetInteger(AName: string = ''): Integer;
-    function GetCardinal(AName: string = ''): Cardinal;
-    function GetReal(AName: string = ''): Real;
-    function GetBool(AName: string = ''): Boolean;
-    function HaveName(AName: string): Boolean;
-  end;
-
   {
   TDnmpSerializableObject = class(TInterfacedObject)
   public
-    function ToStorage(): TDnmpStorage; virtual;
-    function FromStorage(Storage: TDnmpStorage): Boolean; virtual;
+    function ToStorage(): TDataStorage; virtual;
+    function FromStorage(Storage: TDataStorage): Boolean; virtual;
     // Читает из цифрового потока AStream
     function FromStream(AStream: TStream): Boolean; virtual;
     // Пишет в цифровой поток AStream
@@ -72,20 +36,6 @@ type
     function ToString(): AnsiString; reintroduce;
   end;
   }
-
-  { TDnmpSerializer }
-
-  TDnmpSerializer = class(TInterfacedObject)
-    function GetName(): string; virtual;
-    // Serialize storage to string
-    function StorageToString(AStorage: TDnmpStorage): AnsiString; virtual;
-    // De-serialize storage from string
-    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString): Boolean; virtual;
-    // Save storage to file. Filename must be without extension
-    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): Boolean; virtual;
-    // Load storage from file. Filename must be without extension
-    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string): Boolean; virtual;
-  end;
 
   { TDnmpMsg Single message. Refcounted. }
 
@@ -129,8 +79,8 @@ type
   public
     property Items[Index: Integer]: TDnmpMsg read GetMsg write SetMsg; default;
     function GetMsgByAddr(FAddr: TAddr): TDnmpMsg;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): Boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): Boolean;
     procedure SaveToFile(Filename: string);
     function LoadFromFile(Filename: string): Boolean;
   end;
@@ -149,7 +99,7 @@ type
     { item value }
     Value: AnsiString;
     { item value type (stUnknown, stString, stInteger, stNumber, stList, stDictionary) }
-    ValueType: TDnmpStorageType;
+    ValueType: TDataStorageType;
     { info type (ctPublic, ctPrivate) }
     InfoType: TDnmpContactInfoType;
     { parent item name }
@@ -219,8 +169,8 @@ type
     { address string }
     function AddrStr(): string;
     function SameAddr(AAddr: TAddr): Boolean;
-    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): Boolean;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDataStorage;
+    function FromStorage(Storage: TDataStorage): Boolean;
     function StateStr(): string;
     function StateFromStr(s: string): Boolean;
     // Assign data from Item
@@ -264,8 +214,8 @@ type
     procedure Clear();
     // return True if this list have specified Item
     function HaveItem(Item: TDnmpContact): Boolean;
-    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage; virtual;
-    function FromStorage(Storage: TDnmpStorage): Boolean; virtual;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDataStorage; virtual;
+    function FromStorage(Storage: TDataStorage): Boolean; virtual;
   end;
 
   { TDnmpPassport }
@@ -274,6 +224,8 @@ type
   public
     { Owner contact }
     Contact: TDnmpContact;
+    { Owner contact GUID }
+    ContactGUID: string;
     { Owner favorites contacts (parented to Mgr.ContactList) }
     FavoriteContactsList: TDnmpContactList;
     { Subscribed services names }
@@ -282,10 +234,36 @@ type
     MsgInbox: TDnmpMsgQueue;
     // outcoming messages box (from this contact)
     MsgOutbox: TDnmpMsgQueue;
-    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList); override;
+    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList);
     destructor Destroy; override;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): Boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): Boolean;
+  end;
+
+  { TDnmpPassportList }
+
+  TDnmpPassportList = class(TInterfacedObject)
+  private
+    FPassportList: TObjectList;
+    function GetPassport(Index: Integer): TDnmpPassport;
+    procedure SetPassport(Index: Integer; Value: TDnmpPassport);
+    function FGetPassportCount(): Integer;
+  public
+    ParentList: TDnmpContactList;
+    Filename: string;
+    constructor Create(AParentContactsList: TDnmpContactList);
+    destructor Destroy; override;
+    // Passport items list
+    property Items[Index: Integer]: TDnmpPassport read GetPassport write SetPassport;
+    // Number of passport items
+    property Count: Integer read FGetPassportCount;
+    // Add passport in this list
+    procedure AddPassport(Item: TDnmpPassport);
+    // remove item from this list, not affected to parent
+    function Extract(Item: TDnmpPassport): Boolean;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDataStorage;
+    function FromStorage(Storage: TDataStorage): Boolean;
+
   end;
 
   TNodeList = class(TDnmpContactList);
@@ -294,30 +272,23 @@ type
 
   TPointList = class(TDnmpContactList)
   private
-    FPassportList: TObjectList;
-    function GetPassport(Index: Integer): TDnmpPassport;
-    procedure SetPassport(Index: Integer; Value: TDnmpPassport);
-    function FGetPassportCount(): Integer;
+    FPassportList: TDnmpPassportList;
   public
-    constructor Create(AContact: TDnmpContact; AParentContactsList: TDnmpContactList); override;
+    constructor Create(AParentContactsList: TDnmpContactList);
     destructor Destroy; override;
-    // Passport items list
-    property PassportItems[Index: Integer]: TDnmpPassport read GetPassport write SetPassport;
-    // Number of passport items
-    property PassportCount: Integer read FGetPassportCount;
-    // Add passport in this list
-    procedure AddPassport(Item: TDnmpPassport);
+    property PassportList: TDnmpPassportList read FPassportList write FPassportList;
     // Add contact in this list and parent list
     procedure AddItem(Item: TDnmpContact); override;
     // remove item from this list, not affected to parent
     function Extract(Item: TDnmpContact): Boolean; override;
-    function ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage; override;
-    function FromStorage(Storage: TDnmpStorage): Boolean; override;
+    function ToStorage(InfoType: TDnmpContactInfoType): TDataStorage; override;
+    function FromStorage(Storage: TDataStorage): Boolean; override;
   end;
 
   TIncomingMsgEvent = procedure(Sender: TObject; Msg: TDnmpMsg) of object;
 
   // Базовый класс линка
+  { TODO : Очередь сообщений из паспорта контакта }
   TDnmpLink = class(TInterfacedObject)
   protected
     FOnIncomingMsg: TIncomingMsgEvent;
@@ -412,8 +383,8 @@ type
     // Удаляет все записи
     procedure Clear();
     { save to storage }
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): Boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): Boolean;
   end;
 
   { TDnmpMsgHandler }
@@ -484,11 +455,13 @@ type
     procedure OnAllDisconnected();
   public
     // Serializer for objects
-    Serializer: TDnmpSerializer;
+    Serializer: TDataSerializer;
     MyPassport: TDnmpPassport;
     MyInfo: TDnmpContact;
     // Global contact list
     ContactList: TDnmpContactList;
+    // Owned passports list
+    PassportList: TDnmpPassportList;
     // Known linkable nodes, parented to ContactList
     NodeList: TNodeList;
     // Owned points (Server only), parented to ContactList
@@ -521,7 +494,11 @@ type
     destructor Destroy(); override;
     // Reset all data to default, load data from storage
     procedure Init();
+    // wrapper, load list from default file.
+    // For TDnmpContactList and TDnmpPassportList
     procedure LoadList(List: TObject);
+    // wrapper, save list to default file.
+    // For TDnmpContactList and TDnmpPassportList
     procedure WriteList(List: TObject; AInfoType: TDnmpContactInfoType);
     // Load all data from storage
     procedure LoadFromFile();
@@ -595,7 +572,7 @@ type
     // Return maximum node ID +1
     function GetFreeNodeID(): TNodeID;
     // De-serialize data from message body to storage
-    function MsgDataToStorage(Msg: TDnmpMsg): TDnmpStorage;
+    function MsgDataToStorage(Msg: TDnmpMsg): TDataStorage;
     // ==== Сервисные функции
     function GetContactByAddr(SomeAddr: TAddr): TDnmpContact;
     function GetContactByGUID(SomeGUID: string): TDnmpContact;
@@ -665,6 +642,7 @@ const
   csNodelistFileName = 'NodeList';
   csUnapprovedFileName = 'UnapprovedList';
   csContactListFileName = 'ContactList';
+  csPassportListFileName = 'PassportList';
   csMsgQueueFileName = 'MsgQueue';
   ciKeyLength = 8;
   CRLF = #13#10;
@@ -895,55 +873,46 @@ begin
   end;
 end;
 
-{ TPointList }
+{ TDnmpPassportList }
 
-function TPointList.GetPassport(Index: Integer): TDnmpPassport;
+function TDnmpPassportList.GetPassport(Index: Integer): TDnmpPassport;
 begin
   Result:=(FPassportList.Items[Index] as TDnmpPassport);
 end;
 
-procedure TPointList.SetPassport(Index: Integer; Value: TDnmpPassport);
+procedure TDnmpPassportList.SetPassport(Index: Integer; Value: TDnmpPassport);
 begin
   FPassportList.Items[Index]:=Value;
 end;
 
-function TPointList.FGetPassportCount(): Integer;
+function TDnmpPassportList.FGetPassportCount(): Integer;
 begin
   Result:=FPassportList.Count;
 end;
 
-constructor TPointList.Create(AContact: TDnmpContact;
-  AParentContactsList: TDnmpContactList);
+constructor TDnmpPassportList.Create(AParentContactsList: TDnmpContactList);
 begin
-  inherited Create(AContact, AParentContactsList);
+  inherited Create();
+  ParentList:=AParentContactsList;
   FPassportList:=TObjectList.Create(False);
 end;
 
-destructor TPointList.Destroy();
+destructor TDnmpPassportList.Destroy();
 begin
   FreeAndNil(FPassportList);
   inherited Destroy;
 end;
 
-procedure TPointList.AddPassport(Item: TDnmpPassport);
+procedure TDnmpPassportList.AddPassport(Item: TDnmpPassport);
 var
   i: integer;
   TmpPassport: TDnmpPassport;
-  TmpContact: TDnmpContact;
 begin
   if not Assigned(Item) then Exit;
-  if not Assigned(Item.Contact) then Exit;
-  // проверим наличие контакта в списке
-  TmpContact:=GetByGUID(Item.Contact.GUID);
-  if not Assigned(TmpContact) then
-  begin
-    AddItem(Item.Contact);
-    Exit;
-  end;
 
-  for i:=0 to PassportCount-1 do
+  for i:=0 to Count-1 do
   begin
-    TmpPassport:=PassportItems[i];
+    TmpPassport:=Items[i];
     if TmpPassport.Contact.GUID=Item.Contact.GUID then
     begin
       // такой паспорт уже есть
@@ -952,6 +921,74 @@ begin
   end;
   // добавляем недостающий паспорт
   FPassportList.Add(Item);
+end;
+
+function TDnmpPassportList.Extract(Item: TDnmpPassport): Boolean;
+begin
+  Result:=Assigned(FPassportList.Extract(Item));
+end;
+
+function TDnmpPassportList.ToStorage(InfoType: TDnmpContactInfoType
+  ): TDataStorage;
+var
+  Storage: TDataStorage;
+  i: Integer;
+begin
+  Storage:=TDataStorage.Create(stDictionary);
+  for i:=0 to Self.Count-1 do
+  begin
+    Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
+  end;
+
+  Result:=TDataStorage.Create(stDictionary);
+  Result.Add('type', 'DnmpPassportList');
+  Result.Add('items', Storage);
+end;
+
+function TDnmpPassportList.FromStorage(Storage: TDataStorage): Boolean;
+var
+  SubStorage: TDataStorage;
+  i: Integer;
+  Item: TDnmpPassport;
+begin
+  Result:=False;
+  if not Assigned(Storage) then Exit;
+  if Storage.StorageType <> stDictionary then Exit;
+  if Storage.GetString('type')<>'DnmpPassportList' then Exit;
+  SubStorage:=Storage.GetObject('items');
+  if SubStorage.StorageType <> stDictionary then Exit;
+  for i:=0 to SubStorage.Count-1 do
+  begin
+    Item:=TDnmpPassport.Create(nil, ParentList);
+    if not Item.FromStorage(SubStorage.GetObject(i)) then
+    begin
+      Item.Free();
+      Continue;
+    end;
+    Self.AddPassport(Item);
+  end;
+  Result:=True;
+
+  // passports lodaed with empty contacts, only ContactGUID filled
+  // set contacts to passports from ParentList
+  if not Assigned(ParentList) then Exit;
+  for i:=0 to Self.Count-1 do
+  begin
+    Item:=Self.Items[i];
+    Item.Contact:=ParentList.GetByGUID(Item.ContactGUID);
+  end;
+end;
+
+{ TPointList }
+
+constructor TPointList.Create(AParentContactsList: TDnmpContactList);
+begin
+  inherited Create(AParentContactsList);
+end;
+
+destructor TPointList.Destroy();
+begin
+  inherited Destroy;
 end;
 
 procedure TPointList.AddItem(Item: TDnmpContact);
@@ -964,69 +1001,24 @@ begin
     Item.Passport:=TDnmpPassport.Create(Item, ParentList);
   end;
 
-  if FPassportList.IndexOf(Item.Passport) = -1 then FPassportList.AddPassport(Item.Passport);
+  if Assigned(FPassportList) then FPassportList.AddPassport(Item.Passport);
 end;
 
 function TPointList.Extract(Item: TDnmpContact): Boolean;
-var
-  i: integer;
-  TmpPassport: TDnmpPassport;
 begin
   Result:=inherited Extract(Item);
   // убираем паспорт
-  for i:=0 to PassportCount-1 do
-  begin
-    TmpPassport:=PassportItems[i];
-    if TmpPassport.Contact.GUID=Item.Contact.GUID then
-    begin
-      // нашли паспорт
-      FPassportList.Delete(i);
-      Exit;
-    end;
-  end;
-
+  if Assigned(FPassportList) then FPassportList.Extract(Item.Passport);
 end;
 
-function TPointList.ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
+function TPointList.ToStorage(InfoType: TDnmpContactInfoType): TDataStorage;
 begin
   Result:=inherited ToStorage(InfoType);
-  // выгружаем паспорта
-  // ....
 end;
 
-function TPointList.FromStorage(Storage: TDnmpStorage): Boolean;
+function TPointList.FromStorage(Storage: TDataStorage): Boolean;
 begin
   Result:=inherited FromStorage(Storage);
-end;
-
-{ TDnmpSerializer }
-
-function TDnmpSerializer.GetName: string;
-begin
-  Result:='NONE';
-end;
-
-function TDnmpSerializer.StorageToString(AStorage: TDnmpStorage): AnsiString;
-begin
-  Result:='';
-end;
-
-function TDnmpSerializer.StorageFromString(AStorage: TDnmpStorage;
-  AString: AnsiString): Boolean;
-begin
-  Result:=False;
-end;
-
-function TDnmpSerializer.StorageToFile(AStorage: TDnmpStorage; AFileName: string
-  ): Boolean;
-begin
-  Result:=False;
-end;
-
-function TDnmpSerializer.StorageFromFile(AStorage: TDnmpStorage;
-  AFileName: string): Boolean;
-begin
-  Result:=False;
 end;
 
 { TDnmpPassport }
@@ -1051,32 +1043,56 @@ begin
   inherited Destroy;
 end;
 
-function TDnmpPassport.ToStorage(): TDnmpStorage;
+function TDnmpPassport.ToStorage(): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpPassport');
-  Result.Add('contact', Self.Contact.ToStorage(ctAll));
+  Result.Add('contact_guid', Self.Contact.GUID);
+  //Result.Add('contact', Self.Contact.ToStorage(ctAll));
   Result.Add('contacts_list', Self.FavoriteContactsList.ToStorage(ctBrief));
-
+  //Result.Add('services_list', Self.ServicesList.ToStorage(ctBrief));
+  Result.Add('msg_inbox', Self.MsgInbox.ToStorage());
+  Result.Add('msg_outbox', Self.MsgOutbox.ToStorage());
 end;
 
-function TDnmpPassport.FromStorage(Storage: TDnmpStorage): Boolean;
+function TDnmpPassport.FromStorage(Storage: TDataStorage): Boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
   if Storage.StorageType <> stDictionary then Exit;
   if Storage.GetString('type')<>'DnmpPassport' then Exit;
 
+  ContactGUID:=Storage.GetString('contact_guid');
+
+  {
   // Contact
   SubStorage:=Storage.GetObject('contact');
   if Assigned(SubStorage) then Self.Contact.FromStorage(SubStorage);
   //if Assigned(SubStorage) then SubStorage.Free();
+  }
 
   // FavoriteContactsList
   SubStorage:=Storage.GetObject('contacts_list');
   if Assigned(SubStorage) then Self.FavoriteContactsList.FromStorage(SubStorage);
+  //if Assigned(SubStorage) then SubStorage.Free();
+
+  {
+  // ServicesList
+  SubStorage:=Storage.GetObject('services_list');
+  if Assigned(SubStorage) then Self.ServicesList.FromStorage(SubStorage);
+  //if Assigned(SubStorage) then SubStorage.Free();
+  }
+
+  // MsgInbox
+  SubStorage:=Storage.GetObject('msg_inbox');
+  if Assigned(SubStorage) then Self.MsgInbox.FromStorage(SubStorage);
+  //if Assigned(SubStorage) then SubStorage.Free();
+
+  // MsgOutbox
+  SubStorage:=Storage.GetObject('msg_outbox');
+  if Assigned(SubStorage) then Self.MsgOutbox.FromStorage(SubStorage);
   //if Assigned(SubStorage) then SubStorage.Free();
 
   Result:=True;
@@ -1241,25 +1257,25 @@ begin
 end;
 
 function TDnmpContactList.ToStorage(InfoType: TDnmpContactInfoType
-  ): TDnmpStorage;
+  ): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.Items[i].ToStorage(InfoType));
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpContactList');
   Result.Add('items', Storage);
 end;
 
-function TDnmpContactList.FromStorage(Storage: TDnmpStorage): Boolean;
+function TDnmpContactList.FromStorage(Storage: TDataStorage): Boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpContact;
 begin
@@ -1368,13 +1384,13 @@ begin
   Result:=((Self.Addr.Node=AAddr.Node) and (Self.Addr.Point=AAddr.Point));
 end;
 
-function TDnmpContact.ToStorage(InfoType: TDnmpContactInfoType): TDnmpStorage;
+function TDnmpContact.ToStorage(InfoType: TDnmpContactInfoType): TDataStorage;
 var
   i: integer;
   InfoItem: TDnmpContactInfo;
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   // Brief info
   Result.Add('addr', AddrToStr(Self.Addr));
   Result.Add('guid', Self.GUID);
@@ -1397,7 +1413,7 @@ begin
   Result.Add('other_info', Self.OtherInfo);
   Result.Add('key', Self.Key);
 
-  SubStorage:=TDnmpStorage.Create(stDictionary);
+  SubStorage:=TDataStorage.Create(stDictionary);
   for i:=0 to FInfoList.Count-1 do
   begin
     InfoItem:=(FInfoList.Items[i] as TDnmpContactInfo);
@@ -1411,11 +1427,11 @@ begin
   //Result.Add('link_type', LinkTypeToStr(Self.LinkType));
 end;
 
-function TDnmpContact.FromStorage(Storage: TDnmpStorage): Boolean;
+function TDnmpContact.FromStorage(Storage: TDataStorage): Boolean;
 var
   i: integer;
   //InfoItem: TDnmpContactInfo;
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   sName: string;
 begin
   Result:=False;
@@ -1561,156 +1577,6 @@ begin
 end;
 
 
-{ TDnmpStorage }
-
-constructor TDnmpStorage.Create(AStorageType: TDnmpStorageType);
-begin
-  inherited Create();
-  StorageType:=AStorageType;
-  FItems:=TStringList.Create();
-  FItems.OwnsObjects:=True;
-end;
-
-destructor TDnmpStorage.Destroy();
-begin
-  FItems.Free();
-  inherited Destroy();
-end;
-
-function TDnmpStorage.Count(): integer;
-begin
-  Result:=FItems.Count;
-end;
-
-procedure TDnmpStorage.Add(AName: string; AValue: TDnmpStorage);
-begin
-  if (StorageType=stDictionary) or (StorageType=stList) then
-  begin
-    FItems.AddObject(AName, AValue);
-  end
-  else
-  begin
-    // not valid for current storage type
-  end;
-end;
-
-procedure TDnmpStorage.Add(AName, AValue: string);
-var
-  TmpItem: TDnmpStorage;
-begin
-  if (StorageType=stDictionary) or (StorageType=stList) then
-  begin
-    TmpItem:=TDnmpStorage.Create(stString);
-    TmpItem.Value:=AValue;
-    FItems.AddObject(AName, TmpItem)
-  end
-  else Self.Value:=AValue;
-end;
-
-procedure TDnmpStorage.Add(AName: string; AValue: Integer);
-var
-  TmpItem: TDnmpStorage;
-begin
-  if (StorageType=stDictionary) or (StorageType=stList) then
-  begin
-    TmpItem:=TDnmpStorage.Create(stInteger);
-    TmpItem.Value:=IntToStr(AValue);
-    FItems.AddObject(AName, TmpItem)
-  end
-  else Self.Value:=IntToStr(AValue);
-end;
-
-procedure TDnmpStorage.Add(AName: string; AValue: Real);
-var
-  TmpItem: TDnmpStorage;
-begin
-  if (StorageType=stDictionary) or (StorageType=stList) then
-  begin
-    TmpItem:=TDnmpStorage.Create(stNumber);
-    TmpItem.Value:=FloatToStr(AValue);
-    FItems.AddObject(AName, TmpItem);
-  end
-  else Self.Value:=FloatToStr(AValue);
-end;
-
-procedure TDnmpStorage.Add(AName: string; AValue: Boolean);
-begin
-  Self.Add(AName, BoolToStr(AValue, '1', '0'));
-end;
-
-function TDnmpStorage.GetObject(AName: string): TDnmpStorage;
-var
-  n: integer;
-  TmpItem: TDnmpStorage;
-begin
-  Result:=nil;
-  n:=FItems.IndexOf(AName);
-  if n>=0 then
-  begin
-    TmpItem:=(FItems.Objects[n] as TDnmpStorage);
-    if TmpItem.StorageType=stDictionary then Result:=TmpItem;
-  end;
-end;
-
-function TDnmpStorage.GetObject(Index: integer): TDnmpStorage;
-begin
-  Result:=nil;
-  if (Index>=0) and (Index<Count) then
-  begin
-    Result:=(FItems.Objects[Index] as TDnmpStorage);
-  end;
-end;
-
-function TDnmpStorage.GetObjectName(Index: integer): string;
-begin
-  Result:='';
-  if (Index>=0) and (Index<FItems.Count) then Result:=FItems[Index];
-end;
-
-function TDnmpStorage.GetString(AName: string): string;
-var
-  n: integer;
-  TmpItem: TDnmpStorage;
-begin
-  Result:='';
-  if AName='' then Result:=Self.Value
-  else
-  begin
-    n:=FItems.IndexOf(AName);
-    if n<>-1 then
-    begin
-      TmpItem:=(FItems.Objects[n] as TDnmpStorage);
-      Result:=TmpItem.Value;
-      //if TmpItem.StorageType=stString then Result:=TmpItem.Value;
-    end;
-  end;
-end;
-
-function TDnmpStorage.GetInteger(AName: string): Integer;
-begin
-  Result:=StrToIntDef(GetString(AName), 0);
-end;
-
-function TDnmpStorage.GetCardinal(AName: string): Cardinal;
-begin
-  Result:=StrToQWordDef(GetString(AName), 0);
-end;
-
-function TDnmpStorage.GetReal(AName: string): Real;
-begin
-  Result:=StrToFloatDef(GetString(AName), 0);
-end;
-
-function TDnmpStorage.GetBool(AName: string): Boolean;
-begin
-  Result:=(GetString(AName)='1');
-end;
-
-function TDnmpStorage.HaveName(AName: string): Boolean;
-begin
-  Result:=(FItems.IndexOf(AName)<>-1);
-end;
-
 { === TDnmpMsg === }
 
 constructor TDnmpMsg.Create();
@@ -1808,7 +1674,7 @@ end;
 function TDnmpMsg.FromStream(AStream: TStream): Boolean;
 var
   ms: TMemoryStream;
-  iMsgSize, iParamsSize, iDataSize, iSeenbyOffset, iSeenbySize: Cardinal;
+  iMsgSize, iParamsSize, iDataSize, iSeenbyOffset, iSeenbySize, iSeenByCount: Cardinal;
   TmpMsgType: array [0..3] of AnsiChar;
 begin
   Result:=False;
@@ -1843,7 +1709,13 @@ begin
   if (iSeenbySize>0) and ((iSeenbySize mod 4)=0) then
   begin
     //ms.Write(Self.SeenBy, Length(Self.SeenBy)*SizeOf(TNodeID));
-    AStream.Read(Self.SeenBy, iSeenbySize);
+    //AStream.Read(Self.SeenBy, iSeenbySize);
+    iSeenByCount:=(iSeenbySize mod 4);
+    SetLength(Self.SeenBy, iSeenByCount);
+    while iSeenByCount > 0 do
+    begin
+      AStream.Read(Self.SeenBy[iSeenByCount], SizeOf(TNodeID));
+    end;
   end;
   Result:=True;
 end;
@@ -1859,26 +1731,32 @@ begin
   if not Assigned(AStream) then Exit;
   iParamsSize:=Length(Self.Info.Text);
   iDataSize:=Self.Data.Size;
-  iSeenbyOffset:=iParamsSize+iDataSize+24;
+  iSeenbyOffset:=Length(Self.SeenBy)*SizeOf(TNodeID);
   SetLength(MsgType, 4);
   for i:=0 to 3 do FourCC[i]:=MsgType[i+1];
 
   ms:=TMemoryStream.Create();
-  ms.Write(FourCC, SizeOf(FourCC));
+  ms.Write(FourCC, SizeOf(FourCC));  // 4 bytes
   //ms.Write(Self.TimeStamp, SizeOf(Self.TimeStamp));
-  ms.Write(Self.SerialNum, SizeOf(Self.TimeStamp));
-  ms.Write(Self.SourceAddr, SizeOf(Self.SourceAddr));
-  ms.Write(Self.TargetAddr, SizeOf(Self.TargetAddr));
-  ms.Write(iSeenbyOffset, SizeOf(iSeenbyOffset));
-  ms.Write(iParamsSize, SizeOf(iParamsSize));
+  ms.Write(Self.SerialNum, SizeOf(Self.SerialNum));   // 4 bytes
+  ms.Write(Self.SourceAddr, SizeOf(Self.SourceAddr)); // 8 bytes
+  ms.Write(Self.TargetAddr, SizeOf(Self.TargetAddr)); // 8 bytes
+  ms.Write(iSeenbyOffset, SizeOf(iSeenbyOffset));     // 4 bytes
+  ms.Write(iParamsSize, SizeOf(iParamsSize));         // 4 bytes
   Self.Info.SaveToStream(ms);
-  ms.Write(iDataSize, SizeOf(iDataSize));
+  ms.Write(iDataSize, SizeOf(iDataSize));             // 4 bytes
   Self.Data.Seek(0, soFromBeginning);
   ms.CopyFrom(Self.Data, iDataSize);
+  {
   if Length(Self.SeenBy)>0 then
   begin
     //ms.Write(Self.SeenBy, Length(Self.SeenBy)*SizeOf(TNodeID));
     ms.Write(Self.SeenBy, SizeOf(Self.SeenBy));
+  end;
+  }
+  for i:=0 to Length(Self.SeenBy)-1 do
+  begin
+    ms.Write(Self.SeenBy[i], SizeOf(TNodeID));
   end;
 
   ms.Seek(0, soFromBeginning);
@@ -1955,25 +1833,25 @@ begin
   end;
 end;
 
-function TDnmpMsgQueue.ToStorage(): TDnmpStorage;
+function TDnmpMsgQueue.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.Items[i].ToString());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpMsgQueue');
   Result.Add('items', Storage);
 end;
 
-function TDnmpMsgQueue.FromStorage(Storage: TDnmpStorage): Boolean;
+function TDnmpMsgQueue.FromStorage(Storage: TDataStorage): Boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpMsg;
 begin
@@ -2220,34 +2098,34 @@ begin
   SetLength(FItems, FCount);
 end;
 
-function TDnmpRoutingTable.ToStorage(): TDnmpStorage;
+function TDnmpRoutingTable.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 
-function RoutingRecordToStorage(Item: TDnmpRoutingTableRecord): TDnmpStorage;
+function RoutingRecordToStorage(Item: TDnmpRoutingTableRecord): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('dest_node_id', IntToStr(Item.DestNodeID));
   Result.Add('gate_node_id', IntToStr(Item.GateNodeID));
   Result.Add('trace_id', IntToStr(Item.TraceID));
 end;
 
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), RoutingRecordToStorage(Self.Items[i]));
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpRoutingTable');
   Result.Add('items', Storage);
 end;
 
-function TDnmpRoutingTable.FromStorage(Storage: TDnmpStorage): Boolean;
+function TDnmpRoutingTable.FromStorage(Storage: TDataStorage): Boolean;
 var
-  SubStorage, AStorage: TDnmpStorage;
+  SubStorage, AStorage: TDataStorage;
   i: Integer;
   Item: TDnmpRoutingTableRecord;
 begin
@@ -2378,6 +2256,9 @@ begin
   ContactList:=TDnmpContactList.Create(nil);
   ContactList.Filename:=csContactListFileName;
 
+  PassportList:=TDnmpPassportList.Create(ContactList);
+  PassportList.Filename:=csPassportListFileName;
+
   TmpContactList:=TDnmpContactList.Create(nil);
 
   MyInfo:=TDnmpContact.Create();
@@ -2446,6 +2327,7 @@ begin
   FreeAndNil(MyPassport);
   FreeAndNil(MyInfo);
   FreeAndNil(TmpContactList);
+  FreeAndNil(PassportList);
   FreeAndNil(ContactList);
   FreeAndNil(Conf);
   inherited Destroy();
@@ -2682,11 +2564,23 @@ begin
 end;
 
 procedure TDnmpManager.ContactConnectedIn(AContact: TDnmpContact);
+var
+  i: integer;
 begin
   AContact.State:=asOnline;
 
   // Запрашиваем информацию о контакте
   RequestInfoByAddr(AContact.Addr);
+
+  // Отправляем отложенные сообщения
+  if Assigned(AContact.Passport) then
+  begin
+    while AContact.Passport.MsgInbox.Count>0 do
+    begin
+      SendMsg(AContact.Passport.MsgInbox.Items[0]);
+      AContact.Passport.MsgInbox.Delete(0);
+    end;
+  end;
 
 end;
 
@@ -2770,17 +2664,26 @@ end;
 
 procedure TDnmpManager.LoadList(List: TObject);
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   AContactList: TDnmpContactList;
+  APassportList: TDnmpPassportList;
 begin
   if not Assigned(Serializer) then Exit;
-  Storage:=TDnmpStorage.Create(stUnknown);
+  Storage:=TDataStorage.Create(stUnknown);
   if (List is TDnmpContactList) then
   begin
     AContactList:=(List as TDnmpContactList);
-    DebugText('Load list from '+AContactList.Filename);
+    DebugText('Load contacts from '+AContactList.Filename);
     if Serializer.StorageFromFile(Storage, sDataPath+AContactList.Filename) then AContactList.FromStorage(Storage);
     DebugText(IntToStr(AContactList.Count)+' items loaded');
+  end
+
+  else if (List is TDnmpPassportList) then
+  begin
+    APassportList:=(List as TDnmpPassportList);
+    DebugText('Load passports from '+APassportList.Filename);
+    if Serializer.StorageFromFile(Storage, sDataPath+APassportList.Filename) then APassportList.FromStorage(Storage);
+    DebugText(IntToStr(APassportList.Count)+' items loaded');
   end;
   Storage.Free();
 end;
@@ -2789,6 +2692,7 @@ procedure TDnmpManager.WriteList(List: TObject; AInfoType: TDnmpContactInfoType
   );
 var
   AContactList: TDnmpContactList;
+  APassportList: TDnmpPassportList;
 begin
   if not Assigned(Serializer) then Exit;
   if (List is TDnmpContactList) then
@@ -2796,6 +2700,13 @@ begin
     AContactList:=(List as TDnmpContactList);
     DebugText('Save '+IntToStr(AContactList.Count)+' items to '+AContactList.Filename);
     Serializer.StorageToFile(AContactList.ToStorage(AInfoType), sDataPath+AContactList.Filename);
+  end
+
+  else if (List is TDnmpPassportList) then
+  begin
+    APassportList:=(List as TDnmpPassportList);
+    DebugText('Save '+IntToStr(APassportList.Count)+' items to '+APassportList.Filename);
+    Serializer.StorageToFile(APassportList.ToStorage(AInfoType), sDataPath+APassportList.Filename);
   end;
 end;
 
@@ -2803,13 +2714,13 @@ procedure TDnmpManager.LoadFromFile();
 var
   Sect, MainSect : string;
   i, n: Integer;
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
 begin
   //FServerMode:=Conf.ReadBool('Main','IsNode', False);
   if Assigned(Serializer) then
   begin
     // MyInfo
-    Storage:=TDnmpStorage.Create(stUnknown);
+    Storage:=TDataStorage.Create(stUnknown);
     DebugText('Load MyInfo from '+csMyInfoFileName);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyInfoFileName) then MyInfo.FromStorage(Storage);
     Storage.Free();
@@ -2817,13 +2728,16 @@ begin
     FServerMode:=MyInfo.IsNode;
 
     // MyPassport
-    Storage:=TDnmpStorage.Create(stUnknown);
+    Storage:=TDataStorage.Create(stUnknown);
     DebugText('Load MyPassport from '+csMyPassportFileName);
     if Serializer.StorageFromFile(Storage, sDataPath+csMyPassportFileName) then MyPassport.FromStorage(Storage);
     Storage.Free();
 
     // Contact list
     LoadList(ContactList);
+
+    // Passport list
+    LoadList(PassportList);
 
     // Nodelist
     LoadList(Nodelist);
@@ -2863,6 +2777,9 @@ begin
     // ContactList
     WriteList(ContactList, ctAll);
 
+    // PassportList
+    WriteList(PassportList, ctAll);
+
     // Nodelist
     WriteList(Nodelist, ctBrief);
 
@@ -2879,10 +2796,11 @@ var
   i: integer;
   TargetPoint: TPointID;
   DnmpLink: TDnmpLink;
+  TmpContact: TDnmpContact;
 begin
   Result:=true;
 
-  if self.ServerMode then // If we are node
+  if Self.ServerMode then // If we are node
   begin
     // Add seen-by to transit message
     if (not SameNode(Msg.SourceAddr, MyInfo.Addr))
@@ -2915,10 +2833,11 @@ begin
       begin
         if PointList[i].Addr.Point = TargetPoint then
         begin
+          TmpContact:=PointList[i];
           // Помещаем сообщение в очередь отправки поинту
-          //DelayMsg(Msg);
+          if Assigned(TmpContact.Passport) then TmpContact.Passport.MsgInbox.Add(Msg);
           // отправляем уведомление о задержке сообщения
-          //SendInfoMsg(Msg, '201', 'Message delayed');
+          SendErrorMsg(Msg.SourceAddr, '201', 'Message delayed');
           DebugText('201 - Message delayed');
           Exit;
         end;
@@ -2989,7 +2908,7 @@ begin
   end;
 
   // Отправка сообщения об ошибке
-  //SendErrorMsg(Msg, '102', 'Destination address not found');
+  SendErrorMsg(Msg.SourceAddr, '102', 'Destination address not found');
   DebugText('102 - Destination address not found');
   Result:=False;
   Exit;
@@ -3324,12 +3243,12 @@ begin
   msg.Free();
 end;
 
-function TDnmpManager.MsgDataToStorage(Msg: TDnmpMsg): TDnmpStorage;
+function TDnmpManager.MsgDataToStorage(Msg: TDnmpMsg): TDataStorage;
 var
   sData: AnsiString;
-  TmpSerializer: TDnmpSerializer;
+  TmpSerializer: TDataSerializer;
 begin
-  Result:=TDnmpStorage.Create(stUnknown);
+  Result:=TDataStorage.Create(stUnknown);
   sData:=StreamToStr(Msg.Data);
   TmpSerializer:=Self.Serializer;
   if not TmpSerializer.StorageFromString(Result, sData) then Result:=nil;

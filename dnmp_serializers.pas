@@ -5,25 +5,25 @@ unit dnmp_serializers;
 interface
 
 uses
-  Classes, SysUtils, dnmp_unit, fpjson, jsonparser, IniFiles;
+  Classes, SysUtils, DataStorage, fpjson, jsonparser, IniFiles;
 
 type
 
-  { TDnmpSerializerFpJson }
+  { TDataSerializerFpJson }
 
-  TDnmpSerializerFpJson = class(TDnmpSerializer)
+  TDataSerializerFpJson = class(TDataSerializer)
   public
     function GetName(): string; override;
-    function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
-    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString
+    function StorageToString(AStorage: TDataStorage): AnsiString; override;
+    function StorageFromString(AStorage: TDataStorage; AString: AnsiString
       ): boolean; override;
-    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
+    function StorageToFile(AStorage: TDataStorage; AFileName: string): boolean;
       override;
-    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string
+    function StorageFromFile(AStorage: TDataStorage; AFileName: string
       ): boolean; override;
   end;
 
-  { TDnmpSerializerIni (write only)}
+  { TDataSerializerIni (write only)}
   {
   @ - string
   # - integer
@@ -31,301 +31,49 @@ type
   % - dictionary
   & - list
   }
-  TDnmpSerializerIni = class(TDnmpSerializer)
+  TDataSerializerIni = class(TDataSerializer)
   public
     function GetName(): string; override;
-    function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
-    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString
+    function StorageToString(AStorage: TDataStorage): AnsiString; override;
+    function StorageFromString(AStorage: TDataStorage; AString: AnsiString
       ): boolean; override;
-    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
+    function StorageToFile(AStorage: TDataStorage; AFileName: string): boolean;
       override;
-    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string
-      ): boolean; override;
-  end;
-
-  { TDnmpSerializerBencode }
-  {
-  Bencode serializer
-  integers: i<value>e
-    i0e  i42e  i-42e
-  strings: <lalie_len>:<value>
-    3:ben  4:code
-  lists: l<items>e (without any spaces)
-    l i42e 3:ben 4:code e
-  dictionaries: d<items>e  where items is <string_name><value>
-    d 4:name 3:ben  4:code i42e e
-  }
-  TDnmpSerializerBencode = class(TDnmpSerializer)
-  private
-    function GetName(): string; override;
-    function StorageToBencode(AStorage: TDnmpStorage): AnsiString;
-    function ReadBencodeValue(AStorage: TdnmpStorage; AString: AnsiString;
-      var APos: Cardinal; ALen: Cardinal): boolean;
-    function ReadBencodeIntegerStr(var AString: AnsiString; var APos: Cardinal;
-      ALen: Cardinal): AnsiString;
-    function ReadBencodeString(var AString: AnsiString; var APos: Cardinal;
-      ALen: Cardinal): AnsiString;
-    function ReadBencodeList(AStorage: TdnmpStorage; var AString: AnsiString;
-      var APos: Cardinal; ALen: Cardinal): boolean;
-    function ReadBencodeDictionary(AStorage: TdnmpStorage; var AString: AnsiString;
-      var APos: Cardinal; ALen: Cardinal): boolean;
-  public
-    function StorageToString(AStorage: TDnmpStorage): AnsiString; override;
-    function StorageFromString(AStorage: TDnmpStorage; AString: AnsiString
-      ): boolean; override;
-    function StorageToFile(AStorage: TDnmpStorage; AFileName: string): boolean;
-      override;
-    function StorageFromFile(AStorage: TDnmpStorage; AFileName: string
+    function StorageFromFile(AStorage: TDataStorage; AFileName: string
       ): boolean; override;
   end;
 
 implementation
 
-{ TDnmpSerializerBencode }
 
-function TDnmpSerializerBencode.GetName: string;
-begin
-  Result:='BENCODE';
-end;
+{ TDataSerializerIni }
 
-function TDnmpSerializerBencode.StorageToBencode(AStorage: TDnmpStorage
-  ): AnsiString;
-var
-  sName: AnsiString;
-  SubItem: TDnmpStorage;
-  i: integer;
-begin
-  Result:='';
-  if AStorage.StorageType=stString then
-  begin
-    Result:=Result+IntToStr(Length(AStorage.Value))+':'+AStorage.Value;
-  end;
-
-  if AStorage.StorageType=stNumber then
-  begin
-    Result:=Result+IntToStr(Length(AStorage.Value))+':'+AStorage.Value;
-  end;
-
-  if AStorage.StorageType=stInteger then
-  begin
-    Result:=Result+'i'+AStorage.Value+'e';
-  end;
-
-  if AStorage.StorageType=stDictionary then
-  begin
-    Result:=Result+'d';
-    for i:=0 to AStorage.Count-1 do
-    begin
-      sName:=AStorage.GetObjectName(i);
-      SubItem:=(AStorage.GetObject(i) as TDnmpStorage);
-      // name
-      Result:=Result+IntToStr(Length(sName))+':'+sName;
-      // value
-      Result:=Result+StorageToBencode(SubItem);
-    end;
-    Result:=Result+'e';
-  end;
-
-  if AStorage.StorageType=stList then
-  begin
-    Result:=Result+'l';
-    for i:=0 to AStorage.Count-1 do
-    begin
-      SubItem:=(AStorage.GetObject(i) as TDnmpStorage);
-      // value
-      Result:=Result+StorageToBencode(SubItem);
-    end;
-    Result:=Result+'e';
-  end;
-end;
-
-function TDnmpSerializerBencode.ReadBencodeIntegerStr(var AString: AnsiString;
-  var APos: Cardinal; ALen: Cardinal): AnsiString;
-begin
-  Result:='';
-  if AString[APos]='i' then Inc(APos) else Exit;
-  while APos<=ALen do
-  begin
-    if AString[APos]='e' then
-    begin
-      Inc(APos);
-      Break
-    end;
-    Result:=Result+AString[APos];
-    Inc(APos);
-  end;
-end;
-
-function TDnmpSerializerBencode.ReadBencodeString(var AString: AnsiString;
-  var APos: Cardinal; ALen: Cardinal): AnsiString;
-var
-  sValue: AnsiString;
-  ValueLen: Cardinal;
-begin
-  Result:='';
-  sValue:='';
-  while APos<=ALen do
-  begin
-    if AString[APos]=':' then
-    begin
-      ValueLen:=StrToIntDef(sValue, 0);
-      Result:=Copy(AString, APos+1, ValueLen);
-      APos:=APos+ValueLen+1;
-      Exit;
-    end;
-    sValue:=sValue+AString[APos];
-    Inc(APos);
-  end;
-end;
-
-function TDnmpSerializerBencode.ReadBencodeDictionary(AStorage: TdnmpStorage;
-  var AString: AnsiString; var APos: Cardinal; ALen: Cardinal): boolean;
-var
-  sName: AnsiString;
-  SubStorage: TDnmpStorage;
-begin
-  Result:=False;
-  if AString[APos]='d' then Inc(APos) else Exit;
-  AStorage.StorageType:=stDictionary;
-  while APos<=ALen do
-  begin
-    if AString[APos]='e' then
-    begin
-      Inc(APos);
-      Result:=True;
-      Exit;
-    end;
-    sName:=ReadBencodeString(AString, APos, ALen);
-    SubStorage:=TDnmpStorage.Create(stUnknown);
-    if ReadBencodeValue(SubStorage, AString, APos, ALen) then AStorage.Add(sName, SubStorage);
-  end;
-end;
-
-function TDnmpSerializerBencode.ReadBencodeList(AStorage: TdnmpStorage;
-  var AString: AnsiString; var APos: Cardinal; ALen: Cardinal): boolean;
-var
-  SubStorage: TDnmpStorage;
-begin
-  Result:=False;
-  if AString[APos]='l' then Inc(APos) else Exit;
-  AStorage.StorageType:=stList;
-  while APos<=ALen do
-  begin
-    if AString[APos]='e' then
-    begin
-      Inc(APos);
-      Result:=True;
-      Exit;
-    end;
-    SubStorage:=TDnmpStorage.Create(stUnknown);
-    if ReadBencodeValue(SubStorage, AString, APos, ALen) then AStorage.Add('', SubStorage);
-  end;
-end;
-
-function TDnmpSerializerBencode.ReadBencodeValue(AStorage: TdnmpStorage;
-  AString: AnsiString; var APos: Cardinal; ALen: Cardinal): boolean;
-begin
-  Result:=False;
-  if not Assigned(AStorage) then Exit;
-  if APos<=ALen then
-  begin
-    if AString[APos]='i' then
-    begin
-      // read integer value
-      AStorage.StorageType:=stInteger;
-      AStorage.Value:=ReadBencodeIntegerStr(AString, APos, ALen);
-      Result:=True;
-    end
-
-    else if Pos(AString[APos], '0123456789')>0 then
-    begin
-      // read string value
-      AStorage.StorageType:=stString;
-      AStorage.Value:=ReadBencodeString(AString, APos, ALen);
-      Result:=True;
-    end
-
-    else if AString[APos]='d' then
-    begin
-      // read dictionary value
-      ReadBencodeDictionary(AStorage, AString, APos, ALen);
-      Result:=True;
-    end
-
-    else if AString[APos]='l' then
-    begin
-      // read list value
-      ReadBencodeList(AStorage, AString, APos, ALen);
-      Result:=True;
-    end
-
-    else
-    begin
-      // error
-      Exit;
-    end;
-  end;
-end;
-
-function TDnmpSerializerBencode.StorageToString(AStorage: TDnmpStorage
-  ): AnsiString;
-begin
-  Result:=StorageToBencode(AStorage);
-end;
-
-function TDnmpSerializerBencode.StorageFromString(AStorage: TDnmpStorage;
-  AString: AnsiString): boolean;
-var
-  n: Cardinal;
-begin
-  n:=1;
-  Result:=ReadBencodeValue(AStorage, AString, n, Length(AString));
-end;
-
-function TDnmpSerializerBencode.StorageToFile(AStorage: TDnmpStorage;
-  AFileName: string): boolean;
-begin
-  Result:=False;
-  if Trim(AFileName)='' then Exit;
-  Result:=StrToFile(AFileName+'.be', Self.StorageToString(AStorage));
-end;
-
-function TDnmpSerializerBencode.StorageFromFile(AStorage: TDnmpStorage;
-  AFileName: string): boolean;
-begin
-  Result:=False;
-  if Trim(AFileName)='' then Exit;
-  Result:=Self.StorageFromString(AStorage, FileToStr(AFileName+'.be'));
-end;
-
-{ TDnmpSerializerIni }
-
-function TDnmpSerializerIni.GetName: string;
+function TDataSerializerIni.GetName: string;
 begin
   Result:='INI';
 end;
 
-function TDnmpSerializerIni.StorageToString(AStorage: TDnmpStorage): AnsiString;
+function TDataSerializerIni.StorageToString(AStorage: TDataStorage): AnsiString;
 begin
   Result:=inherited StorageToString(AStorage);
 end;
 
-function TDnmpSerializerIni.StorageFromString(AStorage: TDnmpStorage;
+function TDataSerializerIni.StorageFromString(AStorage: TDataStorage;
   AString: AnsiString): boolean;
 begin
   Result:=inherited StorageFromString(AStorage, AString);
 end;
 
 {TODO: repair}
-function TDnmpSerializerIni.StorageToFile(AStorage: TDnmpStorage;
+function TDataSerializerIni.StorageToFile(AStorage: TDataStorage;
   AFileName: string): boolean;
 var
   ini: TMemIniFile;
 
-  procedure WriteStorageToIni(Storage: TDnmpStorage; sSect: string);
+  procedure WriteStorageToIni(Storage: TDataStorage; sSect: string);
   var
     sName: string;
-    TmpItem: TDnmpStorage;
+    TmpItem: TDataStorage;
     i: integer;
   begin
     if Storage.StorageType=stString then
@@ -349,7 +97,7 @@ var
       for i:=0 to Storage.Count-1 do
       begin
         sName:=Storage.GetObjectName(i);
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
+        TmpItem:=(Storage.GetObject(i) as TDataStorage);
         if TmpItem.StorageType=stString then ini.WriteString(sSect, '@'+sName, TmpItem.GetString())
         else if TmpItem.StorageType=stNumber then ini.WriteFloat(sSect, '$'+sName, TmpItem.GetReal())
         else if TmpItem.StorageType=stInteger then ini.WriteInteger(sSect, '#'+sName, TmpItem.GetInteger())
@@ -372,7 +120,7 @@ var
       for i:=0 to Storage.Count-1 do
       begin
         sName:=IntToStr(i);
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
+        TmpItem:=(Storage.GetObject(i) as TDataStorage);
         if TmpItem.StorageType=stString then ini.WriteString(sSect, '@'+sName, TmpItem.GetString())
         else if TmpItem.StorageType=stNumber then ini.WriteFloat(sSect, '$'+sName, TmpItem.GetReal())
         else if TmpItem.StorageType=stInteger then ini.WriteInteger(sSect, '#'+sName, TmpItem.GetInteger())
@@ -405,28 +153,28 @@ begin
   end;
 end;
 
-function TDnmpSerializerIni.StorageFromFile(AStorage: TDnmpStorage;
+function TDataSerializerIni.StorageFromFile(AStorage: TDataStorage;
   AFileName: string): boolean;
 begin
   Result:=inherited StorageFromFile(AStorage, AFileName);
 end;
 
-{ TDnmpSerializerFpJson }
+{ TDataSerializerFpJson }
 
-function TDnmpSerializerFpJson.GetName: string;
+function TDataSerializerFpJson.GetName: string;
 begin
   Result:='JSON';
 end;
 
-function TDnmpSerializerFpJson.StorageToString(AStorage: TDnmpStorage
+function TDataSerializerFpJson.StorageToString(AStorage: TDataStorage
   ): AnsiString;
 var
   jj: TJSONData;
 
-  function StorageAsJsonData(Storage: TDnmpStorage): TJSONData;
+  function StorageAsJsonData(Storage: TDataStorage): TJSONData;
   var
     i: integer;
-    TmpItem: TDnmpStorage;
+    TmpItem: TDataStorage;
   begin
     Result:=nil;
     if not Assigned(Storage) then Exit;
@@ -461,7 +209,7 @@ var
       Result:=TJSONArray.Create();
       for i:=0 to Storage.Count-1 do
       begin
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
+        TmpItem:=(Storage.GetObject(i) as TDataStorage);
         (Result as TJSONArray).Add(StorageAsJsonData(TmpItem));
       end;
     end
@@ -471,7 +219,7 @@ var
       Result:=TJSONObject.Create();
       for i:=0 to Storage.Count-1 do
       begin
-        TmpItem:=(Storage.GetObject(i) as TDnmpStorage);
+        TmpItem:=(Storage.GetObject(i) as TDataStorage);
         (Result as TJSONObject).Add(Storage.GetObjectName(i), StorageAsJsonData(TmpItem));
       end;
     end;
@@ -486,15 +234,15 @@ begin
   jj.Free();
 end;
 
-function TDnmpSerializerFpJson.StorageFromString(AStorage: TDnmpStorage;
+function TDataSerializerFpJson.StorageFromString(AStorage: TDataStorage;
   AString: AnsiString): boolean;
 var
   parser: TJSONParser;
   jj: TJSONData;
 
-  function JsonDataToStorage(j: TJSONData; Storage: TDnmpStorage): boolean;
+  function JsonDataToStorage(j: TJSONData; Storage: TDataStorage): boolean;
   var
-    SubStorage: TDnmpStorage;
+    SubStorage: TDataStorage;
     i: integer;
   begin
     Result:=False;
@@ -520,7 +268,7 @@ var
       Storage.StorageType:=stDictionary;
       for i:=0 to j.Count-1 do
       begin
-        SubStorage:=TDnmpStorage.Create(stUnknown);
+        SubStorage:=TDataStorage.Create(stUnknown);
         if JsonDataToStorage(j.Items[i], SubStorage) then Storage.Add(IntToStr(i), SubStorage)
         else SubStorage.Free();
       end;
@@ -532,7 +280,7 @@ var
       Storage.StorageType:=stDictionary;
       for i:=0 to j.Count-1 do
       begin
-        SubStorage:=TDnmpStorage.Create(stUnknown);
+        SubStorage:=TDataStorage.Create(stUnknown);
         if JsonDataToStorage(j.Items[i], SubStorage) then Storage.Add((j as TJSONObject).Names[i], SubStorage)
         else SubStorage.Free();
       end;
@@ -558,7 +306,7 @@ begin
 
 end;
 
-function TDnmpSerializerFpJson.StorageToFile(AStorage: TDnmpStorage;
+function TDataSerializerFpJson.StorageToFile(AStorage: TDataStorage;
   AFileName: string): boolean;
 begin
   Result:=False;
@@ -567,7 +315,7 @@ begin
   Result:=StrToFile(AFileName+'.json', Self.StorageToString(AStorage));
 end;
 
-function TDnmpSerializerFpJson.StorageFromFile(AStorage: TDnmpStorage;
+function TDataSerializerFpJson.StorageFromFile(AStorage: TDataStorage;
   AFileName: string): boolean;
 begin
   Result:=False;
