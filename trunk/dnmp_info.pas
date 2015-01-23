@@ -8,7 +8,7 @@ DNMP INFO - information service
 interface
 
 uses
-  Classes, SysUtils, dnmp_unit;
+  Classes, SysUtils, dnmp_unit, DataStorage;
 
 type
 
@@ -95,7 +95,7 @@ end;
 
 procedure TDnmpInfoService.OnNodelistResponse(Msg: TDnmpMsg);
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   TmpNodelist: TNodeList; // non-parented
   i: integer;
 begin
@@ -202,7 +202,7 @@ var
   //i: integer;
   SomeAddr: TAddr;
   TmpInfo, FoundInfo: TDnmpContact;
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   s: string;
   Done: boolean;
 begin
@@ -322,7 +322,7 @@ end;
 
 procedure TDnmpInfoService.OnContactListResponse(Msg: TDnmpMsg);
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
 begin
   Storage:=Mgr.MsgDataToStorage(Msg);
   if not Assigned(Storage) then Exit;

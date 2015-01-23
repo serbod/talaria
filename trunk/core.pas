@@ -5,7 +5,7 @@ unit Core;
 interface
 
 uses
-  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc,
+  Classes, SysUtils, Forms, dnmp_unit, dnmp_services, dnmp_grpc, DataStorage,
   Misc, dnmp_mail, Controls, dnmp_serializers, Graphics, Dialogs, ExtCtrls;
 
 type
@@ -655,11 +655,11 @@ begin
   Mgr.OnLog:=@LogHandler;
   Mgr.OnEvent:=@EventHandler;
   Mgr.OnIncomingMsg:=@MsgHandler;
-  //Mgr.Serializer:=TDnmpSerializerFpJson.Create();
-  Mgr.Serializer:=TDnmpSerializerBencode.Create();
+  //Mgr.Serializer:=TDataSerializerFpJson.Create();
+  Mgr.Serializer:=TDataSerializerBencode.Create();
   //Mgr.LoadFromFile();
-  //Mgr.Serializer:=TDnmpSerializerIni.Create();
-  //Mgr.Serializer:=TDnmpSerializerBencode.Create();
+  //Mgr.Serializer:=TDataSerializerIni.Create();
+  //Mgr.Serializer:=TDataSerializerBencode.Create();
 
   ServMgr:=TDnmpServiceManager.Create(Mgr);
   //ServMgr.LoadFromFile();

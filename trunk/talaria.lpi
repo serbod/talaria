@@ -16,9 +16,10 @@
     </i18n>
     <VersionInfo>
       <UseVersionInfo Value="True"/>
-      <RevisionNr Value="2"/>
-      <BuildNr Value="34"/>
-      <StringTable ProductVersion=""/>
+      <AutoIncrementBuild Value="True"/>
+      <RevisionNr Value="3"/>
+      <BuildNr Value="39"/>
+      <StringTable CompanyName="serbod.com" ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
@@ -42,7 +43,7 @@
         <PackageName Value="LCL"/>
       </Item3>
     </RequiredPackages>
-    <Units Count="28">
+    <Units Count="29">
       <Unit0>
         <Filename Value="talaria.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -217,6 +218,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="GraphicTools"/>
       </Unit27>
+      <Unit28>
+        <Filename Value="datastorage.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DataStorage"/>
+      </Unit28>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

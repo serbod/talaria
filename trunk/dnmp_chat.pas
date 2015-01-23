@@ -63,7 +63,7 @@ Data:
 interface
 
 uses
-  Classes, SysUtils, dnmp_unit, dnmp_services, contnrs, FileUtil;
+  Classes, SysUtils, dnmp_unit, dnmp_services, contnrs, FileUtil, DataStorage;
 
 type
 
@@ -80,8 +80,8 @@ type
     RemoteName: string;
     RemoteGUID: string;
     Text: string;
-    function ToStorage(): TDnmpStorage; virtual;
-    function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+    function ToStorage(): TDataStorage; virtual;
+    function FromStorage(Storage: TDataStorage): boolean; virtual;
     procedure FillFromContact(AContact: TDnmpContact; ATimestamp: TDateTime; AIncoming: boolean; AText: string);
   end;
 
@@ -98,8 +98,8 @@ type
     FileContent: TStream;
     procedure AfterConstruction(); override;
     procedure BeforeDestruction(); override;
-    function ToStorage(): TDnmpStorage; override;
-    function FromStorage(Storage: TDnmpStorage): boolean; override;
+    function ToStorage(): TDataStorage; override;
+    function FromStorage(Storage: TDataStorage): boolean; override;
   end;
 
   { TDnmpChatMessagesList }
@@ -147,8 +147,8 @@ type
     function AddObserver(AControl: TComponent): boolean;
     { Remove observer visual control }
     function DelObserver(AControl: TComponent): boolean;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
     procedure UpdateView();
   end;
 
@@ -175,8 +175,8 @@ type
     constructor Create(AMgr: TDnmpManager; AServiceMgr: TDnmpServiceManager; AServiceInfo: TDnmpServiceInfo); override;
     destructor Destroy(); override;
     //function SendCmd(Text: string; Addr: TAddr): string;
-    function ToStorage(): TDnmpStorage; override;
-    function FromStorage(Storage: TDnmpStorage): boolean; override;
+    function ToStorage(): TDataStorage; override;
+    function FromStorage(Storage: TDataStorage): boolean; override;
     //function SayText(AbonentGUID: string; sText: string): string;
     { create new message with sText and send it to Contact }
     function SayToContact(AContact: TDnmpContact; sText: string): string;
@@ -209,7 +209,7 @@ begin
   inherited BeforeDestruction();
 end;
 
-function TDnmpChatFileMessage.ToStorage: TDnmpStorage;
+function TDnmpChatFileMessage.ToStorage: TDataStorage;
 begin
   Result:=inherited ToStorage;
   Result.Add('file_name', FileName);
@@ -219,7 +219,7 @@ begin
   Result.Add('file_content', StreamToStr(FileContent));
 end;
 
-function TDnmpChatFileMessage.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChatFileMessage.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=inherited FromStorage(Storage);
   if not Result then Exit;
@@ -232,9 +232,9 @@ end;
 
 { TDnmpChatMessage }
 
-function TDnmpChatMessage.ToStorage: TDnmpStorage;
+function TDnmpChatMessage.ToStorage: TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('id', ID);
   Result.Add('time', Timestamp);
   Result.Add('in', IsIncoming);
@@ -244,7 +244,7 @@ begin
   Result.Add('text', Text);
 end;
 
-function TDnmpChatMessage.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChatMessage.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -379,13 +379,11 @@ end;
 function TDnmpChatMessagesList.AddItem(Timestamp: TDateTime;
   IsIncoming: boolean; Text: string; RemoteAddr: TAddr;
   RemoteContact: TDnmpContact): TDnmpChatMessage;
-var
-  TmpContact: TDnmpContact;
 begin
   Result:=nil;
   if not Assigned(ParentList) then
   begin
-    // { TODO : find }
+    // { TODO : find duplicates }
     // add
     Result:=TDnmpChatMessage.Create();
     Result.FillFromContact(RemoteContact, Timestamp, IsIncoming, Text);
@@ -412,13 +410,11 @@ function TDnmpChatMessagesList.AddItemFile(Timestamp: TDateTime;
   IsIncoming: boolean; RemoteAddr: TAddr; AFileName: string;
   AFileSize: Cardinal; AFileDate: TDateTime; RemoteContact: TDnmpContact
   ): TDnmpChatFileMessage;
-var
-  TmpContact: TDnmpContact;
 begin
   Result:=nil;
   if not Assigned(ParentList) then
   begin
-    // { TODO : find }
+    // { TODO : find duplicates }
     // add
     Result:=TDnmpChatFileMessage.Create();
     Result.FillFromContact(RemoteContact, Timestamp, IsIncoming, '');
@@ -461,25 +457,25 @@ begin
   Result:=True;
 end;
 
-function TDnmpChatMessagesList.ToStorage(): TDnmpStorage;
+function TDnmpChatMessagesList.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
   i: Integer;
 begin
-  Storage:=TDnmpStorage.Create(stDictionary);
+  Storage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     Storage.Add(IntToStr(i), Self.Items[i].ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpChatMessagesList');
   Result.Add('items', Storage);
 end;
 
-function TDnmpChatMessagesList.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChatMessagesList.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage, SubStorageItem: TDnmpStorage;
+  SubStorage, SubStorageItem: TDataStorage;
   i: Integer;
   Item: TDnmpChatMessage;
   Done: boolean;
@@ -578,11 +574,11 @@ begin
   inherited Destroy();
 end;
 
-function TDnmpChat.ToStorage(): TDnmpStorage;
+function TDnmpChat.ToStorage(): TDataStorage;
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpChat');
 
   Storage:=Self.ServiceInfo.ToStorage();
@@ -592,9 +588,9 @@ begin
   Result.Add('messages_list', Storage);
 end;
 
-function TDnmpChat.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpChat.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;

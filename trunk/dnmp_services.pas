@@ -1,8 +1,7 @@
 unit dnmp_services;
 
 interface
-uses SysUtils, Classes, Contnrs, StrUtils, dnmp_unit
-  {, uLkJSON}, fpjson, jsonparser;
+uses SysUtils, Classes, Contnrs, dnmp_unit, DataStorage;
 
 type
 
@@ -25,8 +24,8 @@ type
     destructor Destroy(); override;
     //function AbonentsCount(): Integer;
     function Owner(): TDnmpContact; // first owner
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
     procedure Assign(Item: TDnmpServiceInfo);
   end;
 
@@ -41,10 +40,10 @@ type
     property Items[Index: Integer]: TDnmpServiceInfo read GetItem write SetItem; default;
     function GetServiceByTypeName(sType, sName: string): TDnmpServiceInfo;
     function UpdateServiceInfo(sType, sName, sParent, sProvider, sRating, sAbonCount, sDescr: string): TDnmpServiceInfo;
-    function ToStorage(): TDnmpStorage;
-    function ToStorageShort(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
-    function FromStorageShort(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function ToStorageShort(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
+    function FromStorageShort(Storage: TDataStorage): boolean;
   end;
 
   TDnmpServiceManager = class;
@@ -74,8 +73,8 @@ type
     property OnEvent: TDnmpServiceEvent read FEvent write FEvent;
     // Отладочное сообщение
     procedure DebugText(s: string);
-    function ToStorage(): TDnmpStorage; virtual;
-    function FromStorage(Storage: TDnmpStorage): boolean; virtual;
+    function ToStorage(): TDataStorage; virtual;
+    function FromStorage(Storage: TDataStorage): boolean; virtual;
   end;
 
   { TDnmpServiceList }
@@ -88,8 +87,8 @@ type
     Mgr: TDnmpManager;
     property Items[Index: Integer]: TDnmpService read GetItem write SetItem; default;
     function GetService(sType, sName: string): TDnmpService;
-    function ToStorage(): TDnmpStorage;
-    function FromStorage(Storage: TDnmpStorage): boolean;
+    function ToStorage(): TDataStorage;
+    function FromStorage(Storage: TDataStorage): boolean;
   end;
 
   { TDnmpServiceManager }
@@ -218,9 +217,9 @@ end;
 //  Result:=Abonents.Count;
 //end;
 
-function TDnmpServiceInfo.ToStorage(): TDnmpStorage;
+function TDnmpServiceInfo.ToStorage(): TDataStorage;
 begin
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   // Basic info
   Result.Add('type', self.ServiceType);
   Result.Add('name', self.Name);
@@ -237,7 +236,7 @@ begin
   Result.Add('subscribers', Self.Subscribers.ToStorage(ctBrief));
 end;
 
-function TDnmpServiceInfo.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpServiceInfo.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=False;
   if not Assigned(Storage) then Exit;
@@ -318,34 +317,34 @@ begin
   Result:=si;
 end;
 
-function TDnmpServiceInfoList.ToStorage: TDnmpStorage;
+function TDnmpServiceInfoList.ToStorage: TDataStorage;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
 begin
-  SubStorage:=TDnmpStorage.Create(stDictionary);
+  SubStorage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     SubStorage.Add(IntToStr(i), Self.Items[i].ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpServiceInfoList');
   Result.Add('items', SubStorage);
 end;
 
-function TDnmpServiceInfoList.ToStorageShort(): TDnmpStorage;
+function TDnmpServiceInfoList.ToStorageShort(): TDataStorage;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   si: TDnmpServiceInfo;
 begin
-  Result:=TDnmpStorage.Create(stList);
+  Result:=TDataStorage.Create(stList);
 
   for i:=0 to Self.Count-1 do
   begin
     si:=Self.Items[i];
-    SubStorage:=TDnmpStorage.Create(stDictionary);
+    SubStorage:=TDataStorage.Create(stDictionary);
     SubStorage.Add('type', si.ServiceType);
     SubStorage.Add('name', si.Name);
     SubStorage.Add('parent_name', si.ParentName);
@@ -356,9 +355,9 @@ begin
   end;
 end;
 
-function TDnmpServiceInfoList.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpServiceInfoList.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpServiceInfo;
 begin
@@ -382,9 +381,9 @@ begin
   Result:=True;
 end;
 
-function TDnmpServiceInfoList.FromStorageShort(Storage: TDnmpStorage): boolean;
+function TDnmpServiceInfoList.FromStorageShort(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item, Item2: TDnmpServiceInfo;
 begin
@@ -483,12 +482,12 @@ begin
 end;
 
 
-function TDnmpService.ToStorage(): TDnmpStorage;
+function TDnmpService.ToStorage(): TDataStorage;
 begin
   Result:=Self.ServiceInfo.ToStorage();
 end;
 
-function TDnmpService.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpService.FromStorage(Storage: TDataStorage): boolean;
 begin
   Result:=self.ServiceInfo.FromStorage(Storage);
 end;
@@ -527,25 +526,25 @@ begin
   end;
 end;
 
-function TDnmpServiceList.ToStorage(): TDnmpStorage;
+function TDnmpServiceList.ToStorage(): TDataStorage;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
 begin
-  SubStorage:=TDnmpStorage.Create(stDictionary);
+  SubStorage:=TDataStorage.Create(stDictionary);
   for i:=0 to Self.Count-1 do
   begin
     SubStorage.Add(IntToStr(i), Self.Items[i].ToStorage());
   end;
 
-  Result:=TDnmpStorage.Create(stDictionary);
+  Result:=TDataStorage.Create(stDictionary);
   Result.Add('type', 'DnmpServiceList');
   Result.Add('items', SubStorage);
 end;
 
-function TDnmpServiceList.FromStorage(Storage: TDnmpStorage): boolean;
+function TDnmpServiceList.FromStorage(Storage: TDataStorage): boolean;
 var
-  SubStorage: TDnmpStorage;
+  SubStorage: TDataStorage;
   i: Integer;
   Item: TDnmpService;
 begin
@@ -622,15 +621,15 @@ end;
 
 procedure TDnmpServiceManager.LoadFromFile();
 var
-  Storage: TDnmpStorage;
+  Storage: TDataStorage;
 begin
   if not Assigned(Mgr.Serializer) then Exit;
 
-  Storage:=TDnmpStorage.Create(stUnknown);
+  Storage:=TDataStorage.Create(stUnknown);
   if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDInfoFileName) then Self.ServiceInfoList.FromStorage(Storage);
   Storage.Free();
 
-  Storage:=TDnmpStorage.Create(stUnknown);
+  Storage:=TDataStorage.Create(stUnknown);
   if Mgr.Serializer.StorageFromFile(Storage, Self.Mgr.sDataPath+csSRVDKnownFileName) then Self.RemoteServiceInfoList.FromStorage(Storage);
   Storage.Free();
 end;
@@ -640,7 +639,7 @@ var
   i: integer;
   si: TDnmpServiceInfo;
   SomeService: TDnmpService;
-  TmpStorage: TDnmpStorage;
+  TmpStorage: TDataStorage;
   s: string;
 begin
   Result:=inherited Start();
@@ -665,7 +664,7 @@ begin
   begin
     SomeService:=Self.ServiceList.GetItem(i);
     s:=SomeService.ServiceInfo.ServiceType+'_'+SomeService.ServiceInfo.Name;
-    TmpStorage:=TDnmpStorage.Create(stUnknown);
+    TmpStorage:=TDataStorage.Create(stUnknown);
     Self.Mgr.DebugText('Load service '+s);
     if Self.Mgr.Serializer.StorageFromFile(TmpStorage, Self.Mgr.sDataPath+s) then
     begin
@@ -960,8 +959,8 @@ var
   si: TDnmpServiceInfo;
   //sl, slData: TStringList;
   TmpList: TDnmpServiceInfoList;
-  Storage: TDnmpStorage;
-  SubStorage: TDnmpStorage;
+  Storage: TDataStorage;
+  SubStorage: TDataStorage;
 begin
   Result:=False;
   if not Assigned(ServiceInfoList) then Exit;
@@ -1159,7 +1158,7 @@ function TDnmpServiceManager.ReadServiceList(sDataList, sListType: string): Bool
 var
   i: Integer;
   TmpList: TDnmpServiceInfoList;
-  TmpStorage: TDnmpStorage;
+  TmpStorage: TDataStorage;
 
 begin
   Result:=False;
@@ -1167,7 +1166,7 @@ begin
   if sListType='SERVICES_LIST' then TmpList:=self.RemoteServiceInfoList
   else Exit;
 
-  TmpStorage:=TDnmpStorage.Create(stUnknown);
+  TmpStorage:=TDataStorage.Create(stUnknown);
   if Mgr.Serializer.StorageFromString(TmpStorage, sDataList) then
   begin
     if TmpList.FromStorageShort(TmpStorage) then
